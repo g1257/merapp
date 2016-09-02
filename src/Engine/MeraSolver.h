@@ -14,6 +14,7 @@ public:
 
     void computeGroundState()
     {
+        // Compute All Density Matricies - top to bottom using A or D operators
         SizeType qiter = 1;
         SizeType layers = 1;
 
