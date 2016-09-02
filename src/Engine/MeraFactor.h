@@ -1,5 +1,20 @@
 #ifndef MERAFACTOR_H
 #define MERAFACTOR_H
+#include <iostream>
+
+namespace Mera {
+
+class MeraFactor {
 
 
-#endif MERAFACTOR_H
+public:
+
+
+private:
+
+
+}; //class
+
+} //namespace
+
+#endif //MERAFACTOR_H

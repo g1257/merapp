@@ -15,10 +15,10 @@ public:
     void computeGroundState()
     {
         SizeType qiter = 1;
-        SizeType qlayer = 1;
+        SizeType layers = 1;
 
         for (SizeType iter=0; iter<qiter; ++iter) {
-            for (SizeType layer=0; layer<qlayer; ++layer) {
+            for (SizeType layer=0; layer<layers; ++layer) {
                 step_.optimize(iter,layer);
             }
         }
