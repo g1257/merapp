@@ -1,0 +1,5 @@
+#ifndef MERAOBJECT_H
+#define MERAOBJECT_H
+
+
+#endif MERAOBJECT_H
