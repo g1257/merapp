@@ -13,7 +13,7 @@
 
 int main(int argc,char *argv[])
 {
-    MeraSolver solver;
+    Mera::MeraSolver solver;
     solver.computeGroundState();
 
 
