@@ -7,6 +7,7 @@
 
 namespace Mera {
 
+template<typename ParametersForSolverType>
 class MeraLayer {
 
     typedef int TensorType;
@@ -22,8 +23,8 @@ public:
 
     typedef std::pair<SizeType,SizeType> PairSizeType;
 
-    MeraLayer(SizeType tau)
-        : tau_(tau),vecForUpdateOrder_(u_.size())
+    MeraLayer(const ParametersForSolverType& params)
+        : params_(params),vecForUpdateOrder_(u_.size())
     {
         setUpdateOrder();
 		setMeraArchitecture(MERA_ARCH_1D_TERNARY);
@@ -63,10 +64,27 @@ private:
 
 	void setMeraArchitecture1dTernary()
 	{
+		if (params_.tauMax & 1) setMeraArchitecture1dTernaryOdd();
+		else setMeraArchitecture1dTernaryEven();
+	}
+
+	void setMeraArchitecture1dTernaryEven()
+	{
+		SizeType totalUs = (params_.numberOfSites + 1)/3;
+		mu_.resize(totalUs,2); // only INs are accounted for for now
+		for (SizeType i = 0; i < totalUs; ++i) {
+			mu_(i,0) = TensorLeg(3*i,TensorLeg::TensorMeraType::IN);
+			mu_(i,1) = TensorLeg(3*i + 1,TensorLeg::TensorMeraType::IN);
+		}
 
 	}
 
-	SizeType tau_;
+	void setMeraArchitecture1dTernaryOdd()
+	{
+
+	}
+
+	const ParametersForSolverType& params_;
     std::vector<TensorType> u_; // disentagler
     std::vector<TensorType> w_; // isometries
     std::vector<TensorType> rho_; // density matrices

@@ -1,19 +1,21 @@
 #ifndef MERASOLVER_H
 #define MERASOLVER_H
 #include <iostream>
-#include "MeraStep.h"
+#include "MeraLayer.h"
 #include "ParametersForSolver.h"
 
 namespace Mera {
 
 class MeraSolver {
 
-    typedef MeraStep<ParametersForSolver> MeraStepType;
+	typedef ParametersForSolver ParametersForSolverType;
+	typedef MeraLayer<ParametersForSolverType> MeraLayerType;
+	typedef typename PsimagLite::Vector<MeraLayerType*>::Type VectorMeraLayerType;
+    typedef typename MeraLayerType::PairSizeType PairSizeType;
 
 public:
 
 	MeraSolver(const ParametersForSolver& params)
-	    : step_(params)
 	{}
 
     void computeGroundState()
@@ -24,7 +26,7 @@ public:
 
         for (SizeType iter=0; iter<qiter; ++iter) {
             for (SizeType layer=0; layer<layers; ++layer) {
-                step_.optimize(iter,layer);
+                optimize(iter,layer);
             }
         }
 
@@ -33,7 +35,27 @@ public:
 
 private:
 
-    MeraStepType step_;
+	void optimize(SizeType iter, SizeType layer)
+    {
+        SizeType qlayer = 1; // number of loops for convergece of u or w
+        SizeType n = meraLayer_[layer]->size();
+        for (SizeType i=0; i<qlayer; ++i) {
+            // optimize one (w or u) of a layer tau
+            for (SizeType f=0; f<n; ++f) {
+                // factors = number of u and w in a layer
+                optimizeThisTensor(meraLayer_[layer]->tensorToOptimize(f));
+            }
+        }
+    }
+
+	void optimizeThisTensor(PairSizeType pair)
+    {
+        // find Y (environment) for this tensor
+        // Y = USV^+
+        // w = -VU^+
+    }
+
+    VectorMeraLayerType meraLayer_;
 }; //class
 
 } //namespace

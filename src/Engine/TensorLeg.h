@@ -8,6 +8,10 @@ struct TensorLeg {
 
 	enum TensorMeraType {IN, OUT};
 
+	TensorLeg(SizeType site_, TensorMeraType inOrOut_)
+	    : site(site_),inOrOut(inOrOut_)
+	{}
+
 	SizeType site;
 	TensorMeraType inOrOut;
 };
