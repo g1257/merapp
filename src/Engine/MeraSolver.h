@@ -2,15 +2,19 @@
 #define MERASOLVER_H
 #include <iostream>
 #include "MeraStep.h"
-
+#include "ParametersForSolver.h"
 
 namespace Mera {
 
 class MeraSolver {
 
-    typedef MeraStep MeraStepType;
+    typedef MeraStep<ParametersForSolver> MeraStepType;
 
 public:
+
+	MeraSolver(const ParametersForSolver& params)
+	    : step_(params)
+	{}
 
     void computeGroundState()
     {
