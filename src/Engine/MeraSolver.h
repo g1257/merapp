@@ -16,7 +16,7 @@ class MeraSolver {
 public:
 
 	MeraSolver(const ParametersForSolver& params)
-	    : params_(params), meraLayer_(params.tauMax,0)
+	    : params_(params), srep_(""), meraLayer_(params.tauMax,0)
 	{
 		for (SizeType i = 0; i < params.tauMax; ++i) {
 			SizeType sites = calcSitesForLayer(i);
@@ -54,6 +54,10 @@ public:
 
 private:
 
+	MeraSolver(const MeraSolver&);
+
+	MeraSolver& operator=(const MeraSolver&);
+
 	void optimize(SizeType iter, SizeType layer)
     {
         SizeType qlayer = 1; // number of loops for convergece of u or w
@@ -75,6 +79,7 @@ private:
     }
 
 	const ParametersForSolver& params_;
+	PsimagLite::String srep_;
     VectorMeraLayerType meraLayer_;
 }; //class
 
