@@ -38,7 +38,6 @@ public:
 	      scount_(0),
 	      srep_("")
 	{
-		if (prevLayer_) scount_ += prevLayer_->scount_;
 		setMeraArchitecture(params.meraArch);
 		setUpdateOrder();
 		createSrep(srep_);
@@ -274,6 +273,25 @@ private:
 		VectorSizeType sindex(sitesInLayer_,0);
 		SizeType scount = 0;
 		SizeType fcount = 0;
+		SizeType soffset = (prevLayer_) ? prevLayer_->scount_ : 0;
+		PairSizeType result;
+
+		// set sindex
+		for (SizeType i = 0; i < mw_.n_row(); ++i) {
+			SizeType ins = findInsOrOuts(mw_,i,TensorLegType::IN);
+			// loop over ins only here
+			for (SizeType j = 0; j < ins; ++j) {
+				SizeType site = mw_(i,j)->site;
+				if (site >= sitesInLayer_) continue;
+
+				if (siteIsInLegOfSomeTensor(result,mu_,site,TensorLegType::OUT)) {
+					sindex[site] = scount + soffset;
+					scount++;
+					continue;
+				}
+			}
+		}
+
 		for (SizeType i = 0; i < vecForUpdateOrder_.size(); ++i) {
 			SizeType s = vecForUpdateOrder_[i].first;
 			TensorTypeEnum t = vecForUpdateOrder_[i].second;
@@ -286,7 +304,6 @@ private:
 				throw PsimagLite::RuntimeError("w has outs > 1\n");
 
 			srep += ":" + ttos(ins) + ":" + ttos(outs);
-			PairSizeType result;
 
 			// loop over ins
 			for (SizeType j = 0; j < ins; ++j) {
@@ -306,18 +323,18 @@ private:
 
 					assert(tau_ > 0);
 					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(result.first+scount_);
+						SizeType offset = (prevLayer_->prevLayer_) ?
+						            prevLayer_->prevLayer_->scount_ : 0;
+						srep += ":s" + ttos(result.first+offset);
 						continue;
 					}
 
-					throw PsimagLite::RuntimeError("u with unconnected in is not a dummy?!\n");
+					throw PsimagLite::RuntimeError("u with disconnected in is not a dummy?!\n");
 				}
 
 				if (t == TENSOR_TYPE_W) {
 					if (siteIsInLegOfSomeTensor(result,mu_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(scount_+scount+outputSites_);
-						sindex[site] = scount;
-						scount++;
+						srep += ":s" + ttos(sindex[site] + outputSites_);
 						continue;
 					}
 
@@ -330,7 +347,7 @@ private:
 
 					assert(tau_ > 0);
 					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(result.first+scount_);
+						srep += ":s" + ttos(result.first+soffset);
 						continue;
 					}
 
@@ -352,17 +369,17 @@ private:
 				if (t == TENSOR_TYPE_U) {
 
 					if (siteIsInLegOfSomeTensor(result,mw_,site,TensorLegType::IN)) {
-						srep += ":s" + ttos(sindex[site]+scount_+outputSites_);
+						srep += ":s" + ttos(sindex[site] + outputSites_);
 						continue;
 					}
 
-					throw PsimagLite::RuntimeError("u with unconnected out is not a dummy?!\n");
+					throw PsimagLite::RuntimeError("u with disconnected out is not a dummy?!\n");
 				}
 
 				if (t == TENSOR_TYPE_W) {
 					assert(outs == 1);
 					assert(j == 0);
-					srep += ":s" + ttos(s+scount_);
+					srep += ":s" + ttos(s+soffset);
 					continue;
 				}
 
@@ -373,7 +390,7 @@ private:
 			if (i > 0 && i % 5 == 0) srep += "\n";
 		}
 
-		scount_ += scount+outputSites_;
+		scount_ = scount+outputSites_+soffset;
 	}
 
 	SizeType findInsOrOuts(const MatrixTensorLegType& m,
