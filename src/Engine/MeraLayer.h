@@ -37,7 +37,12 @@ public:
 
 	~MeraLayer()
 	{
-
+		for (SizeType i = 0; i < mv_.n_row(); ++i) {
+			for (SizeType j = 0; j < mv_.n_col(); ++j) {
+				delete mv_(i,j);
+				mv_(i,j) = 0;
+			}
+		}
 	}
 
 	SizeType size() const
