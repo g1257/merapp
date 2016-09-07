@@ -10,6 +10,8 @@
 
 #include <unistd.h>
 #include "MeraSolver.h"
+#include <fstream>
+#include "MeraToTikz.h"
 
 void testCase(SizeType num,
               Mera::ParametersForSolver::MeraArchitectureEnum arch,
@@ -24,6 +26,14 @@ void testCase(SizeType num,
 	solver.computeGroundState();
 	std::cout<<solver;
 	std::cout<<"-----------------------------------\n\n\n";
+
+	PsimagLite::String file("meraTikzTestNumber");
+	file += ttos(num);
+	file += ".tex";
+	std::ofstream fout(file.c_str());
+	Mera::MeraToTikz obj(solver.sRep());
+	fout<<obj;
+	fout.close();
 }
 
 int main(int ,char **)

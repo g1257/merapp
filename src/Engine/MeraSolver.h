@@ -34,6 +34,8 @@ public:
 		}
 	}
 
+	const PsimagLite::String& sRep() const { return srep_; }
+
     void computeGroundState()
     {
         // Compute All Density Matricies - top to bottom using A or D operators

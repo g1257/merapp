@@ -7,7 +7,7 @@ CPPFLAGS += -I../../PsimagLite -I../../PsimagLite/src -IEngine
 all: merapp
 
 merapp: merapp.o 
-	$(CXX) $(LDFLAGS) merapp.o -o merapp
+	$(CXX) merapp.o -o merapp $(LDFLAGS)
 
 merapp.o: merapp.cpp  Makefile   Config.make
 	$(CXX) $(CPPFLAGS) -c merapp.cpp

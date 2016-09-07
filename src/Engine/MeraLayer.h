@@ -18,8 +18,6 @@ class MeraLayer {
 
 	enum TensorTypeEnum {TENSOR_TYPE_W,TENSOR_TYPE_U};
 
-
-
 public:
 
 	typedef TensorLegType_ TensorLegType;
