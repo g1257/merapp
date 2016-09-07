@@ -13,6 +13,7 @@ class MeraLayer {
 	typedef int TensorType;
 	typedef TensorLeg TensorLegType_;
 	typedef PsimagLite::Matrix<TensorLegType_*> MatrixTensorLegType;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 	enum TensorTypeEnum {TENSOR_TYPE_W,TENSOR_TYPE_U};
 
@@ -22,7 +23,8 @@ class MeraLayer {
 public:
 
 	typedef TensorLegType_ TensorLegType;
-	typedef std::pair<SizeType,TensorTypeEnum> PairSizeType;
+	typedef std::pair<SizeType,TensorTypeEnum> PairSizeTypeType;
+	typedef std::pair<SizeType,SizeType> PairSizeType;
 
 	MeraLayer(const ParametersForSolverType& params, SizeType tau, SizeType sitesInLayer)
 	    : params_(params),
@@ -60,7 +62,7 @@ public:
 
 	SizeType outputSites() const { return outputSites_; }
 
-	const PairSizeType& tensorToOptimize(SizeType i) const
+	const PairSizeTypeType& tensorToOptimize(SizeType i) const
 	{
 		assert(i < vecForUpdateOrder_.size());
 		return vecForUpdateOrder_[i];
@@ -120,8 +122,8 @@ private:
 		vecForUpdateOrder_.resize(mu_.n_row() + mv_.n_row());
 
 		for (SizeType i=0; i<n; ++i) {
-			vecForUpdateOrder_[2*i] = PairSizeType(i,TENSOR_TYPE_W);
-			vecForUpdateOrder_[2*i+1] = PairSizeType(i,TENSOR_TYPE_U);
+			vecForUpdateOrder_[2*i] = PairSizeTypeType(i,TENSOR_TYPE_U);
+			vecForUpdateOrder_[2*i+1] = PairSizeTypeType(i,TENSOR_TYPE_W);
 		}
 
 		int x = mu_.n_row() - mv_.n_row();
@@ -130,7 +132,7 @@ private:
 		SizeType m = std::abs(x);
 		TensorTypeEnum type = (x < 0) ? TENSOR_TYPE_W : TENSOR_TYPE_U;
 		for (SizeType i=n; i<n+m; ++i)
-			vecForUpdateOrder_[n+i] =  PairSizeType(i,type);
+			vecForUpdateOrder_[n+i] =  PairSizeTypeType(i,type);
 	}
 
 	void setMeraArchitecture(MeraArchitectureEnum what)
@@ -172,10 +174,53 @@ private:
 			mv_(i,3) = new TensorLeg(i,TensorLeg::TensorMeraType::OUT);
 			outputSites_++;
 		}
+
+		markBogusUoutputs();
+	}
+
+	void markBogusUoutputs()
+	{
+		SizeType totalUs = mu_.n_row();
+		SizeType cols = mu_.n_col();
+		PairSizeType result;
+		for (SizeType i = 0; i < totalUs; ++i) {
+			for (SizeType j = 0; j < cols; ++j) {
+				TensorLegType* ptr = mu_(i,j);
+				if (ptr == 0) continue;
+				if (ptr->inOrOut != TensorLegType::OUT) continue;
+				SizeType site = ptr->site;
+				if (siteIsInLegOfSomeTensor(result,mv_,site,TensorLegType::IN))
+					continue;
+				ptr->site = sitesInLayer_;
+			}
+		}
+	}
+
+	bool siteIsInLegOfSomeTensor(PairSizeType& result,
+	                             const MatrixTensorLegType& m,
+	                             SizeType site,
+	                             TensorLegType::TensorMeraType inOrOut) const
+	{
+		SizeType totalVs = m.n_row();
+		SizeType cols = m.n_col();
+		for (SizeType i = 0; i < totalVs; ++i) {
+			for (SizeType j = 0; j < cols; ++j) {
+				TensorLegType* ptr = m(i,j);
+				if (ptr == 0) continue;
+				if (ptr->inOrOut != inOrOut) continue;
+				result = PairSizeType(i,j);
+				if (site == ptr->site) return true;
+			}
+		}
+
+		return false;
 	}
 
 	void createSrep(PsimagLite::String& srep) const
 	{
+		VectorSizeType sindex(sitesInLayer_,0);
+		SizeType scount = 0;
+		SizeType fcount = 0;
 		for (SizeType i = 0; i < vecForUpdateOrder_.size(); ++i) {
 			SizeType s = vecForUpdateOrder_[i].first;
 			TensorTypeEnum t = vecForUpdateOrder_[i].second;
@@ -185,11 +230,75 @@ private:
 			SizeType ins = findInsOrOuts(m,s,TensorLegType::IN);
 			SizeType outs = findInsOrOuts(m,s,TensorLegType::OUT);
 			srep += ":" + ttos(ins) + ":" + ttos(outs);
-			for (SizeType j = 0; j < ins; ++j)
-				srep += ":I" + ttos(j);
-			for (SizeType j = 0; j < outs; ++j)
-				srep += ":O" + ttos(j);
+			PairSizeType result;
+			for (SizeType j = 0; j < ins; ++j) {
+				SizeType site = m(s,j)->site;
+				if (t == TENSOR_TYPE_U) {
+					if (tau_ == 0) {
+						srep += ":f" + ttos(fcount);
+						fcount++;
+						continue;
+					}
+
+					srep += ":sT";
+					continue;
+				}
+
+				if (t == TENSOR_TYPE_W) {
+					if (tau_ == 0) {
+						if (siteIsInLegOfSomeTensor(result,mu_,site,TensorLegType::OUT)) {
+							srep += ":s" + ttos(scount);
+							sindex[site] = scount;
+							scount++;
+							continue;
+						}
+
+						srep += ":f" + ttos(fcount);
+						fcount++;
+						continue;
+					}
+
+					srep += ":I" + ttos(j);
+					continue;
+				}
+
+				throw PsimagLite::RuntimeError("Unknown TENSOR_TYPE\n");
+			}
+
+			for (SizeType j = 0; j < outs; ++j) {
+				SizeType site = m(s,ins+j)->site;
+				if (t == TENSOR_TYPE_U) {
+					if (tau_ == 0) {
+						if (site >= sitesInLayer_) {
+							srep += ":d";
+							continue;
+						}
+
+						srep += ":s" + ttos(scount);
+						sindex[site] = scount;
+						scount++;
+						continue;
+					}
+
+					srep += ":sT";
+					continue;
+				}
+
+				if (t == TENSOR_TYPE_W) {
+					if (tau_ == 0) {
+						srep += ":O" + ttos(j);
+						continue;
+					}
+
+					srep += ":O" + ttos(j);
+					continue;
+				}
+
+				throw PsimagLite::RuntimeError("Unknown TENSOR_TYPE\n");
+			}
+
 			srep += ";";
+			if (i > 0 && i % 5 == 0) srep += "\n";
 		}
 	}
 
@@ -212,9 +321,9 @@ private:
 	SizeType outputSites_;
 	PsimagLite::String srep_;
 	std::vector<TensorType> u_; // disentagler
-//	std::vector<TensorType> w_; // isometries
-//	std::vector<TensorType> rho_; // density matrices
-	std::vector<PairSizeType> vecForUpdateOrder_;
+	//	std::vector<TensorType> w_; // isometries
+	//	std::vector<TensorType> rho_; // density matrices
+	std::vector<PairSizeTypeType> vecForUpdateOrder_;
 	MatrixTensorLegType mu_;
 	MatrixTensorLegType mv_;
 }; //class
