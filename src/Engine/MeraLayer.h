@@ -26,10 +26,14 @@ public:
 	typedef std::pair<SizeType,TensorTypeEnum> PairSizeTypeType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 
-	MeraLayer(const ParametersForSolverType& params, SizeType tau, SizeType sitesInLayer)
+	MeraLayer(const ParametersForSolverType& params,
+	          SizeType tau,
+	          SizeType sitesInLayer,
+	          MeraLayer* prevLayer)
 	    : params_(params),
 	      tau_(tau),
 	      sitesInLayer_(sitesInLayer),
+	      prevLayer_(prevLayer),
 	      outputSites_(0),
 	      srep_("")
 	{
@@ -229,68 +233,82 @@ private:
 			const MatrixTensorLegType& m = (t == TENSOR_TYPE_U) ? mu_ : mw_;
 			SizeType ins = findInsOrOuts(m,s,TensorLegType::IN);
 			SizeType outs = findInsOrOuts(m,s,TensorLegType::OUT);
+			if (t == TENSOR_TYPE_W && outs > 1)
+				throw PsimagLite::RuntimeError("w has outs > 1\n");
+
 			srep += ":" + ttos(ins) + ":" + ttos(outs);
 			PairSizeType result;
+
+			// loop over ins
 			for (SizeType j = 0; j < ins; ++j) {
 				SizeType site = m(s,j)->site;
 				if (t == TENSOR_TYPE_U) {
-					if (tau_ == 0) {
+					if (!prevLayer_) {
+						assert(tau_ == 0);
 						srep += ":f" + ttos(fcount);
 						fcount++;
 						continue;
 					}
 
-					srep += ":sT";
+					assert(tau_ > 0);
+					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
+						srep += ":t" + ttos(result.first);
+						continue;
+					}
+
+					srep += ":d";
 					continue;
 				}
 
 				if (t == TENSOR_TYPE_W) {
-					if (tau_ == 0) {
-						if (siteIsInLegOfSomeTensor(result,mu_,site,TensorLegType::OUT)) {
-							srep += ":s" + ttos(scount);
-							sindex[site] = scount;
-							scount++;
-							continue;
-						}
-
-						srep += ":f" + ttos(fcount);
-						fcount++;
-						continue;
-					}
-
-					srep += ":I" + ttos(j);
-					continue;
-				}
-
-				throw PsimagLite::RuntimeError("Unknown TENSOR_TYPE\n");
-			}
-
-			for (SizeType j = 0; j < outs; ++j) {
-				SizeType site = m(s,ins+j)->site;
-				if (t == TENSOR_TYPE_U) {
-					if (tau_ == 0) {
-						if (site >= sitesInLayer_) {
-							srep += ":d";
-							continue;
-						}
-
+					if (siteIsInLegOfSomeTensor(result,mu_,site,TensorLegType::OUT)) {
 						srep += ":s" + ttos(scount);
 						sindex[site] = scount;
 						scount++;
 						continue;
 					}
 
-					srep += ":sT";
-					continue;
-				}
-
-				if (t == TENSOR_TYPE_W) {
-					if (tau_ == 0) {
-						srep += ":O" + ttos(j);
+					if (!prevLayer_) {
+						assert(tau_ == 0);
+						srep += ":f" + ttos(fcount);
+						fcount++;
 						continue;
 					}
 
-					srep += ":O" + ttos(j);
+					assert(tau_ > 0);
+					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
+						srep += ":t" + ttos(result.first);
+						continue;
+					}
+
+					throw PsimagLite::RuntimeError("tau > 0 but W in leg not connected?!\n");
+				}
+
+				throw PsimagLite::RuntimeError("Unknown TENSOR_TYPE\n");
+			}
+
+			// loop over outs
+			for (SizeType j = 0; j < outs; ++j) {
+				SizeType site = m(s,ins+j)->site;
+				if (t == TENSOR_TYPE_U) {
+
+					if (site >= sitesInLayer_) {
+						srep += ":d";
+						continue;
+					}
+
+					if (siteIsInLegOfSomeTensor(result,mw_,site,TensorLegType::IN)) {
+						srep += ":s" + ttos(sindex[site]);
+						continue;
+					}
+
+					throw PsimagLite::RuntimeError("u with unconnected is not a dummy?!\n");
+				}
+
+				if (t == TENSOR_TYPE_W) {
+					assert(outs == 1);
+					assert(j == 0);
+					srep += ":t" + ttos(i);
 					continue;
 				}
 
@@ -318,6 +336,7 @@ private:
 	const ParametersForSolverType& params_;
 	SizeType tau_;
 	SizeType sitesInLayer_;
+	MeraLayer* prevLayer_;
 	SizeType outputSites_;
 	PsimagLite::String srep_;
 	std::vector<TensorType> u_; // disentagler
