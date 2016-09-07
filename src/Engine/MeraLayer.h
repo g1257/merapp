@@ -308,6 +308,9 @@ private:
 			// loop over ins
 			for (SizeType j = 0; j < ins; ++j) {
 				SizeType site = m(s,j)->site;
+				SizeType offset = (prevLayer_ && prevLayer_->prevLayer_) ?
+				            prevLayer_->prevLayer_->scount_ : 0;
+
 				if (site >= sitesInLayer_) {
 					srep += ":d";
 					continue;
@@ -323,8 +326,6 @@ private:
 
 					assert(tau_ > 0);
 					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
-						SizeType offset = (prevLayer_->prevLayer_) ?
-						            prevLayer_->prevLayer_->scount_ : 0;
 						srep += ":s" + ttos(result.first+offset);
 						continue;
 					}
@@ -347,7 +348,7 @@ private:
 
 					assert(tau_ > 0);
 					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(result.first+soffset);
+						srep += ":s" + ttos(result.first + offset);
 						continue;
 					}
 
