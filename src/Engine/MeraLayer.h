@@ -143,13 +143,57 @@ private:
 			vecForUpdateOrder_[n+i] =  PairSizeTypeType(i,type);
 	}
 
-	void setMeraArchitecture(MeraArchitectureEnum what)
-	{
-		if (what != MERA_ARCH_1D_TERNARY)
-			throw PsimagLite::RuntimeError("MERA architecture not implemented\n");
+        void setMeraArchitecture(MeraArchitectureEnum what)
+        {
+        if (what == MERA_ARCH_1D_BINARY)
+            setMeraArchitecture1dBinary();
+        else if (what == MERA_ARCH_1D_TERNARY)
+            setMeraArchitecture1dTernary();
+        else
+            throw PsimagLite::RuntimeError("MERA architecture not implemented\n");
+        }
 
-		setMeraArchitecture1dTernary();
-	}
+    void setMeraArchitecture1dBinary()
+    {
+        SizeType totalUs = (sitesInLayer_&1) ? (sitesInLayer_ - 1)/2 : sitesInLayer_/2;
+
+        SizeType type = (tau_ % 3);
+        SizeType offset = 0;
+        if (type == 2) offset = 1;
+        mu_.resize(totalUs,2); // (2,2) but not indicating the outs
+        for (SizeType i = 0; i < totalUs; ++i) {
+            mu_(i,0) = new TensorLeg(2*i+offset,TensorLegType::IN);
+            mu_(i,1) = new TensorLeg(2*i+1+offset,TensorLegType::IN);
+        }
+
+        SizeType totalVs = totalUs;
+        mw_.resize(totalVs,3); // (2,1)
+        for (SizeType i = 0; i < totalVs; ++i) {
+            SizeType first = 2*i + 1;
+            SizeType second = 2*i + 2;
+            if (type == 1 && i == 0) {
+                first = sitesInLayer_;
+                second = 2*i;
+            }
+            if (type == 1 && i > 0) {
+                first = 2*i-1;
+                second = 2*i;
+            }
+            if (type == 2 && i == 0) {
+                first = sitesInLayer_;
+                second = 2*i+1;
+            }
+            if (type == 2 && i > 0) {
+                first = 2*i;
+                second = 2*i+1;
+            }
+            mw_(i,0) = new TensorLeg(first,TensorLegType::IN);
+            mw_(i,1) = new TensorLeg(second,TensorLegType::IN);
+            mw_(i,2) = new TensorLeg(i,TensorLegType::OUT);
+            outputSites_++;
+        }
+    }
+
 
 	void setMeraArchitecture1dTernary()
 	{
@@ -163,10 +207,10 @@ private:
 		for (SizeType i = 0; i < totalUs; ++i) {
 			SizeType first = 3*i + offset - 1;
 			if (i == 0 && type == 1) first = sitesInLayer_;
-			mu_(i,0) = new TensorLeg(first,TensorLeg::TensorMeraType::IN);
-			mu_(i,1) = new TensorLeg(3*i + offset,TensorLeg::TensorMeraType::IN);
-			mu_(i,2) = new TensorLeg(first,TensorLeg::TensorMeraType::OUT);
-			mu_(i,3) = new TensorLeg(3*i + offset,TensorLeg::TensorMeraType::OUT);
+            mu_(i,0) = new TensorLeg(first,TensorLegType::IN);
+            mu_(i,1) = new TensorLeg(3*i + offset,TensorLegType::IN);
+            mu_(i,2) = new TensorLeg(first,TensorLegType::OUT);
+            mu_(i,3) = new TensorLeg(3*i + offset,TensorLegType::OUT);
 		}
 
 		SizeType totalVs = (sitesInLayer_ + 1)/3 + type - 1;
@@ -176,10 +220,10 @@ private:
 			if (3*i + offset >= sitesInLayer_) break;
 			SizeType first = 3*i + offset - 1;
 			if (i == 0 && type == 2) first = sitesInLayer_;
-			mw_(i,0) = new TensorLeg(first,TensorLeg::TensorMeraType::IN);
-			mw_(i,1) = new TensorLeg(3*i + offset,TensorLeg::TensorMeraType::IN);
-			mw_(i,2) = new TensorLeg(3*i + offset + 1,TensorLeg::TensorMeraType::IN);
-			mw_(i,3) = new TensorLeg(i,TensorLeg::TensorMeraType::OUT);
+            mw_(i,0) = new TensorLeg(first,TensorLegType::IN);
+            mw_(i,1) = new TensorLeg(3*i + offset,TensorLegType::IN);
+            mw_(i,2) = new TensorLeg(3*i + offset + 1,TensorLegType::IN);
+            mw_(i,3) = new TensorLeg(i,TensorLegType::OUT);
 			outputSites_++;
 		}
 
