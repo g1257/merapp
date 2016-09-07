@@ -386,7 +386,6 @@ private:
 			}
 
 			srep += ";";
-			if (i > 0 && i % 5 == 0) srep += "\n";
 		}
 
 		scount_ = scount+outputSites_+soffset;

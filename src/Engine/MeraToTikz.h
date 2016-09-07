@@ -5,6 +5,7 @@
 
 namespace Mera {
 
+template<typename RealType>
 class MeraToTikz {
 
 	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,TENSOR_TYPE_W,TENSOR_TYPE_U};
@@ -35,9 +36,15 @@ class MeraToTikz {
 				throw PsimagLite::RuntimeError(str + srep_ + "\n");
 			}
 
-			if (name_.substr(0,l-1) == "u") type_ = TENSOR_TYPE_U;
-			if (name_.substr(0,l-1) == "w") type_ = TENSOR_TYPE_W;
 			if (name_.substr(l-1,l) == "*") conjugate_ = true;
+			SizeType l2 = (conjugate_) ? l - 1 : l;
+			if (name_.substr(0,l2) == "u") type_ = TENSOR_TYPE_U;
+			if (name_.substr(0,l2) == "w") type_ = TENSOR_TYPE_W;
+
+			if (type_ == TENSOR_TYPE_UNKNOWN) {
+				PsimagLite::String str("OpaqueTensor: partial srep, tensor type");
+				throw PsimagLite::RuntimeError(str + srep_ + "\n");
+			}
 
 			timeIndex_ = atoi(tokens[1].c_str());
 			spaceIndex_ = atoi(tokens[2].c_str());
@@ -49,6 +56,18 @@ class MeraToTikz {
 				throw PsimagLite::RuntimeError(str + srep_ + "\n");
 			}
 		}
+
+		SizeType x() const
+		{
+			return spaceIndex_;
+		}
+
+		SizeType y() const
+		{
+			return timeIndex_;
+		}
+
+		TensorTypeEnum type() const { return type_; }
 
 	private:
 
@@ -95,6 +114,27 @@ private:
 		tensor_.resize(tokens.size(),0);
 		for (SizeType i = 0; i < tokens.size(); ++i)
 			tensor_[i] = new OpaqueTensor(tokens[i]);
+
+		buffer_ = "%" + srep_;
+		buffer_ += "\n";
+
+		RealType dx = 1.;
+		RealType dy = 1.;
+		for (SizeType i = 0; i < tensor_.size(); ++i) {
+			buffer_ += ("\\coordinate (A");
+			RealType x = 1.5*tensor_[i]->x();
+			RealType y = 3.0*tensor_[i]->y();
+			buffer_ += ttos(i) + ") at (" + ttos(x) + "," + ttos(y) + ");\n";
+			buffer_ += ("\\coordinate (B");
+			buffer_ += ttos(i) + ") at (" + ttos(x+dx);
+			buffer_ += "," + ttos(y+dy) + ");\n";
+			if (tensor_[i]->type() == TENSOR_TYPE_U) {
+				buffer_ += "\\draw[disen] (A" + ttos(i) + ") rectangle (B";
+				buffer_ += ttos(i)+ ");\n";
+			} else {
+				//buffer_ += "\\draw (A" + ttos(i) + ") circle (0.5);\n";
+			}
+		}
 	}
 
 	static void printHeader(std::ostream& os)
@@ -110,8 +150,9 @@ private:
 		str += "\\usepackage{xcolor}\n";
 
 		str += "\\begin{document}";
-		str += "\\begin{tikzpicture}[mylink/.style={},mylink2/.style={very thick}]";
-		os<<str;
+		str += "\\begin{tikzpicture}[\n";
+		str += "disen/.style={fill=green},mylink2/.style={very thick}]";
+		os<<str<<"\n";
 	}
 
 	static void printFooter(std::ostream& os)
@@ -123,10 +164,10 @@ private:
 
 	static PsimagLite::String buffer_;
 	PsimagLite::String srep_;
-	PsimagLite::Vector<OpaqueTensor*>::Type tensor_;
+	typename PsimagLite::Vector<OpaqueTensor*>::Type tensor_;
 }; // class MeraToTikz
 
-// move to a .cpp file:
-PsimagLite::String MeraToTikz::buffer_;
+template<typename T>
+PsimagLite::String MeraToTikz<T>::buffer_;
 } // namespace Mera
 #endif // MERATOTIKZ_H

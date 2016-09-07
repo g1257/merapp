@@ -31,7 +31,7 @@ void testCase(SizeType num,
 	file += ttos(num);
 	file += ".tex";
 	std::ofstream fout(file.c_str());
-	Mera::MeraToTikz obj(solver.sRep());
+	Mera::MeraToTikz<double> obj(solver.sRep());
 	fout<<obj;
 	fout.close();
 }
