@@ -57,6 +57,24 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const MeraLayer<P>& m)
 	{
 		os<<"tau="<<m.tau_<<"\n";
+		os<<"sitesInThisLayer="<<m.sitesInLayer_<<"\n";
+		os<<"vs="<<m.mv_.n_row()<<"\n";
+		for (SizeType i = 0; i < m.mv_.n_row(); ++i) {
+			os<<"isometry number "<<i<<" has sites ";
+			for (SizeType j = 0; j < m.mv_.n_col(); ++j) {
+				TensorLegType* ptr = m.mv_(i,j);
+				if (!ptr) continue;
+				PsimagLite::String val = (ptr->inOrOut == TensorLegType::OUT) ? " *" : " ";
+				if (ptr->inOrOut == TensorLegType::IN && ptr->site >= m.sitesInLayer_)
+					os<<val<<" o";
+				else
+					os<<val<<ptr->site;
+			}
+
+			os<<"\n";
+		}
+
+		os<<"-------------------\n";
 		return os;
 	}
 
@@ -83,23 +101,17 @@ private:
 
 	void setMeraArchitecture1dTernary()
 	{
-		SizeType offset = (tau_ & 1) ? 0 : 1;
-		SizeType totalVs = 0;
-
-		for (SizeType i = 0; i < sitesInLayer_; ++i) {
-			if (3*totalVs + offset + 4 == sitesInLayer_) break;
-			if (3*totalVs + offset + 1 == sitesInLayer_) break;
-			totalVs++;
-		}
-
-		if (totalVs == 0)
-			throw PsimagLite::RuntimeError("totalVs calculation failed\n");
-
+		SizeType type = (tau_ % 3);
+		SizeType totalVs = (sitesInLayer_ + 1)/3 - 1 + type;
+		SizeType offset = 2 - type;
 		mv_.resize(totalVs,4); // (3,1)
 		for (SizeType i = 0; i < totalVs; ++i) {
-			mv_(i,0) = new TensorLeg(3*i + offset,TensorLeg::TensorMeraType::IN);
-			mv_(i,1) = new TensorLeg(3*i + offset + 1,TensorLeg::TensorMeraType::IN);
-			mv_(i,2) = new TensorLeg(3*i + offset + 2,TensorLeg::TensorMeraType::IN);
+			if (3*i + offset >= sitesInLayer_) break;
+			SizeType first = 3*i + offset - 1;
+			if (i == 0 && type == 2) first = sitesInLayer_;
+			mv_(i,0) = new TensorLeg(first,TensorLeg::TensorMeraType::IN);
+			mv_(i,1) = new TensorLeg(3*i + offset,TensorLeg::TensorMeraType::IN);
+			mv_(i,2) = new TensorLeg(3*i + offset + 1,TensorLeg::TensorMeraType::IN);
 			mv_(i,3) = new TensorLeg(i,TensorLeg::TensorMeraType::OUT);
 			outputSites_++;
 		}

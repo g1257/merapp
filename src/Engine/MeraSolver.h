@@ -21,6 +21,7 @@ public:
 		for (SizeType i = 0; i < params.tauMax; ++i) {
 			SizeType sites = calcSitesForLayer(i);
 			meraLayer_[i] = new MeraLayerType(params,i,sites);
+			std::cout<<(*meraLayer_[i]);
 		}
 	}
 
