@@ -22,6 +22,7 @@ public:
 			SizeType sites = calcSitesForLayer(i);
 			meraLayer_[i] = new MeraLayerType(params,i,sites,(i > 0) ? meraLayer_[i-1] : 0);
 			std::cout<<(*meraLayer_[i]);
+			srep_ += meraLayer_[i]->sRep();
 		}
 	}
 
@@ -50,6 +51,12 @@ public:
 	{
 		if (tau == 0) return params_.numberOfSites;
 		return meraLayer_[tau - 1]->outputSites();
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, const MeraSolver& ms)
+	{
+		os<<"fullSrep="<<ms.srep_<<"\n";
+		return os;
 	}
 
 private:
