@@ -43,6 +43,13 @@ public:
 				mv_(i,j) = 0;
 			}
 		}
+
+		for (SizeType i = 0; i < mu_.n_row(); ++i) {
+			for (SizeType j = 0; j < mu_.n_col(); ++j) {
+				delete mu_(i,j);
+				mu_(i,j) = 0;
+			}
+		}
 	}
 
 	SizeType size() const
@@ -68,6 +75,22 @@ public:
 			os<<"isometry number "<<i<<" has sites ";
 			for (SizeType j = 0; j < m.mv_.n_col(); ++j) {
 				TensorLegType* ptr = m.mv_(i,j);
+				if (!ptr) continue;
+				PsimagLite::String val = (ptr->inOrOut == TensorLegType::OUT) ? " *" : " ";
+				if (ptr->inOrOut == TensorLegType::IN && ptr->site >= m.sitesInLayer_)
+					os<<val<<" o";
+				else
+					os<<val<<ptr->site;
+			}
+
+			os<<"\n";
+		}
+
+		os<<"us="<<m.mu_.n_row()<<"\n";
+		for (SizeType i = 0; i < m.mu_.n_row(); ++i) {
+			os<<"disentangler number "<<i<<" has sites ";
+			for (SizeType j = 0; j < m.mu_.n_col(); ++j) {
+				TensorLegType* ptr = m.mu_(i,j);
 				if (!ptr) continue;
 				PsimagLite::String val = (ptr->inOrOut == TensorLegType::OUT) ? " *" : " ";
 				if (ptr->inOrOut == TensorLegType::IN && ptr->site >= m.sitesInLayer_)
@@ -107,8 +130,21 @@ private:
 	void setMeraArchitecture1dTernary()
 	{
 		SizeType type = (tau_ % 3);
-		SizeType totalVs = (sitesInLayer_ + 1)/3 - 1 + type;
-		SizeType offset = 2 - type;
+		SizeType offset = 0;
+		if (type == 0) offset = 1;
+		if (type == 2) offset = 2;
+		SizeType totalUs = (sitesInLayer_ + 1)/3;
+
+		mu_.resize(totalUs,2); // (2,2) but not indicating the outs
+		for (SizeType i = 0; i < totalUs; ++i) {
+			SizeType first = 3*i + offset - 1;
+			if (i == 0 && type == 1) first = sitesInLayer_;
+			mu_(i,0) = new TensorLeg(first,TensorLeg::TensorMeraType::IN);
+			mu_(i,1) = new TensorLeg(3*i + offset,TensorLeg::TensorMeraType::IN);
+		}
+
+		SizeType totalVs = (sitesInLayer_ + 1)/3 + type - 1;
+		offset = 2 - type;
 		mv_.resize(totalVs,4); // (3,1)
 		for (SizeType i = 0; i < totalVs; ++i) {
 			if (3*i + offset >= sitesInLayer_) break;
