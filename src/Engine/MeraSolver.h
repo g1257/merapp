@@ -16,7 +16,21 @@ class MeraSolver {
 public:
 
 	MeraSolver(const ParametersForSolver& params)
-	{}
+	    : params_(params), meraLayer_(params.tauMax,0)
+	{
+		for (SizeType i = 0; i < params.tauMax; ++i) {
+			SizeType sites = calcSitesForLayer(i);
+			meraLayer_[i] = new MeraLayerType(params,i,sites);
+		}
+	}
+
+	~MeraSolver()
+	{
+		for (SizeType i = 0; i < params_.tauMax; ++i) {
+			delete meraLayer_[i];
+			meraLayer_[i] = 0;
+		}
+	}
 
     void computeGroundState()
     {
@@ -29,9 +43,13 @@ public:
                 optimize(iter,layer);
             }
         }
-
-
     }
+
+	SizeType calcSitesForLayer(SizeType tau) const
+	{
+		if (tau == 0) return params_.numberOfSites;
+		return meraLayer_[tau - 1]->outputSites();
+	}
 
 private:
 
@@ -55,6 +73,7 @@ private:
         // w = -VU^+
     }
 
+	const ParametersForSolver& params_;
     VectorMeraLayerType meraLayer_;
 }; //class
 
