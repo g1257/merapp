@@ -1,0 +1,48 @@
+
+[convert to TeX]
+
+- The sRep or string representation of a MERA.
+
+An srep is a string. It's composed of sub-strings (tensor stanzas) separated by semicolon (;)
+
+srep = tensor stanza ; tensor stanza ; tensor stanza ; ...
+
+An srep may NOT end in semicolon.
+
+An srep may contain whitespace. All whitespace is ignored. 
+
+-- Tensor Stanza
+
+A tensor stanza is a string. It's composed of items separated by colons (:)
+
+tensor stanza = item : item : item : item : ...
+
+
+A tensor stanza may NOT end in colon.
+
+A tensor stanza may contain spaces. All whitespace is ignored.
+
+Item 0 of the stanza is the name of the tensor optionally followed by * to indicate conjugation.
+
+Item 1 of the stanza is the time index of the tensor. (Or layer in which this tensor lives.)
+
+Item 2 of the stanza is the spatial index of the tensor. (Or number of this tensor within this layer.)
+
+Item 3 of the stanza is the number of in legs of the tensor, a.k.a., the ins.
+
+Item 4 of the stanza is the number of out legs of the tensor, a.k.a., the outs.
+
+Item 4 + x of the stanza is symbolic index of in leg number x, for 0<=x<ins. If ins==0 these items are not present.
+
+Item 4 + ins + x of the stanza is symbolic index of out leg number x, for 0<=x<outs. If outs==0 these items are not present.
+
+A tensor stanza may NOT have ins + outs == 0.
+
+-- Symbolic indices of legs
+
+A symbolic index is a string formed by a letter plus a non-zero integer.
+The letter can be 's' or 'f' to indicate whether the symbolic index is summed-over (s) or free (f).
+
+-- Whitespace
+One or more of the following: space, tab, eol.
+
