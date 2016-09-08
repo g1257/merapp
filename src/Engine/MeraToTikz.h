@@ -2,6 +2,9 @@
 #define MERATOTIKZ_H
 #include "Vector.h"
 #include "Tokenizer.h"
+#include "TypeToString.h"
+#include <cassert>
+#include <iostream>
 
 namespace Mera {
 
@@ -212,7 +215,7 @@ private:
 						buffer_ += ("\\coordinate (IF");
 						buffer_ += ttos(i) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(ydisen-0.5*dy) + ");\n";
-						buffer_ += "\\draw (IF" + ttos(i) + ") circle (0.2);\n";
+						buffer_ += "\\draw (I" + ttos(i) + ") -- (IF" + ttos(i) + ");\n";
 					}
 				}
 			} else {
@@ -222,7 +225,8 @@ private:
 				buffer_ += ttos(i) + ") at (" + ttos(xisom+dx);
 				buffer_ += "," + ttos(yisom) + ");\n";
 				buffer_ += "\\coordinate (C";
-				buffer_ += ttos(i) + ") at (" + ttos(xisom+0.5*dx) + "," + ttos(yisom+dy) + ");\n";
+				buffer_ += ttos(i) + ") at (" + ttos(xisom+0.5*dx) + ",";
+				buffer_ += ttos(yisom+dy) + ");\n";
 				buffer_ += "\\draw[isom] (A" + ttos(i) + ") -- (B" + ttos(i) + ") -- ";
 				buffer_ += "(C" + ttos(i) + ") -- cycle;\n";
 			}

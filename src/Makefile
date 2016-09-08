@@ -4,13 +4,19 @@
 
 include Config.make
 CPPFLAGS += -I../../PsimagLite -I../../PsimagLite/src -IEngine
-all: merapp
+all: merapp srepToTikz
 
 merapp: merapp.o 
 	$(CXX) merapp.o -o merapp $(LDFLAGS)
 
 merapp.o: merapp.cpp  Makefile   Config.make
 	$(CXX) $(CPPFLAGS) -c merapp.cpp
+
+srepToTikz: srepToTikz.o
+	$(CXX) srepToTikz.o -o srepToTikz $(LDFLAGS)
+
+srepToTikz.o: srepToTikz.cpp  Makefile   Config.make
+	$(CXX) $(CPPFLAGS) -c srepToTikz.cpp
 
 ../../PsimagLite/lib/libpsimaglite.a:
 	$(MAKE) -f Makefile -C ../../PsimagLite/lib/
