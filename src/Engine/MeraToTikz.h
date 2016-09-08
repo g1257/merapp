@@ -141,18 +141,30 @@ private:
 		RealType dx = 1.;
 		RealType dy = 1.;
 		for (SizeType i = 0; i < tensor_.size(); ++i) {
-			buffer_ += ("\\coordinate (A");
-			RealType x = 1.5*tensor_[i]->x();
-			RealType y = 3.0*tensor_[i]->y();
-			buffer_ += ttos(i) + ") at (" + ttos(x) + "," + ttos(y) + ");\n";
-			buffer_ += ("\\coordinate (B");
-			buffer_ += ttos(i) + ") at (" + ttos(x+dx);
-			buffer_ += "," + ttos(y+dy) + ");\n";
+
+			RealType xsep = 1.5*(1.0+tensor_[i]->y());
+			RealType x = xsep*tensor_[i]->x() + 1.5*tensor_[i]->y();
+			RealType y = 3.5*tensor_[i]->y();
+			RealType x2 = x + 1;
+			RealType y2 = y + 1.5;
 			if (tensor_[i]->type() == TENSOR_TYPE_U) {
+				buffer_ += ("\\coordinate (A");
+				buffer_ += ttos(i) + ") at (" + ttos(x) + "," + ttos(y) + ");\n";
+				buffer_ += ("\\coordinate (B");
+				buffer_ += ttos(i) + ") at (" + ttos(x+dx);
+				buffer_ += "," + ttos(y+dy) + ");\n";
 				buffer_ += "\\draw[disen] (A" + ttos(i) + ") rectangle (B";
 				buffer_ += ttos(i)+ ");\n";
 			} else {
-				//buffer_ += "\\draw (A" + ttos(i) + ") circle (0.5);\n";
+				buffer_ += ("\\coordinate (A");
+				buffer_ += ttos(i) + ") at (" + ttos(x2) + "," + ttos(y2) + ");\n";
+				buffer_ += ("\\coordinate (B");
+				buffer_ += ttos(i) + ") at (" + ttos(x2+dx);
+				buffer_ += "," + ttos(y2) + ");\n";
+				buffer_ += ("\\coordinate (C");
+				buffer_ += ttos(i) + ") at (" + ttos(x2+0.5*dx) + "," + ttos(y2+dy) + ");\n";
+				buffer_ += "\\draw[isom] (A" + ttos(i) + ") -- (B" + ttos(i) + ") -- ";
+				buffer_ += "(C" + ttos(i) + ") -- cycle;\n";
 			}
 		}
 	}
@@ -168,10 +180,11 @@ private:
 		str += "\\usetikzlibrary{shapes}\n";
 		str += "\\usetikzlibrary{arrows}\n";
 		str += "\\usepackage{xcolor}\n";
-
+		str += "\\definecolor{myfuchsia}{HTML}{FF12BE}\n";
 		str += "\\begin{document}";
 		str += "\\begin{tikzpicture}[\n";
-		str += "disen/.style={fill=green},mylink2/.style={very thick}]";
+		str += "disen/.style={fill=green},\n";
+		str += "isom/.style={fill=myfuchsia},mylink2/.style={very thick}]";
 		os<<str<<"\n";
 	}
 
