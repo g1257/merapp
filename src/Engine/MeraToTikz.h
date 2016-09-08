@@ -73,10 +73,10 @@ private:
 		RealType dy = 1.;
 		for (SizeType i = 0; i < tensor_.size(); ++i) {
 
-			RealType xsep = 1.5*(1.0+tensor_[i]->y());
-			RealType xdisen = xsep*tensor_[i]->x() + 1.5*tensor_[i]->y();
+			RealType xsep = 3.0*(dx+tensor_[i]->y());
+			RealType xdisen = xsep*dx*tensor_[i]->x() + 1.5*tensor_[i]->y();
 			RealType ydisen = 3.5*tensor_[i]->y();
-			RealType xisom = xdisen + 1;
+			RealType xisom = xdisen + 1.5*dx;
 			RealType yisom = ydisen + 1.5;
 			SizeType ins = tensor_[i]->ins();
 			if (tensor_[i]->type() == TensorStanza::TENSOR_TYPE_U) {
@@ -92,14 +92,14 @@ private:
 				RealType a = dx/(ins - 1);
 				for (SizeType j = 0; j < ins; ++j) {
 					RealType xtmp = a*j + xdisen;
-					buffer_ += "\\coordinate (I";
+					buffer_ += "\\coordinate (IU";
 					buffer_ += ttos(i) + ") at (" + ttos(xtmp) + "," + ttos(ydisen) + ");\n";
 					if (tensor_[i]->indexType(j,TensorStanza::INDEX_DIR_IN) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
-						buffer_ += ("\\coordinate (IF");
+						buffer_ += ("\\coordinate (IUF");
 						buffer_ += ttos(i) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(ydisen-0.5*dy) + ");\n";
-						buffer_ += "\\draw (I" + ttos(i) + ") -- (IF" + ttos(i) + ");\n";
+						buffer_ += "\\draw (IU" + ttos(i) + ") -- (IUF" + ttos(i) + ");\n";
 					}
 				}
 			} else {
@@ -113,6 +113,19 @@ private:
 				buffer_ += ttos(yisom+dy) + ");\n";
 				buffer_ += "\\draw[isom] (A" + ttos(i) + ") -- (B" + ttos(i) + ") -- ";
 				buffer_ += "(C" + ttos(i) + ") -- cycle;\n";
+				RealType a = dx/(ins - 1);
+				for (SizeType j = 0; j < ins; ++j) {
+					RealType xtmp = a*j + xisom;
+					buffer_ += "\\coordinate (IW";
+					buffer_ += ttos(i) + ") at (" + ttos(xtmp) + "," + ttos(yisom) + ");\n";
+					if (tensor_[i]->indexType(j,TensorStanza::INDEX_DIR_IN) ==
+					        TensorStanza::INDEX_TYPE_FREE) {
+						buffer_ += ("\\coordinate (IWF");
+						buffer_ += ttos(i) + ") at (" + ttos(xtmp) + ",";
+						buffer_ += ttos(ydisen-0.5*dy) + ");\n";
+						buffer_ += "\\draw (IW" + ttos(i) + ") -- (IWF" + ttos(i) + ");\n";
+					}
+				}
 			}
 		}
 	}

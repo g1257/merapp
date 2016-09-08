@@ -21,7 +21,7 @@ public:
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
-	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE};
+	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY};
 
 	TensorStanza(PsimagLite::String srep)
 	    :  conjugate_(false),
@@ -110,7 +110,9 @@ public:
 	IndexTypeEnum indexType(SizeType ind, IndexDirectionEnum dir) const
 	{
 		char c = (dir == INDEX_DIR_IN) ? insSi_[ind].first : outsSi_[ind].first;
-		return (c == 's') ? INDEX_TYPE_SUMMED : INDEX_TYPE_FREE;
+		if (c == 's') return INDEX_TYPE_SUMMED;
+		if (c == 'f') return INDEX_TYPE_FREE;
+		return INDEX_TYPE_DUMMY;
 	}
 
 	TensorTypeEnum type() const { return type_; }
