@@ -86,6 +86,7 @@ public:
 	MeraToTikz(PsimagLite::String srep)
 	    : srep_(srep)
 	{
+		cleanWhiteSpace(srep_);
 		fillBuffer();
 	}
 
@@ -106,6 +107,25 @@ public:
 	}
 
 private:
+
+	void cleanWhiteSpace(PsimagLite::String& srep) const
+	{
+		SizeType l = srep.length();
+		PsimagLite::String tmp("");
+
+		for (SizeType i = 0; i < l; ++i) {
+			char c = srep[i];
+			if (isWhiteSpace(c)) continue;
+			tmp += c;
+		}
+
+		srep = tmp;
+	}
+
+	bool isWhiteSpace(unsigned char c) const
+	{
+		return (c == ' ' || c == '\t' || c=='\n');
+	}
 
 	void fillBuffer()
 	{
