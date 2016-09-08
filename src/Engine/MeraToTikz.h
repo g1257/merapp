@@ -21,11 +21,11 @@ class MeraToTikz {
 	typedef std::pair<char,SizeType> PairCharSizeType;
 	typedef PsimagLite::Vector<PairCharSizeType>::Type VectorPairCharSizeType;
 
-	class OpaqueTensor {
+	class TensorStanza {
 
 	public:
 
-		OpaqueTensor(PsimagLite::String srep)
+		TensorStanza(PsimagLite::String srep)
 		    :  conjugate_(false),
 		      srep_(srep),name_(""),
 		      type_(TENSOR_TYPE_UNKNOWN)
@@ -34,14 +34,14 @@ class MeraToTikz {
 			PsimagLite::tokenizer(srep_,tokens,":");
 			SizeType ts = tokens.size();
 			if (ts < 6) {
-				PsimagLite::String str("OpaqueTensor: malformed partial srep ");
+				PsimagLite::String str("TensorStanza: malformed partial srep ");
 				throw PsimagLite::RuntimeError(str + srep_ + "\n");
 			}
 
 			name_ = tokens[0];
 			SizeType l = name_.length();
 			if (l == 0) {
-				PsimagLite::String str("OpaqueTensor: malformed partial srep, empty name ");
+				PsimagLite::String str("TensorStanza: malformed partial srep, empty name ");
 				throw PsimagLite::RuntimeError(str + srep_ + "\n");
 			}
 
@@ -51,7 +51,7 @@ class MeraToTikz {
 			if (name_.substr(0,l2) == "w") type_ = TENSOR_TYPE_W;
 
 			if (type_ == TENSOR_TYPE_UNKNOWN) {
-				PsimagLite::String str("OpaqueTensor: partial srep, tensor type");
+				PsimagLite::String str("TensorStanza: partial srep, tensor type");
 				throw PsimagLite::RuntimeError(str + srep_ + "\n");
 			}
 
@@ -61,7 +61,7 @@ class MeraToTikz {
 			SizeType outs = atoi(tokens[4].c_str());
 
 			if (ins + outs + 5 != ts) {
-				PsimagLite::String str("OpaqueTensor: malformed partial srep ");
+				PsimagLite::String str("TensorStanza: malformed partial srep ");
 				throw PsimagLite::RuntimeError(str + srep_ + "\n");
 			}
 
@@ -69,12 +69,12 @@ class MeraToTikz {
 				PsimagLite::String item = tokens[5+i];
 				l = item.length();
 				if (l == 0) {
-					PsimagLite::String str("OpaqueTensor: malformed srep, in s-index ");
+					PsimagLite::String str("TensorStanza: malformed srep, in s-index ");
 					throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
 				}
 
 				if (l == 1 && item != "d") {
-					PsimagLite::String str("OpaqueTensor: malformed srep, in s-index ");
+					PsimagLite::String str("TensorStanza: malformed srep, in s-index ");
 					throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
 				}
 
@@ -87,12 +87,12 @@ class MeraToTikz {
 				l = item.length();
 
 				if (l == 0) {
-					PsimagLite::String str("OpaqueTensor: malformed srep, out s-index ");
+					PsimagLite::String str("TensorStanza: malformed srep, out s-index ");
 					throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
 				}
 
 				if (l == 1 && item != "d") {
-					PsimagLite::String str("OpaqueTensor: malformed srep, out s-index ");
+					PsimagLite::String str("TensorStanza: malformed srep, out s-index ");
 					throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
 				}
 
@@ -181,7 +181,7 @@ private:
 		PsimagLite::tokenizer(srep_,tokens,";");
 		tensor_.resize(tokens.size(),0);
 		for (SizeType i = 0; i < tokens.size(); ++i)
-			tensor_[i] = new OpaqueTensor(tokens[i]);
+			tensor_[i] = new TensorStanza(tokens[i]);
 
 		buffer_ = "%" + srep_;
 		buffer_ += "\n";
@@ -235,7 +235,7 @@ private:
 
 	static void printHeader(std::ostream& os)
 	{
-		PsimagLite::String str = "\\documentclass{article}\n";
+		PsimagLite::String str = "\\documentclass{standalone}\n";
 		str += "\\usepackage{tikz}\n";
 		str += "\\usepackage{pgfplots}\n";
 		str += "\\pgfplotsset{width=7cm,compat=1.8}\n";
@@ -261,7 +261,7 @@ private:
 
 	static PsimagLite::String buffer_;
 	PsimagLite::String srep_;
-	typename PsimagLite::Vector<OpaqueTensor*>::Type tensor_;
+	typename PsimagLite::Vector<TensorStanza*>::Type tensor_;
 }; // class MeraToTikz
 
 template<typename T>
