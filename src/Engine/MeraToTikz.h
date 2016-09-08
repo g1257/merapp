@@ -5,7 +5,7 @@
 #include "TypeToString.h"
 #include <cassert>
 #include <iostream>
-#include "TensorStanza.h"
+#include "TensorSrep.h"
 
 namespace Mera {
 
@@ -17,16 +17,7 @@ public:
 	MeraToTikz(PsimagLite::String srep)
 	    : srep_(srep)
 	{
-		cleanWhiteSpace(srep_);
 		fillBuffer();
-	}
-
-	~MeraToTikz()
-	{
-		for (SizeType i = 0; i < tensor_.size(); ++i) {
-			delete tensor_[i];
-			tensor_[i] = 0;
-		}
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const MeraToTikz& mt)
@@ -39,47 +30,24 @@ public:
 
 private:
 
-	void cleanWhiteSpace(PsimagLite::String& srep) const
-	{
-		SizeType l = srep.length();
-		PsimagLite::String tmp("");
-
-		for (SizeType i = 0; i < l; ++i) {
-			char c = srep[i];
-			if (isWhiteSpace(c)) continue;
-			tmp += c;
-		}
-
-		srep = tmp;
-	}
-
-	bool isWhiteSpace(unsigned char c) const
-	{
-		return (c == ' ' || c == '\t' || c=='\n');
-	}
-
 	void fillBuffer()
 	{
-		TensorStanza::VectorStringType tokens;
-		PsimagLite::tokenizer(srep_,tokens,";");
-		tensor_.resize(tokens.size(),0);
-		for (SizeType i = 0; i < tokens.size(); ++i)
-			tensor_[i] = new TensorStanza(tokens[i]);
+		TensorSrep tensorSrep(srep_);
 
 		buffer_ = "%" + srep_;
 		buffer_ += "\n";
 
 		RealType dx = 1.;
 		RealType dy = 1.;
-		for (SizeType i = 0; i < tensor_.size(); ++i) {
+		for (SizeType i = 0; i < tensorSrep.size(); ++i) {
 
-			RealType xsep = 3.0*(dx+tensor_[i]->y());
-			RealType xdisen = xsep*dx*tensor_[i]->x() + 1.5*tensor_[i]->y();
-			RealType ydisen = 3.5*tensor_[i]->y();
+			RealType xsep = 3.0*(dx+tensorSrep(i).y());
+			RealType xdisen = xsep*dx*tensorSrep(i).x() + 1.5*tensorSrep(i).y();
+			RealType ydisen = 3.5*tensorSrep(i).y();
 			RealType xisom = xdisen + 1.5*dx;
 			RealType yisom = ydisen + 1.5;
-			SizeType ins = tensor_[i]->ins();
-			if (tensor_[i]->type() == TensorStanza::TENSOR_TYPE_U) {
+			SizeType ins = tensorSrep(i).ins();
+			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(xdisen) + "," + ttos(ydisen) + ");\n";
 				buffer_ += "\\coordinate (B";
@@ -94,7 +62,7 @@ private:
 					RealType xtmp = a*j + xdisen;
 					buffer_ += "\\coordinate (IU";
 					buffer_ += ttos(i) + ") at (" + ttos(xtmp) + "," + ttos(ydisen) + ");\n";
-					if (tensor_[i]->indexType(j,TensorStanza::INDEX_DIR_IN) ==
+					if (tensorSrep(i).indexType(j,TensorStanza::INDEX_DIR_IN) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (IUF");
 						buffer_ += ttos(i) + ") at (" + ttos(xtmp) + ",";
@@ -118,7 +86,7 @@ private:
 					RealType xtmp = a*j + xisom;
 					buffer_ += "\\coordinate (IW";
 					buffer_ += ttos(i) + ") at (" + ttos(xtmp) + "," + ttos(yisom) + ");\n";
-					if (tensor_[i]->indexType(j,TensorStanza::INDEX_DIR_IN) ==
+					if (tensorSrep(i).indexType(j,TensorStanza::INDEX_DIR_IN) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (IWF");
 						buffer_ += ttos(i) + ") at (" + ttos(xtmp) + ",";
@@ -158,7 +126,6 @@ private:
 
 	static PsimagLite::String buffer_;
 	PsimagLite::String srep_;
-	typename PsimagLite::Vector<TensorStanza*>::Type tensor_;
 }; // class MeraToTikz
 
 template<typename T>
