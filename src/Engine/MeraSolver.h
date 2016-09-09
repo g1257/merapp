@@ -41,7 +41,7 @@ public:
 
     void computeGroundState()
     {
-        // Compute All Density Matricies - top to bottom using A or D operators
+        // Compute All Density Matrices - top to bottom using A or D operators
         SizeType qiter = 1;
         SizeType layers = 1;
 
@@ -122,14 +122,14 @@ private:
 				}
 
 				srep2 += "d";
-				i = j - 1;
+				i = j;
 			}
 
 			srep2 += srep[i];
 			++i;
 		}
 
-		srep = srep2;
+		//srep = srep2;
 	}
 
 	void getSpairCount(VectorSizeType& counter,PsimagLite::String srep) const

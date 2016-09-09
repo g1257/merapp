@@ -42,5 +42,5 @@ int main(int ,char **argv)
 	SizeType counter = 0;
 	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	testCase(counter++,Mera::ParametersForSolver::MERA_ARCH_1D_BINARY,16,3);
-	//testCase(counter++,Mera::ParametersForSolver::MERA_ARCH_1D_TERNARY,35,3);
+	testCase(counter++,Mera::ParametersForSolver::MERA_ARCH_1D_TERNARY,35,3);
 }

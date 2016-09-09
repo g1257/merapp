@@ -108,7 +108,7 @@ private:
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (IWF");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
-						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
+						buffer_ += ttos(y[i]-0.5*dy-1.5) + ");\n";
 						buffer_ += "\\draw (IW" + ttos(k) + ") -- (IWF" + ttos(k) + ");\n";
 					}
 				}
@@ -142,7 +142,9 @@ private:
 		const RealType slope = 1.0;
 		SizeType ntensors = tensorSrep.size();
 		RealType xoffset = 0.0;
+		RealType xwoffset = 1.5*dx;
 		SizeType firstWofLayer = ntensors;
+//		SizeType firstUofLayer = ntensors;
 		SizeType savedY = ntensors;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType tensorX = 0;
@@ -152,7 +154,7 @@ private:
 			SizeType type = tensorSrep(i).type();
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
 				// compute xshift
-				std::cerr<<"firstWofLayer= "<<firstWofLayer<<"\n";
+				std::cerr<<"firstWofLayer "<<firstWofLayer<<"\n";
 				assert(firstWofLayer < ntensors);
 				RealType yu = 3.5*tensorY;
 				RealType xw = x[firstWofLayer];
@@ -168,12 +170,16 @@ private:
 				firstWofLayer = i;
 			}
 
+			if (tensorX == 0 && type == TensorStanza::TENSOR_TYPE_U) {
+//				firstUofLayer = i;
+			}
+
 			if (type == TensorStanza::TENSOR_TYPE_U) {
 				x[i] = xsep*dx*tensorX + xoffset;
 				y[i] = 3.5*tensorY;
 			} else {
 				assert(type == TensorStanza::TENSOR_TYPE_W);
-				x[i] = xsep*dx*tensorX + 1.5*dx + xoffset;
+				x[i] = xsep*dx*tensorX + xwoffset + xoffset;
 				y[i] = 3.5*tensorY + 1.5;
 			}
 		}
