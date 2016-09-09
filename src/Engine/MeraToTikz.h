@@ -6,6 +6,7 @@
 #include <cassert>
 #include <iostream>
 #include "TensorSrep.h"
+#include "ProgramGlobals.h"
 
 namespace Mera {
 
@@ -149,7 +150,10 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType tensorX = 0;
 			SizeType tensorY = 0;
-			unpackTimeAndSpace(tensorY,tensorX,tensorSrep(i).id());
+			ProgramGlobals::unpackTimeAndSpace(tensorY,
+			                                   tensorX,
+			                                   tensorSrep(i).id(),
+			                                   tauMax_);
 			RealType xsep = 3.0*(dx+tensorY);
 			SizeType type = tensorSrep(i).type();
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
@@ -232,12 +236,6 @@ private:
 		}
 
 		return PairSizeType(ntensors,0);
-	}
-
-	void unpackTimeAndSpace(SizeType& time, SizeType& space, SizeType id) const
-	{
-		time = id % tauMax_;
-		space = id/tauMax_;
 	}
 
 	static void printHeader(std::ostream& os)

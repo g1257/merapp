@@ -3,6 +3,7 @@
 #include <iostream>
 #include "MeraLayer.h"
 #include "ParametersForSolver.h"
+#include "TensorSrep.h"
 
 namespace Mera {
 
@@ -16,17 +17,13 @@ class MeraSolver {
 
 public:
 
-	MeraSolver(const ParametersForSolver& params)
-	    : params_(params), srep_(""), meraLayer_(params.tauMax,0)
+	MeraSolver(PsimagLite::String srep, const ParametersForSolver& params)
+	    : params_(params), tensorSrep_(srep), meraLayer_(params.tauMax,0)
 	{
 		for (SizeType i = 0; i < params.tauMax; ++i) {
-			SizeType sites = calcSitesForLayer(i);
-			meraLayer_[i] = new MeraLayerType(params,i,sites,(i > 0) ? meraLayer_[i-1] : 0);
+			meraLayer_[i] = new MeraLayerType(params,i,tensorSrep_,(i > 0) ? meraLayer_[i-1] : 0);
 			std::cout<<(*meraLayer_[i]);
-			srep_ += meraLayer_[i]->sRep();
 		}
-
-		cleanUnpaired(srep_);
 	}
 
 	~MeraSolver()
@@ -36,8 +33,6 @@ public:
 			meraLayer_[i] = 0;
 		}
 	}
-
-	const PsimagLite::String& sRep() const { return srep_; }
 
     void computeGroundState()
     {
@@ -52,15 +47,10 @@ public:
         }
     }
 
-	SizeType calcSitesForLayer(SizeType tau) const
-	{
-		if (tau == 0) return params_.numberOfSites;
-		return meraLayer_[tau - 1]->outputSites();
-	}
 
 	friend std::ostream& operator<<(std::ostream& os, const MeraSolver& ms)
 	{
-		os<<"fullSrep="<<ms.srep_<<"\n";
+		os<<ms.tensorSrep_<<"\n";
 		return os;
 	}
 
@@ -183,7 +173,7 @@ private:
 	}
 
 	const ParametersForSolver& params_;
-	PsimagLite::String srep_;
+	TensorSrep tensorSrep_;
     VectorMeraLayerType meraLayer_;
 }; //class
 

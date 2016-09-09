@@ -38,6 +38,16 @@ public:
 		return *data_[ind];
 	}
 
+	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
+	{
+		os<<"tensorSrep.size="<<ts.size()<<"\n";
+		for (SizeType i = 0; i < ts.size(); ++i) {
+			os<<ts.data_[i]<<"\n";
+		}
+
+		return os;
+	}
+
 private:
 
 	void cleanWhiteSpace(PsimagLite::String& srep) const
