@@ -79,6 +79,7 @@ private:
 				}
 
 				// outs for u
+				a = dx/(outs - 1);
 				for (SizeType j = 0; j < outs; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
 					RealType xtmp = a*j + xdisen;
@@ -142,9 +143,12 @@ private:
 			SizeType outs = tensorSrep(i).outs();
 			TensorStanza::TensorTypeEnum type = tensorSrep(i).type();
 			for (SizeType j = 0; j < outs; ++j) {
+				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) !=
+				        TensorStanza::INDEX_TYPE_SUMMED) continue;
+				SizeType k1 = absoluteLegNumber(i,j,ntensors);
 				PsimagLite::String label1 = "(O";
 				label1 += (type == TensorStanza::TENSOR_TYPE_U) ? "U" : "W";
-				label1 += ttos(i) + ")";
+				label1 += ttos(k1) + ")";
 				SizeType what = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
 				PairSizeType k = findTarget(tensorSrep,what,type);
 				if (k.first >= ntensors) continue;
@@ -165,9 +169,12 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (tensorSrep(i).type() == type) continue;
 			SizeType ins = tensorSrep(i).ins();
-			for (SizeType j = 0; j < ins; ++j)
+			for (SizeType j = 0; j < ins; ++j) {
+				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
+				        TensorStanza::INDEX_TYPE_SUMMED) continue;
 				if (tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_IN) == what)
 					return PairSizeType(i,j);
+			}
 		}
 
 		return PairSizeType(ntensors,0);
