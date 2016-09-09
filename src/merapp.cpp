@@ -12,6 +12,7 @@
 #include "MeraSolver.h"
 #include <fstream>
 #include "MeraToTikz.h"
+#include "Version.h"
 
 void testCase(SizeType num,
               Mera::ParametersForSolver::MeraArchitectureEnum arch,
@@ -36,9 +37,10 @@ void testCase(SizeType num,
 	fout.close();
 }
 
-int main(int ,char **)
+int main(int ,char **argv)
 {
 	SizeType counter = 0;
+	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	testCase(counter++,Mera::ParametersForSolver::MERA_ARCH_1D_BINARY,16,3);
 	testCase(counter++,Mera::ParametersForSolver::MERA_ARCH_1D_TERNARY,35,3);
 }

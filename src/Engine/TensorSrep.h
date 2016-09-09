@@ -12,6 +12,8 @@ class TensorSrep {
 
 public:
 
+	static const SizeType MAX_LEGS = 100;
+
 	TensorSrep(PsimagLite::String srep)
 	    : srep_(srep)
 	{
@@ -63,10 +65,10 @@ private:
 		SizeType loc = 0;
 		SizeType parensOpen = std::count(srep_.begin(),srep_.end(),'(');
 
-		SizeType parensClosed = std::count(srep_.begin(),srep_.end(),'(');
+		SizeType parensClosed = std::count(srep_.begin(),srep_.end(),')');
 
 		if (parensOpen != parensClosed) {
-			PsimagLite::String str("TensorSrep: stanza without closing brace?!\n");
+			PsimagLite::String str("TensorSrep: unbalanced parens\n");
 			throw PsimagLite::RuntimeError(str + " at offset " + ttos(loc) + "\n");
 		}
 
@@ -74,7 +76,7 @@ private:
 		while (loc < l) {
 			std::size_t index = srep_.find(")",loc);
 			if (index == PsimagLite::String::npos) {
-				PsimagLite::String str("TensorSrep: unbalanced parens\n");
+				PsimagLite::String str("TensorSrep: stanza without closing brace?!\n");
 				throw PsimagLite::RuntimeError(str);
 			}
 

@@ -25,8 +25,9 @@ public:
 	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY};
 
 	TensorStanza(PsimagLite::String srep)
-	    :  conjugate_(false),
-	      srep_(srep),name_(""),
+	    : conjugate_(false),
+	      srep_(srep),
+	      name_(""),
 	      type_(TENSOR_TYPE_UNKNOWN)
 	{
 		VectorStringType tokens;
@@ -99,12 +100,17 @@ public:
 
 	SizeType outs() const { return outsSi_.size(); }
 
-	IndexTypeEnum indexType(SizeType ind, IndexDirectionEnum dir) const
+	IndexTypeEnum legType(SizeType ind, IndexDirectionEnum dir) const
 	{
 		char c = (dir == INDEX_DIR_IN) ? insSi_[ind].first : outsSi_[ind].first;
 		if (c == 's') return INDEX_TYPE_SUMMED;
 		if (c == 'f') return INDEX_TYPE_FREE;
 		return INDEX_TYPE_DUMMY;
+	}
+
+	SizeType legTag(SizeType ind, IndexDirectionEnum dir) const
+	{
+		return (dir == INDEX_DIR_IN) ? insSi_[ind].second : outsSi_[ind].second;
 	}
 
 	TensorTypeEnum type() const { return type_; }
