@@ -115,6 +115,19 @@ public:
 
 	TensorTypeEnum type() const { return type_; }
 
+	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
+	{
+		os<<"id= "<<ts.id_<<"\n";
+		os<<"conjugate= "<<ts.conjugate_<<"\n";
+		os<<"stanza= "<<ts.srep_<<"\n";
+		os<<"name= "<<ts.name_<<"\n";
+		os<<"type= "<<ts.type_<<"\n";
+		os<<"needs ins and outs FIXME\n";
+		//os<<"ins="<<ts.insSi_<<"\n";
+		//os<<"outs="<<ts.outsSi_;<<"\n";
+		return os;
+	}
+
 private:
 
 	void setArgVector(VectorPairCharSizeType& si, PsimagLite::String part) const

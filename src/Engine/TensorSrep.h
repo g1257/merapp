@@ -42,7 +42,7 @@ public:
 	{
 		os<<"tensorSrep.size="<<ts.size()<<"\n";
 		for (SizeType i = 0; i < ts.size(); ++i) {
-			os<<ts.data_[i]<<"\n";
+			os<<*(ts.data_[i])<<"\n";
 		}
 
 		return os;

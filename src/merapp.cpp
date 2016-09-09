@@ -42,7 +42,7 @@ int main(int ,char **argv)
 	str1 += "u6(f4,f5|s11,s12)w6(s12,s13|s2)\n";
 	str1 += "u9(f6,f7|s13,s14)w9(s14,s15|s3)u12(f8,f9|s15,s16)w12(s16,s17|s4)\n";
 	str1 += "u15(f10,f11|s17,s18)w15(s18,s19|s5)u18(f12,f13|s19,s20)w18(s20,s21|s6)\n";
-	str1 += "u21(f14,f15|s21,s22)w21(s22,d|s7)u1(s0,s1|s27,s28)w1(d,s27|s23)\n";
+	str1 += "u21(f14,f15|s21,s22)w21(s22,d|s7)u1(s0,s1|s27,s28)w1(d,s27|d)\n";
 	str1 += "u4(s2,s3|s29,s30)w4(s28,s29|s24)u7(s4,s5|s31,s32)w7(s30,s31|s25)\n";
 	str1 += "u10(s6,s7|s33,d)w10(s32,s33|s26)u2(s24,s25|s36,s37)w2(d,s36|s34)\n";
 	str1 += "u5(s26,d|s38,d)w5(s37,s38|s35)\n";
@@ -54,9 +54,9 @@ int main(int ,char **argv)
 	str2 += "w15(s21,f17,s22|s5)u18(f18,f19|s22,s23)w18(s23,f20,s24|s6)\n";
 	str2 += "u21(f21,f22|s24,s25)w21(s25,f23,s26|s7)u24(f24,f25|s26,s27)w24(s27,f26,s28|s8)\n";
 	str2 += "u27(f27,f28|s28,s29)w27(s29,f29,s30|s9)u30(f30,f31|s30,s31)";
-	str2 += "w30(s31,f32,s32|s10)u33(f33,f34|s32,d)u1(d,s0|d,s37)w1(s37,s1,s38|s33)\n";
+	str2 += "w30(s31,f32,s32|s10)u33(f33,f34|s32,d)u1(d,s0|d,s37)w1(s37,s1,s38|d)\n";
 	str2 += "u4(s2,s3|s38,s39)w4(s39,s4,s40|s34)u7(s5,s6|s40,s41)w7(s41,s7,s42|s35)\n";
-	str2 += "u10(s8,s9|s42,s43)w10(s43,s10,d|s36)u2(s34,s35|s46,s47)w2(d,s33,s46|s44)\n";
+	str2 += "u10(s8,s9|s42,s43)w10(s43,s10,d|s36)u2(s34,s35|s46,s47)w2(d,d,s46|s44)\n";
 	str2 += "w5(s47,s36,d|s45)";
 	testCase(counter++,str2,3);
 }
