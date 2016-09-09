@@ -12,6 +12,7 @@ class MeraSolver {
 	typedef MeraLayer<ParametersForSolverType> MeraLayerType;
 	typedef typename PsimagLite::Vector<MeraLayerType*>::Type VectorMeraLayerType;
     typedef typename MeraLayerType::PairSizeType PairSizeType;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 public:
 
@@ -24,6 +25,8 @@ public:
 			std::cout<<(*meraLayer_[i]);
 			srep_ += meraLayer_[i]->sRep();
 		}
+
+		cleanUnpaired(srep_);
 	}
 
 	~MeraSolver()
@@ -86,6 +89,98 @@ private:
         // Y = USV^+
         // w = -VU^+
     }
+
+	void cleanUnpaired(PsimagLite::String& srep)
+	{
+		SizeType max = findMaxSummed(srep);
+		VectorSizeType counter(max,0);
+		getSpairCount(counter,srep);
+
+		for (SizeType i = 0; i < max; ++i) {
+			if (counter[i] == 2) continue;
+			std::cerr<<"Upaired s"<<i<<" with "<<counter[i]<<"\n";
+		}
+
+		PsimagLite::String srep2;
+		SizeType i = 0;
+		while (i < srep.length()) {
+			if (srep[i] == 's') {
+				SizeType j = i + 1;
+				PsimagLite::String ds("");
+				while (j < srep.length()) {
+					if (!isdigit(srep[j])) break;
+					ds += srep[j];
+					++j;
+				}
+
+				SizeType d = atoi(ds.c_str());
+				assert(d < counter.size());
+				if (counter[d] == 2) {
+					srep2 += "s";
+					++i;
+					continue;
+				}
+
+				srep2 += "d";
+				i = j - 1;
+			}
+
+			srep2 += srep[i];
+			++i;
+		}
+
+		srep = srep2;
+	}
+
+	void getSpairCount(VectorSizeType& counter,PsimagLite::String srep) const
+	{
+		SizeType i = 0;
+		while (i < srep.length()) {
+			if (srep[i] == 's') {
+				SizeType j = i + 1;
+				PsimagLite::String ds("");
+				while (j < srep.length()) {
+					if (!isdigit(srep[j])) break;
+					ds += srep[j];
+					++j;
+				}
+
+				i = j;
+				SizeType d = atoi(ds.c_str());
+				assert(d < counter.size());
+				counter[d]++;
+				continue;
+			}
+
+			++i;
+		}
+	}
+
+	SizeType findMaxSummed(PsimagLite::String& srep)
+	{
+		SizeType i = 0;
+		SizeType max = 0;
+		while (i < srep.length()) {
+			if (srep[i] == 's') {
+				SizeType j = i + 1;
+				PsimagLite::String ds("");
+				while (j < srep.length()) {
+					if (!isdigit(srep[j])) break;
+					ds += srep[j];
+					++j;
+				}
+
+				i = j;
+				SizeType d = atoi(ds.c_str());
+				if (d > max) max = d;
+				continue;
+			}
+
+			++i;
+		}
+
+		return max + 1;
+	}
 
 	const ParametersForSolver& params_;
 	PsimagLite::String srep_;

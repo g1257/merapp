@@ -12,6 +12,7 @@ class TensorSrep {
 
 public:
 
+	typedef TensorStanza TensorStanzaType;
 	static const SizeType MAX_LEGS = 100;
 
 	TensorSrep(PsimagLite::String srep)

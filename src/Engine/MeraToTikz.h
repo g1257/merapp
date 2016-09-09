@@ -51,6 +51,7 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType ins = tensorSrep(i).ins();
 			SizeType outs = tensorSrep(i).outs();
+
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
@@ -124,6 +125,9 @@ private:
 				SizeType k = absoluteLegNumber(i,0,ntensors);
 				buffer_ +=  ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]+dy) + ");\n";
 			}
+
+			buffer_ += "\\node at (A" + ttos(i) + ") {" + ttos(i) + ",";
+			buffer_ += ttos(tensorSrep(i).id()) + "};\n";
 		}
 
 		drawConnections(tensorSrep);
@@ -135,18 +139,41 @@ private:
 	                        RealType dy,
 	                        const TensorSrep& tensorSrep) const
 	{
+		const RealType slope = 1.0;
 		SizeType ntensors = tensorSrep.size();
+		RealType xoffset = 0.0;
+		SizeType firstWofLayer = ntensors;
+		SizeType savedY = ntensors;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType tensorX = 0;
 			SizeType tensorY = 0;
 			unpackTimeAndSpace(tensorY,tensorX,tensorSrep(i).id());
 			RealType xsep = 3.0*(dx+tensorY);
-			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
-				x[i] = xsep*dx*tensorX;
+			SizeType type = tensorSrep(i).type();
+			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
+				// compute xshift
+				std::cerr<<"firstWofLayer= "<<firstWofLayer<<"\n";
+				assert(firstWofLayer < ntensors);
+				RealType yu = 3.5*tensorY;
+				RealType xw = x[firstWofLayer];
+				RealType yw = y[firstWofLayer];
+				xoffset = xw + (yu - yw)/slope;
+			}
+
+			bool b = (tensorSrep(i).outs() == 0)
+			        ? false : (tensorSrep(i).legType(0,TensorStanza::INDEX_DIR_OUT) ==
+			                   TensorStanza::INDEX_TYPE_SUMMED);
+			if (type == TensorStanza::TENSOR_TYPE_W && savedY != tensorY && b) {
+				savedY = tensorY;
+				firstWofLayer = i;
+			}
+
+			if (type == TensorStanza::TENSOR_TYPE_U) {
+				x[i] = xsep*dx*tensorX + xoffset;
 				y[i] = 3.5*tensorY;
 			} else {
-				assert(tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_W);
-				x[i] = xsep*dx*tensorX + 1.5*dx;
+				assert(type == TensorStanza::TENSOR_TYPE_W);
+				x[i] = xsep*dx*tensorX + 1.5*dx + xoffset;
 				y[i] = 3.5*tensorY + 1.5;
 			}
 		}
