@@ -2,6 +2,7 @@
 #define TENSORSREP_H
 #include "Vector.h"
 #include "TensorStanza.h"
+#include <algorithm>
 
 namespace Mera {
 
@@ -60,14 +61,25 @@ private:
 		SizeType l = srep_.length();
 		SizeType counter = 0;
 		SizeType loc = 0;
+		SizeType parensOpen = std::count(srep_.begin(),srep_.end(),'(');
+
+		SizeType parensClosed = std::count(srep_.begin(),srep_.end(),'(');
+
+		if (parensOpen != parensClosed) {
+			PsimagLite::String str("TensorSrep: stanza without closing brace?!\n");
+			throw PsimagLite::RuntimeError(str + " at offset " + ttos(loc) + "\n");
+		}
+
+		data_.resize(parensOpen,0);
 		while (loc < l) {
-			std::size_t index = srep_.find(")",loc,l);
+			std::size_t index = srep_.find(")",loc);
 			if (index == PsimagLite::String::npos) {
-				PsimagLite::String str("TensorSrep: stanza without closing brace?!\n");
-				throw PsimagLite::RuntimeError(str + " at offset " + ttos(loc) + "\n");
+				PsimagLite::String str("TensorSrep: unbalanced parens\n");
+				throw PsimagLite::RuntimeError(str);
 			}
 
-			PsimagLite::String stanza = srep_.substr(loc,index+1);
+			PsimagLite::String stanza = srep_.substr(loc,index + 1 - loc);
+			assert(counter < data_.size());
 			data_[counter++] = new TensorStanza(stanza);
 			loc = index + 1;
 		}

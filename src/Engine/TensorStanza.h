@@ -5,6 +5,7 @@
 #include "TypeToString.h"
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 namespace Mera {
 
@@ -29,79 +30,70 @@ public:
 	      type_(TENSOR_TYPE_UNKNOWN)
 	{
 		VectorStringType tokens;
-		PsimagLite::tokenizer(srep_,tokens,":");
+		PsimagLite::tokenizer(srep_,tokens,"|");
 		SizeType ts = tokens.size();
-		if (ts < 6) {
-			PsimagLite::String str("TensorStanza: malformed partial srep ");
+		if (ts == 0 || ts > 2) {
+			PsimagLite::String str("TensorStanza: malformed stanza ");
 			throw PsimagLite::RuntimeError(str + srep_ + "\n");
 		}
 
-		name_ = tokens[0];
-		SizeType l = name_.length();
+		PsimagLite::String nameAndId = getNameFromToken(tokens[0]);
+		cleanToken(tokens[0]);
+		setArgVector(insSi_,tokens[0]);
+
+		if (ts == 2) {
+			cleanToken(tokens[1]);
+			setArgVector(outsSi_,tokens[1]);
+		}
+
+		SizeType ins = insSi_.size();
+		SizeType outs = outsSi_.size();
+
+		if (ins + outs == 0) {
+			PsimagLite::String str("TensorStanza: no ins or outs ");
+			throw PsimagLite::RuntimeError(str + srep_ + "\n");
+		}
+
+		SizeType l = nameAndId.length();
 		if (l == 0) {
-			PsimagLite::String str("TensorStanza: malformed partial srep, empty name ");
+			PsimagLite::String str("TensorStanza: malformed partial srep, empty name/id ");
 			throw PsimagLite::RuntimeError(str + srep_ + "\n");
 		}
 
-		if (name_.substr(l-1,l) == "*") conjugate_ = true;
-		SizeType l2 = (conjugate_) ? l - 1 : l;
-		if (name_.substr(0,l2) == "u") type_ = TENSOR_TYPE_U;
-		if (name_.substr(0,l2) == "w") type_ = TENSOR_TYPE_W;
+		SizeType tmp = std::count(nameAndId.begin(),nameAndId.end(),'*');
+		if (tmp > 1) {
+			PsimagLite::String str("TensorStanza: too many * in stanza ");
+			throw PsimagLite::RuntimeError(str + srep_ + "\n");
+		}
+
+		conjugate_ = (tmp == 1);
+
+		std::size_t index = 	nameAndId.find("*");
+		if (index != PsimagLite::String::npos) nameAndId.erase(index,1);
+
+		l = nameAndId.length();
+		assert(l > 0);
+		index = nameAndId.find_first_of("0123456789");
+
+		if (index == PsimagLite::String::npos) {
+			PsimagLite::String str("TensorStanza: no digit for token ");
+			throw PsimagLite::RuntimeError(str + nameAndId + "\n");
+		}
+
+		name_ = nameAndId.substr(0,index);
+
+		id_ = atoi(nameAndId.substr(index,l-index).c_str());
+
+		if (name_ == "u") type_ = TENSOR_TYPE_U;
+		if (name_ == "w") type_ = TENSOR_TYPE_W;
 
 		if (type_ == TENSOR_TYPE_UNKNOWN) {
 			PsimagLite::String str("TensorStanza: partial srep, tensor type");
 			throw PsimagLite::RuntimeError(str + srep_ + "\n");
 		}
-
-		timeIndex_ = atoi(tokens[1].c_str());
-		spaceIndex_ = atoi(tokens[2].c_str());
-		SizeType ins = atoi(tokens[3].c_str());
-		SizeType outs = atoi(tokens[4].c_str());
-
-		if (ins + outs + 5 != ts) {
-			PsimagLite::String str("TensorStanza: malformed partial srep ");
-			throw PsimagLite::RuntimeError(str + srep_ + "\n");
-		}
-
-		for (SizeType i = 0; i < ins; ++i) {
-			PsimagLite::String item = tokens[5+i];
-			l = item.length();
-			if (l == 0) {
-				PsimagLite::String str("TensorStanza: malformed srep, in s-index ");
-				throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
-			}
-
-			if (l == 1 && item != "d") {
-				PsimagLite::String str("TensorStanza: malformed srep, in s-index ");
-				throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
-			}
-
-			PsimagLite::String tmp = item.substr(1,l);
-			insSi_.push_back(PairCharSizeType(item[0],atoi(tmp.c_str())));
-		}
-
-		for (SizeType i = 0; i < outs; ++i) {
-			PsimagLite::String item = tokens[5+ins+i];
-			l = item.length();
-
-			if (l == 0) {
-				PsimagLite::String str("TensorStanza: malformed srep, out s-index ");
-				throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
-			}
-
-			if (l == 1 && item != "d") {
-				PsimagLite::String str("TensorStanza: malformed srep, out s-index ");
-				throw PsimagLite::RuntimeError(str + ttos(i) + ", " + srep_ + "\n");
-			}
-
-			PsimagLite::String tmp = (l == 1) ? "0" : item.substr(1,l);
-			outsSi_.push_back(PairCharSizeType(item[0],atoi(tmp.c_str())));
-		}
 	}
 
-	SizeType x() const { return spaceIndex_; }
-
-	SizeType y() const { return timeIndex_; }
+	SizeType id() const { return id_; }
 
 	SizeType ins() const { return insSi_.size(); }
 
@@ -119,8 +111,55 @@ public:
 
 private:
 
-	SizeType timeIndex_;
-	SizeType spaceIndex_;
+	void setArgVector(VectorPairCharSizeType& si, PsimagLite::String part) const
+	{
+		if (part.length() == 0) return;
+		VectorStringType tokens;
+		PsimagLite::tokenizer(part,tokens,",");
+		SizeType total = tokens.size();
+		for (SizeType i = 0; i < total; ++i)
+			si.push_back(getPairCharInt(tokens[i]));
+	}
+
+	PairCharSizeType getPairCharInt(PsimagLite::String token) const
+	{
+		SizeType l = token.length();
+
+		if (l == 0) {
+			PsimagLite::String str("TensorStanza: malformed stanza, ");
+			throw PsimagLite::RuntimeError(str + token + "\n");
+		}
+
+		if (l == 1 && token != "d") {
+			PsimagLite::String str("TensorStanza: malformed stanza, expecting a dummy, got ");
+			throw PsimagLite::RuntimeError(str + token + "\n");
+		}
+
+		PsimagLite::String tmp = (l == 1) ? "0" : token.substr(1,l-1);
+		return PairCharSizeType(token[0],atoi(tmp.c_str()));
+	}
+
+	PsimagLite::String getNameFromToken(PsimagLite::String token) const
+	{
+		std::size_t index = token.find("(");
+		return token.substr(0,index);
+	}
+
+	void cleanToken(PsimagLite::String& token) const
+	{
+		SizeType l = token.length();
+		assert(l > 0);
+		std::size_t index = token.find("(");
+		PsimagLite::String tmp = token;
+		if (index != PsimagLite::String::npos)
+			tmp = token.substr(index+1,token.length());
+
+		if (token[l-1] == ')') tmp.substr(0,l-1);
+
+		token = tmp;
+	}
+
+	SizeType id_;
 	bool conjugate_;
 	PsimagLite::String srep_;
 	PsimagLite::String name_;

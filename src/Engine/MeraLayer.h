@@ -294,15 +294,14 @@ private:
 			SizeType s = vecForUpdateOrder_[i].first;
 			TensorTypeEnum t = vecForUpdateOrder_[i].second;
 			PsimagLite::String ts = (t == TENSOR_TYPE_U) ? "u" :"w";
-			srep += ts + ":" + ttos(tau_) + ":" + ttos(s);
+			srep += ts + ttos(packTimeSpace(tau_,s)) + "(";
 			const MatrixTensorLegType& m = (t == TENSOR_TYPE_U) ? mu_ : mw_;
 			SizeType ins = findInsOrOuts(m,s,TensorLegType::IN);
 			SizeType outs = findInsOrOuts(m,s,TensorLegType::OUT);
 			if (t == TENSOR_TYPE_W && outs > 1)
 				throw PsimagLite::RuntimeError("w has outs > 1\n");
 
-			srep += ":" + ttos(ins) + ":" + ttos(outs);
-
+			bool prependComma = false;
 			// loop over ins
 			for (SizeType j = 0; j < ins; ++j) {
 				SizeType site = m(s,j)->site;
@@ -310,21 +309,27 @@ private:
 				            prevLayer_->prevLayer_->scount_ : 0;
 
 				if (site >= sitesInLayer_) {
-					srep += ":d";
+					if (prependComma) srep += ",";
+					prependComma = true;
+					srep += "d";
 					continue;
 				}
 
 				if (t == TENSOR_TYPE_U) {
 					if (!prevLayer_) {
 						assert(tau_ == 0);
-						srep += ":f" + ttos(fcount);
+						if (prependComma) srep += ",";
+						prependComma = true;
+						srep += "f" + ttos(fcount);
 						fcount++;
 						continue;
 					}
 
 					assert(tau_ > 0);
 					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(result.first+offset);
+						if (prependComma) srep += ",";
+						prependComma = true;
+						srep += "s" + ttos(result.first+offset);
 						continue;
 					}
 
@@ -333,20 +338,26 @@ private:
 
 				if (t == TENSOR_TYPE_W) {
 					if (siteIsInLegOfSomeTensor(result,mu_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(sindex[site] + outputSites_);
+						if (prependComma) srep += ",";
+						prependComma = true;
+						srep += "s" + ttos(sindex[site] + outputSites_);
 						continue;
 					}
 
 					if (!prevLayer_) {
 						assert(tau_ == 0);
-						srep += ":f" + ttos(fcount);
+						if (prependComma) srep += ",";
+						prependComma = true;
+						srep += "f" + ttos(fcount);
 						fcount++;
 						continue;
 					}
 
 					assert(tau_ > 0);
 					if (siteIsInLegOfSomeTensor(result,prevLayer_->mw_,site,TensorLegType::OUT)) {
-						srep += ":s" + ttos(result.first + offset);
+						if (prependComma) srep += ",";
+						prependComma = true;
+						srep += "s" + ttos(result.first + offset);
 						continue;
 					}
 
@@ -356,19 +367,25 @@ private:
 				throw PsimagLite::RuntimeError("Unknown TENSOR_TYPE\n");
 			}
 
+			if (outs > 0) srep += "|";
+			prependComma = false;
 			// loop over outs
 			for (SizeType j = 0; j < outs; ++j) {
 				SizeType site = m(s,ins+j)->site;
 
 				if (site >= sitesInLayer_) {
-					srep += ":d";
+					if (prependComma) srep += ",";
+					prependComma = true;
+					srep += "d";
 					continue;
 				}
 
 				if (t == TENSOR_TYPE_U) {
 
 					if (siteIsInLegOfSomeTensor(result,mw_,site,TensorLegType::IN)) {
-						srep += ":s" + ttos(sindex[site] + outputSites_);
+						if (prependComma) srep += ",";
+						prependComma = true;
+						srep += "s" + ttos(sindex[site] + outputSites_);
 						continue;
 					}
 
@@ -378,14 +395,16 @@ private:
 				if (t == TENSOR_TYPE_W) {
 					assert(outs == 1);
 					assert(j == 0);
-					srep += ":s" + ttos(s+soffset);
+					if (prependComma) srep += ",";
+					prependComma = true;
+					srep += "s" + ttos(s+soffset);
 					continue;
 				}
 
 				throw PsimagLite::RuntimeError("Unknown TENSOR_TYPE\n");
 			}
 
-			srep += ";";
+			srep += ")";
 			if (i > 0 && i % 5 == 0) srep += "\n";
 		}
 
@@ -403,6 +422,11 @@ private:
 		}
 
 		return sum;
+	}
+
+	SizeType packTimeSpace(SizeType time, SizeType space) const
+	{
+		return time + space*params_.tauMax;
 	}
 
 	const ParametersForSolverType& params_;

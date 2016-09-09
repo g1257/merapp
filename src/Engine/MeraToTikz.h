@@ -14,8 +14,8 @@ class MeraToTikz {
 
 public:
 
-	MeraToTikz(PsimagLite::String srep)
-	    : srep_(srep)
+	MeraToTikz(PsimagLite::String srep, SizeType tauMax)
+	    : srep_(srep),tauMax_(tauMax)
 	{
 		fillBuffer();
 	}
@@ -40,10 +40,12 @@ private:
 		RealType dx = 1.;
 		RealType dy = 1.;
 		for (SizeType i = 0; i < tensorSrep.size(); ++i) {
-
-			RealType xsep = 3.0*(dx+tensorSrep(i).y());
-			RealType xdisen = xsep*dx*tensorSrep(i).x() + 1.5*tensorSrep(i).y();
-			RealType ydisen = 3.5*tensorSrep(i).y();
+			SizeType tensorX = 0;
+			SizeType tensorY = 0;
+			unpackTimeAndSpace(tensorY,tensorX,tensorSrep(i).id());
+			RealType xsep = 3.0*(dx+tensorY);
+			RealType xdisen = xsep*dx*tensorX + 1.5*tensorY;
+			RealType ydisen = 3.5*tensorY;
 			RealType xisom = xdisen + 1.5*dx;
 			RealType yisom = ydisen + 1.5;
 			SizeType ins = tensorSrep(i).ins();
@@ -98,6 +100,12 @@ private:
 		}
 	}
 
+	void unpackTimeAndSpace(SizeType& time, SizeType& space, SizeType id) const
+	{
+		time = id % tauMax_;
+		space = id/tauMax_;
+	}
+
 	static void printHeader(std::ostream& os)
 	{
 		PsimagLite::String str = "\\documentclass{standalone}\n";
@@ -126,6 +134,7 @@ private:
 
 	static PsimagLite::String buffer_;
 	PsimagLite::String srep_;
+	SizeType tauMax_;
 }; // class MeraToTikz
 
 template<typename T>
