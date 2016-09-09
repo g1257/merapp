@@ -54,6 +54,7 @@ CPPFLAGS +=   -g3
 #Don't change basis for un-needed operators (EXPERIMENTAL, NOT CHECKED)
 #CPPFLAGS += -DOPERATORS_DONT_CHANGE_ALL
 
+#CPPFLAGS += -fprofile-arcs -ftest-coverage
 # Specify the strip command to use (or use true to disable) 
 STRIP_COMMAND = true
 
