@@ -13,6 +13,7 @@ template<typename RealType>
 class MeraToTikz {
 
 	typedef std::pair<SizeType,SizeType> PairSizeType;
+	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 
 public:
 
@@ -41,24 +42,21 @@ private:
 
 		RealType dx = 1.;
 		RealType dy = 1.;
+
 		SizeType ntensors = tensorSrep.size();
+		VectorRealType x(ntensors);
+		VectorRealType y(ntensors);
+		computeCoordinates(x,y,dx,dy,tensorSrep);
+
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType tensorX = 0;
-			SizeType tensorY = 0;
-			unpackTimeAndSpace(tensorY,tensorX,tensorSrep(i).id());
-			RealType xsep = 3.0*(dx+tensorY);
-			RealType xdisen = xsep*dx*tensorX + 1.5*tensorY;
-			RealType ydisen = 3.5*tensorY;
-			RealType xisom = xdisen + 1.5*dx;
-			RealType yisom = ydisen + 1.5;
 			SizeType ins = tensorSrep(i).ins();
 			SizeType outs = tensorSrep(i).outs();
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
 				buffer_ += "\\coordinate (A";
-				buffer_ += ttos(i) + ") at (" + ttos(xdisen) + "," + ttos(ydisen) + ");\n";
-				buffer_ += "\\coordinate (B";
-				buffer_ += ttos(i) + ") at (" + ttos(xdisen+dx);
-				buffer_ += "," + ttos(ydisen+dy) + ");\n";
+				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
+				        buffer_ += "\\coordinate (B";
+				buffer_ += ttos(i) + ") at (" + ttos(x[i] + dx);
+				buffer_ += "," + ttos(y[i] + dy) + ");\n";
 				buffer_ += "\\draw[disen] (A" + ttos(i) + ") rectangle (B";
 				buffer_ += ttos(i)+ ");\n";
 				// ins for u
@@ -66,14 +64,14 @@ private:
 				RealType a = dx/(ins - 1);
 				for (SizeType j = 0; j < ins; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
-					RealType xtmp = a*j + xdisen;
+					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (IU";
-					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(ydisen) + ");\n";
+					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]) + ");\n";
 					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (IUF");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
-						buffer_ += ttos(ydisen-0.5*dy) + ");\n";
+						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
 						buffer_ += "\\draw (IU" + ttos(k) + ") -- (IUF" + ttos(k) + ");\n";
 					}
 				}
@@ -82,19 +80,19 @@ private:
 				a = dx/(outs - 1);
 				for (SizeType j = 0; j < outs; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
-					RealType xtmp = a*j + xdisen;
+					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (OU";
-					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(ydisen+dy) + ");\n";
+					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i] + dy) + ");\n";
 				}
 			} else {
 				buffer_ += "\\coordinate (A";
-				buffer_ += ttos(i) + ") at (" + ttos(xisom) + "," + ttos(yisom) + ");\n";
+				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\coordinate (B";
-				buffer_ += ttos(i) + ") at (" + ttos(xisom+dx);
-				buffer_ += "," + ttos(yisom) + ");\n";
+				buffer_ += ttos(i) + ") at (" + ttos(x[i]+dx);
+				buffer_ += "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\coordinate (C";
-				buffer_ += ttos(i) + ") at (" + ttos(xisom+0.5*dx) + ",";
-				buffer_ += ttos(yisom+dy) + ");\n";
+				buffer_ += ttos(i) + ") at (" + ttos(x[i]+0.5*dx) + ",";
+				buffer_ += ttos(y[i]+dy) + ");\n";
 				buffer_ += "\\draw[isom] (A" + ttos(i) + ") -- (B" + ttos(i) + ") -- ";
 				buffer_ += "(C" + ttos(i) + ") -- cycle;\n";
 
@@ -102,14 +100,14 @@ private:
 				RealType a = dx/(ins - 1);
 				for (SizeType j = 0; j < ins; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
-					RealType xtmp = a*j + xisom;
+					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (IW";
-					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(yisom) + ");\n";
+					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]) + ");\n";
 					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (IWF");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
-						buffer_ += ttos(ydisen-0.5*dy) + ");\n";
+						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
 						buffer_ += "\\draw (IW" + ttos(k) + ") -- (IWF" + ttos(k) + ");\n";
 					}
 				}
@@ -121,14 +119,37 @@ private:
 					throw PsimagLite::RuntimeError(str);
 				}
 
-				RealType xtmp = xisom + 0.5*dx;
+				RealType xtmp = x[i] + 0.5*dx;
 				buffer_ += "\\coordinate (OW";
 				SizeType k = absoluteLegNumber(i,0,ntensors);
-				buffer_ +=  ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(yisom+dy) + ");\n";
+				buffer_ +=  ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]+dy) + ");\n";
 			}
 		}
 
 		drawConnections(tensorSrep);
+	}
+
+	void computeCoordinates(VectorRealType& x,
+	                        VectorRealType& y,
+	                        RealType dx,
+	                        RealType dy,
+	                        const TensorSrep& tensorSrep) const
+	{
+		SizeType ntensors = tensorSrep.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType tensorX = 0;
+			SizeType tensorY = 0;
+			unpackTimeAndSpace(tensorY,tensorX,tensorSrep(i).id());
+			RealType xsep = 3.0*(dx+tensorY);
+			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
+				x[i] = xsep*dx*tensorX;
+				y[i] = 3.5*tensorY;
+			} else {
+				assert(tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_W);
+				x[i] = xsep*dx*tensorX + 1.5*dx;
+				y[i] = 3.5*tensorY + 1.5;
+			}
+		}
 	}
 
 	SizeType absoluteLegNumber(SizeType ind, SizeType jnd, SizeType ntensors) const
