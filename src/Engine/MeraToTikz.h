@@ -15,6 +15,7 @@ class MeraToTikz {
 
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 public:
 
@@ -140,12 +141,11 @@ private:
 	                        RealType dy,
 	                        const TensorSrep& tensorSrep) const
 	{
-		const RealType slope = 1.0;
 		SizeType ntensors = tensorSrep.size();
-		RealType xoffset = 0.0;
 		RealType xwoffset = 1.5*dx;
-		SizeType firstWofLayer = ntensors;
-		SizeType savedY = ntensors;
+
+		RealType xsep = 3.0*dx;
+		RealType xoffset = 0.0;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType tensorX = 0;
 			SizeType tensorY = 0;
@@ -153,36 +153,20 @@ private:
 			                                   tensorX,
 			                                   tensorSrep(i).id(),
 			                                   tauMax_);
-			RealType xsep = 3.0*(dx+tensorY);
 			SizeType type = tensorSrep(i).type();
-			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
-				// compute xshift
-				std::cerr<<"firstWofLayer "<<firstWofLayer<<"\n";
-				assert(firstWofLayer < ntensors);
-				RealType yu = 3.5*tensorY;
-				RealType xw = x[firstWofLayer];
-				RealType yw = y[firstWofLayer];
-				xoffset = xw + (yu - yw)/slope;
-			}
-
-			bool b = (tensorSrep(i).outs() == 0)
-			        ? false : (tensorSrep(i).legType(0,TensorStanza::INDEX_DIR_OUT) ==
-			                   TensorStanza::INDEX_TYPE_SUMMED);
-			if (type == TensorStanza::TENSOR_TYPE_W && savedY != tensorY && b) {
-				savedY = tensorY;
-				firstWofLayer = i;
-			}
 
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
 				SizeType id = tensorSrep(i).id();
 				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
-				std::cerr<<"for i= "<<i<<" FOUND j="<<j<<"\n";
 				if (tensorSrep(i).legTag(0,TensorStanza::INDEX_DIR_OUT) ==
 				        tensorSrep(j).legTag(1,TensorStanza::INDEX_DIR_IN)) {
 					xwoffset = -1.5*dx;
 				} else {
 					xwoffset = 1.5*dx;
 				}
+
+				xoffset += xsep;
+				xsep *= 2;
 			}
 
 			if (type == TensorStanza::TENSOR_TYPE_U) {
@@ -194,6 +178,25 @@ private:
 				y[i] = 3.5*tensorY + 1.5;
 			}
 		}
+	}
+
+	SizeType tensorsAtLayer(SizeType layer,
+	                      SizeType type,
+	                      const TensorSrep& tensorSrep) const
+	{
+		SizeType counter = 0;
+		SizeType ntensors = tensorSrep.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			TensorStanza::TensorTypeEnum t = tensorSrep(i).type();
+			if (t != type) continue;
+			SizeType layerX = 0;
+			SizeType layerY = 0;
+			ProgramGlobals::unpackTimeAndSpace(layerY,layerX,tensorSrep(i).id(),tauMax_);
+			if (layerY != layer) continue;
+			counter++;
+		}
+
+		return counter;
 	}
 
 	SizeType findTensor(const TensorSrep& tensorSrep,
@@ -247,7 +250,6 @@ private:
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (tensorSrep(i).type() == type) continue;
 			SizeType ins = tensorSrep(i).ins();
 			for (SizeType j = 0; j < ins; ++j) {
 				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
