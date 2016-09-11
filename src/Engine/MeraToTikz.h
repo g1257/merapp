@@ -87,7 +87,7 @@ private:
 					buffer_ += "\\coordinate (OU";
 					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i] + dy) + ");\n";
 				}
-			} else {
+			} else if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_W) {
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\coordinate (B";
@@ -126,6 +126,15 @@ private:
 				buffer_ += "\\coordinate (OW";
 				SizeType k = absoluteLegNumber(i,0,ntensors);
 				buffer_ +=  ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]+dy) + ");\n";
+			} else if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ROOT) {
+				buffer_ += "\\coordinate (A";
+				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
+				buffer_ += "\\draw[fill=myblue] (A" + ttos(i) + ") circle (0.5);\n";
+				for (SizeType j = 0; j < ins; ++j) {
+					SizeType k = absoluteLegNumber(i,j,ntensors);
+					buffer_ += "\\coordinate (IW";
+					buffer_ += ttos(k) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
+				}
 			}
 
 			buffer_ += "\\node at (A" + ttos(i) + ") {" + ttos(i) + ",";
@@ -172,10 +181,12 @@ private:
 			if (type == TensorStanza::TENSOR_TYPE_U) {
 				x[i] = xsep*dx*tensorX + xoffset;
 				y[i] = 3.5*tensorY;
-			} else {
-				assert(type == TensorStanza::TENSOR_TYPE_W);
+			} else if (type == TensorStanza::TENSOR_TYPE_W) {
 				x[i] = xsep*dx*tensorX + xwoffset + xoffset;
 				y[i] = 3.5*tensorY + 1.5;
+			} else if (type == TensorStanza::TENSOR_TYPE_ROOT) {
+				x[i] = 2.0*xoffset;
+				y[i] = 3.5*tauMax_;
 			}
 		}
 	}
@@ -274,6 +285,7 @@ private:
 		str += "\\usetikzlibrary{arrows}\n";
 		str += "\\usepackage{xcolor}\n";
 		str += "\\definecolor{myfuchsia}{HTML}{FF12BE}\n";
+		str += "\\definecolor{myblue}{HTML}{0074D9}\n";
 		str += "\\begin{document}";
 		str += "\\begin{tikzpicture}[\n";
 		str += "disen/.style={fill=green},\n";

@@ -45,7 +45,7 @@ int main(int ,char **argv)
 	str1 += "u21(f14,f15|s21,s22)w21(s22,d|s7)u1(s0,s1|s27,s28)w1(d,s27|d)\n";
 	str1 += "u4(s2,s3|s29,s30)w4(s28,s29|s24)u7(s4,s5|s31,s32)w7(s30,s31|s25)\n";
 	str1 += "u10(s6,s7|s33,d)w10(s32,s33|s26)u2(s24,s25|s36,s37)w2(d,s36|s34)\n";
-	str1 += "u5(s26,d|s38,d)w5(s37,s38|s35)\n";
+	str1 += "u5(s26,d|s38,d)w5(s37,s38|s35)r(s34,s35)\n";
 	testCase(counter++,str1,3);
 
 	PsimagLite::String str2 = "u0(f0,f1|d,s11)w0(s11,f2,s12|s0)u3(f3,f4|s12,s13)\n";
@@ -57,6 +57,6 @@ int main(int ,char **argv)
 	str2 += "w30(s31,f32,s32|s10)u33(f33,f34|s32,d)u1(d,s0|d,s37)w1(s37,s1,s38|d)\n";
 	str2 += "u4(s2,s3|s38,s39)w4(s39,s4,s40|s34)u7(s5,s6|s40,s41)w7(s41,s7,s42|s35)\n";
 	str2 += "u10(s8,s9|s42,s43)w10(s43,s10,d|s36)u2(s34,s35|s46,s47)w2(d,d,s46|s44)\n";
-	str2 += "w5(s47,s36,d|s45)";
+	str2 += "w5(s47,s36,d|s45)r(s45,s44)";
 	testCase(counter++,str2,3);
 }

@@ -18,7 +18,7 @@ public:
 
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
-	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,TENSOR_TYPE_W,TENSOR_TYPE_U};
+	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,TENSOR_TYPE_ROOT,TENSOR_TYPE_W,TENSOR_TYPE_U};
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
@@ -69,24 +69,28 @@ public:
 
 		conjugate_ = (tmp == 1);
 
-		std::size_t index = 	nameAndId.find("*");
+		std::size_t index = nameAndId.find("*");
 		if (index != PsimagLite::String::npos) nameAndId.erase(index,1);
 
 		l = nameAndId.length();
 		assert(l > 0);
 		index = nameAndId.find_first_of("0123456789");
 
-		if (index == PsimagLite::String::npos) {
-			PsimagLite::String str("TensorStanza: no digit for token ");
-			throw PsimagLite::RuntimeError(str + nameAndId + "\n");
-		}
-
 		name_ = nameAndId.substr(0,index);
 
-		id_ = atoi(nameAndId.substr(index,l-index).c_str());
+		if (index == PsimagLite::String::npos)
+			id_ = 0;
+		else
+			id_ = atoi(nameAndId.substr(index,l-index).c_str());
 
 		if (name_ == "u") type_ = TENSOR_TYPE_U;
 		if (name_ == "w") type_ = TENSOR_TYPE_W;
+		if (name_ == "r") type_ = TENSOR_TYPE_ROOT;
+
+		if (type_ != TENSOR_TYPE_ROOT && index == PsimagLite::String::npos) {
+			PsimagLite::String str("TensorStanza: no digit for token ");
+			throw PsimagLite::RuntimeError(str + nameAndId + "\n");
+		}
 
 		if (type_ == TENSOR_TYPE_UNKNOWN) {
 			PsimagLite::String str("TensorStanza: partial srep, tensor type");
