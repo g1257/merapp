@@ -56,7 +56,7 @@ private:
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
-				        buffer_ += "\\coordinate (B";
+				buffer_ += "\\coordinate (B";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i] + dx);
 				buffer_ += "," + ttos(y[i] + dy) + ");\n";
 				buffer_ += "\\draw[disen] (A" + ttos(i) + ") rectangle (B";
@@ -145,7 +145,6 @@ private:
 		RealType xoffset = 0.0;
 		RealType xwoffset = 1.5*dx;
 		SizeType firstWofLayer = ntensors;
-//		SizeType firstUofLayer = ntensors;
 		SizeType savedY = ntensors;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType tensorX = 0;
@@ -174,8 +173,16 @@ private:
 				firstWofLayer = i;
 			}
 
-			if (tensorX == 0 && type == TensorStanza::TENSOR_TYPE_U) {
-//				firstUofLayer = i;
+			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
+				SizeType id = tensorSrep(i).id();
+				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
+				std::cerr<<"for i= "<<i<<" FOUND j="<<j<<"\n";
+				if (tensorSrep(i).legTag(0,TensorStanza::INDEX_DIR_OUT) ==
+				        tensorSrep(j).legTag(1,TensorStanza::INDEX_DIR_IN)) {
+					xwoffset = -1.5*dx;
+				} else {
+					xwoffset = 1.5*dx;
+				}
 			}
 
 			if (type == TensorStanza::TENSOR_TYPE_U) {
@@ -187,6 +194,21 @@ private:
 				y[i] = 3.5*tensorY + 1.5;
 			}
 		}
+	}
+
+	SizeType findTensor(const TensorSrep& tensorSrep,
+	                    SizeType id,
+	                    TensorStanza::TensorTypeEnum type) const
+	{
+		SizeType ntensors = tensorSrep.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			TensorStanza::TensorTypeEnum t = tensorSrep(i).type();
+			if (t != type) continue;
+			if (tensorSrep(i).id() != id) continue;
+			return i;
+		}
+
+		return ntensors;
 	}
 
 	SizeType absoluteLegNumber(SizeType ind, SizeType jnd, SizeType ntensors) const
