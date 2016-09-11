@@ -21,11 +21,29 @@ public:
 		parseIt();
 	}
 
+	TensorSrep(const TensorSrep& other)
+	    : srep_(other.srep_),data_(other.data_.size())
+	{
+		for (SizeType i = 0; i < data_.size(); ++i)
+			data_[i] = new TensorStanzaType(*(other.data_[i]));
+	}
+
 	~TensorSrep()
 	{
 		for (SizeType i = 0; i < data_.size(); ++i) {
 			delete data_[i];
 			data_[i] = 0;
+		}
+	}
+
+	const PsimagLite::String& sRep() const { return srep_; }
+
+	void conjugate()
+	{
+		srep_ = "";
+		for (SizeType i = 0; i < data_.size(); ++i) {
+			data_[i]->conjugate();
+			srep_ += data_[i]->sRep();
 		}
 	}
 
@@ -48,6 +66,8 @@ public:
 	}
 
 private:
+
+	TensorSrep& operator=(const TensorSrep&);
 
 	void cleanWhiteSpace(PsimagLite::String& srep) const
 	{

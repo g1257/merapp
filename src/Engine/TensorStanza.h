@@ -98,6 +98,16 @@ public:
 		}
 	}
 
+	void conjugate()
+	{
+		conjugate_ = (!conjugate_);
+		srep_ = srepFromObject();
+	}
+
+	bool isConjugate() const { return conjugate_; }
+
+	const PsimagLite::String& sRep() const { return srep_; }
+
 	SizeType id() const { return id_; }
 
 	SizeType ins() const { return insSi_.size(); }
@@ -133,6 +143,34 @@ public:
 	}
 
 private:
+
+	PsimagLite::String srepFromObject() const
+	{
+		PsimagLite::String srep = name_;
+		if (conjugate_) srep += "*";
+		srep += ttos(id_);
+		srep += "(";
+		for (SizeType i = 0; i < insSi_.size(); ++i) {
+			srep += insSi_[i].first + ttos(insSi_[i].second);
+			if (i == insSi_.size() - 1) continue;
+			srep += ",";
+		}
+
+		if (outsSi_.size() == 0) {
+			srep += ")";
+			return srep;
+		}
+
+		srep += "|";
+		for (SizeType i = 0; i < outsSi_.size(); ++i) {
+			srep += outsSi_[i].first + ttos(outsSi_[i].second);
+			if (i == outsSi_.size() - 1) continue;
+			srep += ",";
+		}
+
+		srep += ")";
+		return srep;
+	}
 
 	void setArgVector(VectorPairCharSizeType& si, PsimagLite::String part) const
 	{

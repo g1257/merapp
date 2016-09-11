@@ -43,16 +43,18 @@ private:
 		buffer_ += "\n";
 
 		RealType dx = 1.;
-		RealType dy = 1.;
+		RealType dy0 = 1.;
 
 		SizeType ntensors = tensorSrep.size();
 		VectorRealType x(ntensors);
 		VectorRealType y(ntensors);
-		computeCoordinates(x,y,dx,dy,tensorSrep);
+		computeCoordinates(x,y,dx,tensorSrep);
 
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType ins = tensorSrep(i).ins();
 			SizeType outs = tensorSrep(i).outs();
+			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
+			RealType dy = ysign*dy0;
 
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) {
 				buffer_ += "\\coordinate (A";
@@ -110,7 +112,7 @@ private:
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (IWF");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
-						buffer_ += ttos(y[i]-0.5*dy-1.5) + ");\n";
+						buffer_ += ttos(y[i]-0.5*dy-1.5*ysign) + ");\n";
 						buffer_ += "\\draw (IW" + ttos(k) + ") -- (IWF" + ttos(k) + ");\n";
 					}
 				}
@@ -147,7 +149,6 @@ private:
 	void computeCoordinates(VectorRealType& x,
 	                        VectorRealType& y,
 	                        RealType dx,
-	                        RealType dy,
 	                        const TensorSrep& tensorSrep) const
 	{
 		SizeType ntensors = tensorSrep.size();
@@ -163,7 +164,7 @@ private:
 			                                   tensorSrep(i).id(),
 			                                   tauMax_);
 			SizeType type = tensorSrep(i).type();
-
+			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
 				SizeType id = tensorSrep(i).id();
 				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
@@ -180,13 +181,13 @@ private:
 
 			if (type == TensorStanza::TENSOR_TYPE_U) {
 				x[i] = xsep*dx*tensorX + xoffset;
-				y[i] = 3.5*tensorY;
+				y[i] = 3.5*tensorY*ysign;
 			} else if (type == TensorStanza::TENSOR_TYPE_W) {
 				x[i] = xsep*dx*tensorX + xwoffset + xoffset;
-				y[i] = 3.5*tensorY + 1.5;
+				y[i] = ysign*(3.5*tensorY + 1.5);
 			} else if (type == TensorStanza::TENSOR_TYPE_ROOT) {
 				x[i] = 2.0*xoffset;
-				y[i] = 3.5*tauMax_;
+				y[i] = ysign*3.5*tauMax_;
 			}
 		}
 	}

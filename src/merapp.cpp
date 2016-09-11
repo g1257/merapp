@@ -59,4 +59,9 @@ int main(int ,char **argv)
 	str2 += "u10(s8,s9|s42,s43)w10(s43,s10,d|s36)u2(s34,s35|s46,s47)w2(d,d,s46|s44)\n";
 	str2 += "w5(s47,s36,d|s45)r(s45,s44)";
 	testCase(counter++,str2,3);
+
+	Mera::TensorSrep tensorSep(str2);
+	Mera::TensorSrep tensorSep2(tensorSep);
+	tensorSep2.conjugate();
+	testCase(counter++,tensorSep2.sRep(),3);
 }
