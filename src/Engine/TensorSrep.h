@@ -46,6 +46,15 @@ public:
 		}
 	}
 
+	void contract(const TensorSrep& other)
+	{
+		TensorSrep copy(other);
+		SizeType ms = maxSummed();
+		copy.shiftSummedBy(ms + 1);
+		append(copy);
+		contract(0);
+	}
+
 	// FIXME: should it be a member?
 	void contract(const TensorSrep& other,
 	              const VectorSizeType& indicesToContract)
@@ -54,8 +63,8 @@ public:
 		SizeType ms = maxSummed();
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
-		contract(indicesToContract);
-		relabelFrees();
+		contract(&indicesToContract);
+		relabelFrees(size() - copy.size());
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -121,9 +130,11 @@ private:
 		}
 	}
 
-	void contract(const VectorSizeType& indicesToContract)
+	void contract(const VectorSizeType* indicesToContract)
 	{
-		if (indicesToContract.size() == 0) return;
+		if (indicesToContract && indicesToContract->size() == 0)
+			return;
+
 		SizeType ms = 1 + maxSummed();
 		srep_ = "";
 		SizeType ntensors = data_.size();
@@ -144,15 +155,19 @@ private:
 		}
 	}
 
-	void relabelFrees()
+	void relabelFrees(SizeType start)
 	{
 		SizeType ntensors = data_.size();
 		SizeType count = 0;
 		srep_ = "";
-		for (SizeType i = 0; i < ntensors; ++i) {
+		for (SizeType i = start; i < ntensors; ++i)
 			count = data_[i]->relabelFrees(count);
+
+		for (SizeType i = 0; i < start; ++i)
+			count = data_[i]->relabelFrees(count);
+
+		for (SizeType i = 0; i < ntensors; ++i)
 			srep_ += data_[i]->sRep();
-		}
 	}
 
 	void cleanWhiteSpace(PsimagLite::String& srep) const

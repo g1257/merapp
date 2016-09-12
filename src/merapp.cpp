@@ -71,4 +71,7 @@ int main(int ,char **argv)
 	indicesToContract[1] = 1;
 	tensorSep.contract(tensorSep3,indicesToContract);
 	testCase(counter++,tensorSep.sRep(),3);
+
+	tensorSep.contract(tensorSep2);
+	testCase(counter++,tensorSep.sRep(),3);
 }

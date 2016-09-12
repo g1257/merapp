@@ -132,17 +132,19 @@ public:
 		srep_ = srepFromObject();
 	}
 
-	void contract(const VectorSizeType& indicesToContract, SizeType ms)
+	void contract(const VectorSizeType* indicesToContract, SizeType ms)
 	{
-		SizeType total = indicesToContract.size();
-		if (total == 0) return;
+		if (indicesToContract && indicesToContract->size() == 0)
+			return;
+
 		SizeType ins = insSi_.size();
 
 		for (SizeType i = 0; i < ins; ++i) {
 			if (insSi_[i].first != 'f') continue;
-			if (std::find(indicesToContract.begin(),
-			              indicesToContract.end(),
-			              insSi_[i].second) == indicesToContract.end()) continue;
+			if (indicesToContract && std::find(indicesToContract->begin(),
+			                                   indicesToContract->end(),
+			                                   insSi_[i].second) == indicesToContract->end())
+				continue;
 
 			insSi_[i].first = 's';
 			insSi_[i].second += ms;
@@ -151,9 +153,10 @@ public:
 		SizeType outs = outsSi_.size();
 		for (SizeType i = 0; i < outs; ++i) {
 			if (outsSi_[i].first != 'f') continue;
-			if (std::find(indicesToContract.begin(),
-			              indicesToContract.end(),
-			              outsSi_[i].second) == indicesToContract.end()) continue;
+			if (indicesToContract && std::find(indicesToContract->begin(),
+			                                   indicesToContract->end(),
+			                                   outsSi_[i].second) == indicesToContract->end())
+				continue;
 
 			outsSi_[i].first = 's';
 			outsSi_[i].second += ms;
