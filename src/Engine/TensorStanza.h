@@ -19,7 +19,11 @@ public:
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
-	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,TENSOR_TYPE_ROOT,TENSOR_TYPE_W,TENSOR_TYPE_U};
+	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,
+		                 TENSOR_TYPE_ROOT,
+		                 TENSOR_TYPE_W,
+		                 TENSOR_TYPE_U,
+		                 TENSOR_TYPE_H};
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
@@ -87,6 +91,7 @@ public:
 
 		if (name_ == "u") type_ = TENSOR_TYPE_U;
 		if (name_ == "w") type_ = TENSOR_TYPE_W;
+		if (name_ == "h") type_ = TENSOR_TYPE_H;
 		if (name_ == "r") type_ = TENSOR_TYPE_ROOT;
 
 		if (type_ != TENSOR_TYPE_ROOT && index == PsimagLite::String::npos) {
@@ -95,7 +100,7 @@ public:
 		}
 
 		if (type_ == TENSOR_TYPE_UNKNOWN) {
-			PsimagLite::String str("TensorStanza: partial srep, tensor type");
+			PsimagLite::String str("TensorStanza: unknown tensor type ");
 			throw PsimagLite::RuntimeError(str + srep_ + "\n");
 		}
 
@@ -184,6 +189,15 @@ public:
 	TensorTypeEnum type() const { return type_; }
 
 	const SizeType& maxSummed() const { return maxSummed_; }
+
+	PsimagLite::String label() const
+	{
+		if (type_ == TENSOR_TYPE_U) return "u";
+		if (type_ == TENSOR_TYPE_W) return "w";
+		if (type_ == TENSOR_TYPE_ROOT) return "r";
+		if (type_ == TENSOR_TYPE_H) return "h";
+		return "unknown";
+	}
 
 	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
 	{

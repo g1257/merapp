@@ -65,7 +65,10 @@ int main(int ,char **argv)
 	tensorSep2.conjugate();
 	testCase(counter++,tensorSep2.sRep(),3);
 
-	Mera::TensorSrep::VectorSizeType indicesToContract(1,0);
-	tensorSep.contract(tensorSep2,indicesToContract);
+	PsimagLite::String str3 = "h0(f0,f1|f2,f3)\n";
+	Mera::TensorSrep tensorSep3(str3);
+	Mera::TensorSrep::VectorSizeType indicesToContract(2,0);
+	indicesToContract[1] = 1;
+	tensorSep.contract(tensorSep3,indicesToContract);
 	testCase(counter++,tensorSep.sRep(),3);
 }
