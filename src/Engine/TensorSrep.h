@@ -46,25 +46,15 @@ public:
 		}
 	}
 
-	void freeToSummed(const VectorSizeType& indicesToContract)
-	{
-		SizeType ntensors = data_.size();
-		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->freeToSummed(indicesToContract);
-			srep_ += data_[i]->sRep();
-		}
-	}
-
 	// FIXME: should it be a member?
 	void contract(const TensorSrep& other,
 	              const VectorSizeType& indicesToContract)
 	{
 		TensorSrep copy(other);
-		//copy.freeToSummed(indicesToContract);
-		//freeToSummed(indicesToContract);
 		SizeType ms = maxSummed();
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
+		contract(indicesToContract);
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -127,6 +117,18 @@ private:
 			assert(counter < data_.size());
 			data_[counter++] = new TensorStanza(stanza);
 			loc = index + 1;
+		}
+	}
+
+	void contract(const VectorSizeType& indicesToContract)
+	{
+		if (indicesToContract.size() == 0) return;
+		SizeType ms = 1 + maxSummed();
+		srep_ = "";
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->contract(indicesToContract,ms);
+			srep_ += data_[i]->sRep();
 		}
 	}
 

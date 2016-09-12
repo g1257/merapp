@@ -127,11 +127,12 @@ public:
 		srep_ = srepFromObject();
 	}
 
-	void freeToSummed(const VectorSizeType& indicesToContract)
+	void contract(const VectorSizeType& indicesToContract, SizeType ms)
 	{
 		SizeType total = indicesToContract.size();
 		if (total == 0) return;
 		SizeType ins = insSi_.size();
+
 		for (SizeType i = 0; i < ins; ++i) {
 			if (insSi_[i].first != 'f') continue;
 			if (std::find(indicesToContract.begin(),
@@ -139,8 +140,7 @@ public:
 			              insSi_[i].second) == indicesToContract.end()) continue;
 
 			insSi_[i].first = 's';
-			insSi_[i].second = maxSummed_;
-			maxSummed_++;
+			insSi_[i].second += ms;
 		}
 
 		SizeType outs = outsSi_.size();
@@ -151,10 +151,10 @@ public:
 			              outsSi_[i].second) == indicesToContract.end()) continue;
 
 			outsSi_[i].first = 's';
-			outsSi_[i].second = maxSummed_;
-			maxSummed_++;
+			outsSi_[i].second += ms;
 		}
 
+		maxSummed_ += ms;
 		srep_ = srepFromObject();
 	}
 

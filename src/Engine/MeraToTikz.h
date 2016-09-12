@@ -77,7 +77,8 @@ private:
 						buffer_ += ("\\coordinate (IUF");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
-						buffer_ += "\\draw (IU" + ttos(k) + ") -- (IUF" + ttos(k) + ");\n";
+						buffer_ += "\\draw[myfreelink] (IU" + ttos(k);
+						buffer_ += ") -- (IUF" + ttos(k) + ");\n";
 					}
 				}
 
@@ -113,7 +114,8 @@ private:
 						buffer_ += ("\\coordinate (IWF");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(y[i]-0.5*dy-1.5*ysign) + ");\n";
-						buffer_ += "\\draw (IW" + ttos(k) + ") -- (IWF" + ttos(k) + ");\n";
+						buffer_ += "\\draw[myfreelink] (IW" + ttos(k) + ") -- ";
+						buffer_ += "(IWF" + ttos(k) + ");\n";
 					}
 				}
 
@@ -191,8 +193,8 @@ private:
 	}
 
 	SizeType tensorsAtLayer(SizeType layer,
-	                      SizeType type,
-	                      const TensorSrep& tensorSrep) const
+	                        SizeType type,
+	                        const TensorSrep& tensorSrep) const
 	{
 		SizeType counter = 0;
 		SizeType ntensors = tensorSrep.size();
@@ -233,17 +235,28 @@ private:
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType outs = tensorSrep(i).outs();
+			SizeType ins = tensorSrep(i).ins();
 			TensorStanza::TensorTypeEnum type = tensorSrep(i).type();
-			for (SizeType j = 0; j < outs; ++j) {
-				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) !=
+			for (SizeType j = 0; j < ins; ++j) {
+				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
 				        TensorStanza::INDEX_TYPE_SUMMED) continue;
 				SizeType k1 = absoluteLegNumber(i,j,ntensors);
-				PsimagLite::String label1 = "(O";
+				PsimagLite::String label1 = "(I";
 				label1 += (type == TensorStanza::TENSOR_TYPE_U) ? "U" : "W";
 				label1 += ttos(k1) + ")";
-				SizeType what = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
-				PairSizeType k = findTarget(tensorSrep,what,type);
+
+				SizeType what = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_IN);
+				PairSizeType k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_OUT);
+				if (k.first < ntensors) {
+					PsimagLite::String label2 = "(O";
+					label2 += (tensorSrep(k.first).type() == TensorStanza::TENSOR_TYPE_U) ?
+					            "U" : "W";
+					SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
+					label2 += ttos(k2) + ")";
+					buffer_ += "\\draw " + label1 + " -- " + label2 + ";\n";
+				}
+
+				k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_IN);
 				if (k.first >= ntensors) continue;
 				PsimagLite::String label2 = "(I";
 				label2 += (tensorSrep(k.first).type() == TensorStanza::TENSOR_TYPE_U) ? "U" : "W";
@@ -255,16 +268,19 @@ private:
 	}
 
 	PairSizeType findTarget(const TensorSrep& tensorSrep,
+	                        SizeType selfInd,
 	                        SizeType what,
-	                        TensorStanza::TensorTypeEnum type) const
+	                        TensorStanza::IndexDirectionEnum dir) const
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType ins = tensorSrep(i).ins();
-			for (SizeType j = 0; j < ins; ++j) {
-				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
+			if (i == selfInd) continue;
+			SizeType s = (dir == TensorStanza::INDEX_DIR_IN) ?
+			            tensorSrep(i).ins() : tensorSrep(i).outs();
+			for (SizeType j = 0; j < s; ++j) {
+				if (tensorSrep(i).legType(j,dir) !=
 				        TensorStanza::INDEX_TYPE_SUMMED) continue;
-				if (tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_IN) == what)
+				if (tensorSrep(i).legTag(j,dir) == what)
 					return PairSizeType(i,j);
 			}
 		}
@@ -285,10 +301,13 @@ private:
 		str += "\\usepackage{xcolor}\n";
 		str += "\\definecolor{myfuchsia}{HTML}{FF12BE}\n";
 		str += "\\definecolor{myblue}{HTML}{0074D9}\n";
+		str += "\\definecolor{mygreen}{HTML}{2ECC40}\n";
 		str += "\\begin{document}";
 		str += "\\begin{tikzpicture}[\n";
 		str += "disen/.style={fill=green},\n";
-		str += "isom/.style={fill=myfuchsia},mylink2/.style={very thick}]";
+		str += "isom/.style={fill=myfuchsia},\n";
+		str += "myfreelink/.style={thick,mygreen}\n";
+		str += "]";
 		os<<str<<"\n";
 	}
 
