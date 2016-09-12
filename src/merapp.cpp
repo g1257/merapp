@@ -64,4 +64,8 @@ int main(int ,char **argv)
 	Mera::TensorSrep tensorSep2(tensorSep);
 	tensorSep2.conjugate();
 	testCase(counter++,tensorSep2.sRep(),3);
+
+	Mera::TensorSrep::VectorSizeType indicesToContract(1,0);
+	tensorSep.contract(tensorSep2,indicesToContract);
+	testCase(counter++,tensorSep.sRep(),3);
 }

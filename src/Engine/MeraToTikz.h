@@ -39,7 +39,7 @@ private:
 	{
 		TensorSrep tensorSrep(srep_);
 
-		buffer_ = "%" + srep_;
+		buffer_ = "%" + ProgramGlobals::addLf(srep_,80);
 		buffer_ += "\n";
 
 		RealType dx = 1.;

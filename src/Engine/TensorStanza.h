@@ -16,6 +16,7 @@ class TensorStanza {
 
 public:
 
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,TENSOR_TYPE_ROOT,TENSOR_TYPE_W,TENSOR_TYPE_U};
@@ -123,6 +124,37 @@ public:
 		}
 
 		maxSummed_ += ms;
+		srep_ = srepFromObject();
+	}
+
+	void freeToSummed(const VectorSizeType& indicesToContract)
+	{
+		SizeType total = indicesToContract.size();
+		if (total == 0) return;
+		SizeType ins = insSi_.size();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (insSi_[i].first != 'f') continue;
+			if (std::find(indicesToContract.begin(),
+			              indicesToContract.end(),
+			              insSi_[i].second) == indicesToContract.end()) continue;
+
+			insSi_[i].first = 's';
+			insSi_[i].second = maxSummed_;
+			maxSummed_++;
+		}
+
+		SizeType outs = outsSi_.size();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (outsSi_[i].first != 'f') continue;
+			if (std::find(indicesToContract.begin(),
+			              indicesToContract.end(),
+			              outsSi_[i].second) == indicesToContract.end()) continue;
+
+			outsSi_[i].first = 's';
+			outsSi_[i].second = maxSummed_;
+			maxSummed_++;
+		}
+
 		srep_ = srepFromObject();
 	}
 

@@ -9,10 +9,10 @@ namespace Mera {
 class TensorSrep {
 
 	typedef PsimagLite::Vector<TensorStanza*>::Type VectorTensorStanza;
-	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 public:
 
+	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef TensorStanza TensorStanzaType;
 
 	TensorSrep(PsimagLite::String srep)
@@ -46,13 +46,25 @@ public:
 		}
 	}
 
+	void freeToSummed(const VectorSizeType& indicesToContract)
+	{
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->freeToSummed(indicesToContract);
+			srep_ += data_[i]->sRep();
+		}
+	}
+
 	// FIXME: should it be a member?
 	void contract(const TensorSrep& other,
 	              const VectorSizeType& indicesToContract)
 	{
 		TensorSrep copy(other);
+		copy.freeToSummed(indicesToContract);
+		freeToSummed(indicesToContract);
 		SizeType ms = maxSummed();
 		copy.shiftSummedBy(ms);
+		append(copy);
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -89,25 +101,6 @@ private:
 
 	TensorSrep& operator=(const TensorSrep&);
 
-	void cleanWhiteSpace(PsimagLite::String& srep) const
-	{
-		SizeType l = srep.length();
-		PsimagLite::String tmp("");
-
-		for (SizeType i = 0; i < l; ++i) {
-			char c = srep[i];
-			if (isWhiteSpace(c)) continue;
-			tmp += c;
-		}
-
-		srep = tmp;
-	}
-
-	bool isWhiteSpace(unsigned char c) const
-	{
-		return (c == ' ' || c == '\t' || c=='\n');
-	}
-
 	void parseIt()
 	{
 		SizeType l = srep_.length();
@@ -135,6 +128,36 @@ private:
 			data_[counter++] = new TensorStanza(stanza);
 			loc = index + 1;
 		}
+	}
+
+	void append(const TensorSrep& other)
+	{
+		SizeType ntensors = data_.size();
+		SizeType add = other.size();
+		data_.resize(ntensors + add);
+		for (SizeType i = 0; i < add; ++i) {
+			data_[ntensors + i] = new TensorStanza(*other.data_[i]);
+			srep_ += data_[ntensors + i]->sRep();
+		}
+	}
+
+	void cleanWhiteSpace(PsimagLite::String& srep) const
+	{
+		SizeType l = srep.length();
+		PsimagLite::String tmp("");
+
+		for (SizeType i = 0; i < l; ++i) {
+			char c = srep[i];
+			if (isWhiteSpace(c)) continue;
+			tmp += c;
+		}
+
+		srep = tmp;
+	}
+
+	bool isWhiteSpace(unsigned char c) const
+	{
+		return (c == ' ' || c == '\t' || c=='\n');
 	}
 
 	SizeType maxSummed() const
