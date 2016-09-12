@@ -55,6 +55,7 @@ public:
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
 		contract(indicesToContract);
+		relabelFrees();
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -140,6 +141,17 @@ private:
 		for (SizeType i = 0; i < add; ++i) {
 			data_[ntensors + i] = new TensorStanza(*other.data_[i]);
 			srep_ += data_[ntensors + i]->sRep();
+		}
+	}
+
+	void relabelFrees()
+	{
+		SizeType ntensors = data_.size();
+		SizeType count = 0;
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i) {
+			count = data_[i]->relabelFrees(count);
+			srep_ += data_[i]->sRep();
 		}
 	}
 

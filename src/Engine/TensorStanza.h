@@ -163,6 +163,24 @@ public:
 		srep_ = srepFromObject();
 	}
 
+	SizeType relabelFrees(SizeType count)
+	{
+		SizeType total = insSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (insSi_[i].first != 'f') continue;
+			insSi_[i].second = count++;
+		}
+
+		total = outsSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (outsSi_[i].first != 'f') continue;
+			outsSi_[i].second = count++;
+		}
+
+		srep_ = srepFromObject();
+		return count;
+	}
+
 	bool isConjugate() const { return conjugate_; }
 
 	const PsimagLite::String& sRep() const { return srep_; }
