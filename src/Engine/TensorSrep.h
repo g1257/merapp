@@ -60,10 +60,10 @@ public:
 	              const VectorSizeType& indicesToContract)
 	{
 		TensorSrep copy(other);
-		copy.freeToSummed(indicesToContract);
-		freeToSummed(indicesToContract);
+		//copy.freeToSummed(indicesToContract);
+		//freeToSummed(indicesToContract);
 		SizeType ms = maxSummed();
-		copy.shiftSummedBy(ms);
+		copy.shiftSummedBy(ms + 1);
 		append(copy);
 	}
 
