@@ -9,6 +9,7 @@ namespace Mera {
 class TensorSrep {
 
 	typedef PsimagLite::Vector<TensorStanza*>::Type VectorTensorStanza;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 public:
 
@@ -36,12 +37,31 @@ public:
 		}
 	}
 
+	void shiftSummedBy(SizeType ms)
+	{
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->shiftSummedBy(ms);
+			srep_ += data_[i]->sRep();
+		}
+	}
+
+	// FIXME: should it be a member?
+	void contract(const TensorSrep& other,
+	              const VectorSizeType& indicesToContract)
+	{
+		TensorSrep copy(other);
+		SizeType ms = maxSummed();
+		copy.shiftSummedBy(ms);
+	}
+
 	const PsimagLite::String& sRep() const { return srep_; }
 
 	void conjugate()
 	{
 		srep_ = "";
-		for (SizeType i = 0; i < data_.size(); ++i) {
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
 			data_[i]->conjugate();
 			srep_ += data_[i]->sRep();
 		}
@@ -115,6 +135,18 @@ private:
 			data_[counter++] = new TensorStanza(stanza);
 			loc = index + 1;
 		}
+	}
+
+	SizeType maxSummed() const
+	{
+		SizeType ntensors = data_.size();
+		SizeType max = 0;
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType tmp = data_[i]->maxSummed();
+			if (max < tmp) max = tmp;
+		}
+
+		return max;
 	}
 
 	PsimagLite::String srep_;

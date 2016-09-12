@@ -28,7 +28,8 @@ public:
 	    : conjugate_(false),
 	      srep_(srep),
 	      name_(""),
-	      type_(TENSOR_TYPE_UNKNOWN)
+	      type_(TENSOR_TYPE_UNKNOWN),
+	      maxSummed_(0)
 	{
 		VectorStringType tokens;
 		PsimagLite::tokenizer(srep_,tokens,"|");
@@ -96,11 +97,32 @@ public:
 			PsimagLite::String str("TensorStanza: partial srep, tensor type");
 			throw PsimagLite::RuntimeError(str + srep_ + "\n");
 		}
+
+		maxSummed_ = maxSummedPriv();
 	}
 
 	void conjugate()
 	{
 		conjugate_ = (!conjugate_);
+		srep_ = srepFromObject();
+	}
+
+	void shiftSummedBy(SizeType ms)
+	{
+		if (ms == 0) return;
+		SizeType ins = insSi_.size();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (insSi_[i].first != 's') continue;
+			insSi_[i].second += ms;
+		}
+
+		SizeType outs = outsSi_.size();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			outsSi_[i].second += ms;
+		}
+
+		maxSummed_ += ms;
 		srep_ = srepFromObject();
 	}
 
@@ -128,6 +150,8 @@ public:
 	}
 
 	TensorTypeEnum type() const { return type_; }
+
+	const SizeType& maxSummed() const { return maxSummed_; }
 
 	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
 	{
@@ -220,11 +244,30 @@ private:
 		token = tmp;
 	}
 
+	SizeType maxSummedPriv() const
+	{
+		SizeType max = 0;
+		SizeType ins = insSi_.size();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (insSi_[i].first != 's') continue;
+			if (max < insSi_[i].second) max = insSi_[i].second;
+		}
+
+		SizeType outs = outsSi_.size();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			if (max < outsSi_[i].second) max = outsSi_[i].second;
+		}
+
+		return max;
+	}
+
 	SizeType id_;
 	bool conjugate_;
 	PsimagLite::String srep_;
 	PsimagLite::String name_;
 	TensorTypeEnum type_;
+	SizeType maxSummed_;
 	VectorPairCharSizeType insSi_;
 	VectorPairCharSizeType outsSi_;
 };
