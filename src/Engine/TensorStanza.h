@@ -20,6 +20,7 @@ public:
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,
+		                 TENSOR_TYPE_ERASED,
 		                 TENSOR_TYPE_ROOT,
 		                 TENSOR_TYPE_W,
 		                 TENSOR_TYPE_U,
@@ -34,7 +35,8 @@ public:
 	      srep_(srep),
 	      name_(""),
 	      type_(TENSOR_TYPE_UNKNOWN),
-	      maxSummed_(0)
+	      maxSummed_(0),
+	      maxFree_(0)
 	{
 		VectorStringType tokens;
 		PsimagLite::tokenizer(srep_,tokens,"|");
@@ -104,7 +106,8 @@ public:
 			throw PsimagLite::RuntimeError(str + srep_ + "\n");
 		}
 
-		maxSummed_ = maxSummedPriv();
+		maxSummed_ = maxIndex('s');
+		maxFree_ = maxIndex('f');
 	}
 
 	void conjugate()
@@ -166,6 +169,51 @@ public:
 		srep_ = srepFromObject();
 	}
 
+	void eraseTensor(VectorSizeType& s)
+	{
+		type_ = TENSOR_TYPE_ERASED;
+		SizeType total = insSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (insSi_[i].first != 's') continue;
+			s.push_back(insSi_[i].second);
+		}
+
+		total = outsSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			s.push_back(outsSi_[i].second);
+		}
+
+		maxSummed_ = 0;
+		maxFree_ = 0;
+		insSi_.clear();
+		outsSi_.clear();
+		srep_ = "";
+	}
+
+	SizeType uncontract(const VectorSizeType& erased, SizeType count)
+	{
+		SizeType total = insSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (insSi_[i].first != 's') continue;
+			if (std::find(erased.begin(),erased.end(),insSi_[i].second) ==
+			        erased.end()) continue;
+			insSi_[i].first = 'f';
+			insSi_[i].second = count++;
+		}
+
+		total = outsSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			if (std::find(erased.begin(),erased.end(),outsSi_[i].second) ==
+			        erased.end()) continue;
+			outsSi_[i].first = 'f';
+			outsSi_[i].second = count++;
+		}
+
+		return count;
+	}
+
 	SizeType relabelFrees(SizeType count)
 	{
 		SizeType total = insSi_.size();
@@ -180,6 +228,7 @@ public:
 			outsSi_[i].second = count++;
 		}
 
+		maxFree_ = maxIndex('f');
 		srep_ = srepFromObject();
 		return count;
 	}
@@ -209,7 +258,7 @@ public:
 
 	TensorTypeEnum type() const { return type_; }
 
-	const SizeType& maxSummed() const { return maxSummed_; }
+	const SizeType& maxTag(char c) const { return (c == 's') ? maxSummed_ : maxFree_; }
 
 	PsimagLite::String label() const
 	{
@@ -311,18 +360,18 @@ private:
 		token = tmp;
 	}
 
-	SizeType maxSummedPriv() const
+	SizeType maxIndex(char c) const
 	{
 		SizeType max = 0;
 		SizeType ins = insSi_.size();
 		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != 's') continue;
+			if (insSi_[i].first != c) continue;
 			if (max < insSi_[i].second) max = insSi_[i].second;
 		}
 
 		SizeType outs = outsSi_.size();
 		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != 's') continue;
+			if (outsSi_[i].first != c) continue;
 			if (max < outsSi_[i].second) max = outsSi_[i].second;
 		}
 
@@ -335,6 +384,7 @@ private:
 	PsimagLite::String name_;
 	TensorTypeEnum type_;
 	SizeType maxSummed_;
+	SizeType maxFree_;
 	VectorPairCharSizeType insSi_;
 	VectorPairCharSizeType outsSi_;
 };

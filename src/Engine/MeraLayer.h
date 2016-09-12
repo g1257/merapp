@@ -93,9 +93,9 @@ private:
 			                                   params_.tauMax);
 			if (tensorY != tau) continue;
 			TensorStanza::TensorTypeEnum type = tensorSrep_(i).type();
-			if (type == TensorStanza::TensorTypeEnum::TENSOR_TYPE_U)
+			if (type == TensorStanza::TENSOR_TYPE_U)
 				mu.push_back(i);
-			if (type == TensorStanza::TensorTypeEnum::TENSOR_TYPE_W)
+			if (type == TensorStanza::TENSOR_TYPE_W)
 				mw.push_back(i);
 		}
 	}

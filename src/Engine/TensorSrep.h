@@ -37,19 +37,10 @@ public:
 		}
 	}
 
-	void shiftSummedBy(SizeType ms)
-	{
-		SizeType ntensors = data_.size();
-		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->shiftSummedBy(ms);
-			srep_ += data_[i]->sRep();
-		}
-	}
-
 	void contract(const TensorSrep& other)
 	{
 		TensorSrep copy(other);
-		SizeType ms = maxSummed();
+		SizeType ms = maxTag('s');
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
 		contract(0);
@@ -60,11 +51,25 @@ public:
 	              const VectorSizeType& indicesToContract)
 	{
 		TensorSrep copy(other);
-		SizeType ms = maxSummed();
+		SizeType ms = maxTag('s');
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
 		contract(&indicesToContract);
 		relabelFrees(size() - copy.size());
+	}
+
+	void eraseTensor(SizeType index)
+	{
+		assert(index < data_.size());
+		VectorSizeType sErased;
+		data_[index]->eraseTensor(sErased);
+		SizeType ntensors = data_.size();
+		SizeType count = maxTag('f') + 1;
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i) {
+			count = data_[i]->uncontract(sErased,count);
+			srep_ += data_[i]->sRep();
+		}
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -135,7 +140,7 @@ private:
 		if (indicesToContract && indicesToContract->size() == 0)
 			return;
 
-		SizeType ms = 1 + maxSummed();
+		SizeType ms = 1 + maxTag('s');
 		srep_ = "";
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
@@ -170,6 +175,15 @@ private:
 			srep_ += data_[i]->sRep();
 	}
 
+	void shiftSummedBy(SizeType ms)
+	{
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->shiftSummedBy(ms);
+			srep_ += data_[i]->sRep();
+		}
+	}
+
 	void cleanWhiteSpace(PsimagLite::String& srep) const
 	{
 		SizeType l = srep.length();
@@ -189,12 +203,12 @@ private:
 		return (c == ' ' || c == '\t' || c=='\n');
 	}
 
-	SizeType maxSummed() const
+	SizeType maxTag(char c) const
 	{
 		SizeType ntensors = data_.size();
 		SizeType max = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType tmp = data_[i]->maxSummed();
+			SizeType tmp = data_[i]->maxTag(c);
 			if (max < tmp) max = tmp;
 		}
 

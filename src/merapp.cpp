@@ -74,4 +74,7 @@ int main(int ,char **argv)
 
 	tensorSep.contract(tensorSep2);
 	testCase(counter++,tensorSep.sRep(),3);
+
+	tensorSep.eraseTensor(3);
+	testCase(counter++,tensorSep.sRep(),3);
 }
