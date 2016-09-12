@@ -153,9 +153,8 @@ private:
 	{
 		SizeType ntensors = tensorSrep.size();
 		RealType xwoffset = 1.5*dx;
+		SizeType yoffset0 = dx;
 
-		RealType xsep = 3.0*dx;
-		RealType xoffset = 0.0;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType tensorX = 0;
 			SizeType tensorY = 0;
@@ -165,6 +164,8 @@ private:
 			                                   tauMax_);
 			SizeType type = tensorSrep(i).type();
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
+			RealType xsep = 3.0*dx*(1+tensorY);
+			RealType xoffset = 3.0*pow(2,tensorY);
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
 				SizeType id = tensorSrep(i).id();
 				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
@@ -174,20 +175,17 @@ private:
 				} else {
 					xwoffset = 1.5*dx;
 				}
-
-				xoffset += xsep;
-				xsep *= 2;
 			}
 
 			if (type == TensorStanza::TENSOR_TYPE_U) {
 				x[i] = xsep*dx*tensorX + xoffset;
-				y[i] = 3.5*tensorY*ysign;
+				y[i] = 3.5*tensorY*ysign + yoffset0*ysign;
 			} else if (type == TensorStanza::TENSOR_TYPE_W) {
 				x[i] = xsep*dx*tensorX + xwoffset + xoffset;
-				y[i] = ysign*(3.5*tensorY + 1.5);
+				y[i] = ysign*(3.5*tensorY + 1.5) + yoffset0*ysign;
 			} else if (type == TensorStanza::TENSOR_TYPE_ROOT) {
-				x[i] = 2.0*xoffset;
-				y[i] = ysign*3.5*tauMax_;
+				x[i] = 1.5*tauMax_*xsep;
+				y[i] = ysign*3.5*tauMax_ + yoffset0*ysign;
 			}
 		}
 	}
