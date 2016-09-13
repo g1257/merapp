@@ -28,7 +28,7 @@ tensorEval.o: tensorEval.cpp Makefile   Config.make
 	$(MAKE) -f Makefile -C ../../PsimagLite/lib/
 
 Makefile.dep: merapp.cpp   
-	$(CXX) $(CPPFLAGS) -MM merapp.cpp  srepToTikz.cpp > Makefile.dep
+	$(CXX) $(CPPFLAGS) -MM merapp.cpp  srepToTikz.cpp tensorEval.cpp > Makefile.dep
 
 clean: Makefile.dep
 	rm -f core* merapp  *.o *.dep  

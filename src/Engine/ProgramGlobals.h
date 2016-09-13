@@ -54,5 +54,7 @@ struct ProgramGlobals {
 
 	static RngType rng;
 };
+
+ProgramGlobals::RngType ProgramGlobals::rng(1234);
 } // namespace Mera
 #endif // PROGRAMGLOBALS_H

@@ -10,8 +10,10 @@ int main()
 	typedef TensorEvalType::TensorType TensorType;
 	TensorEvalType::VectorTensorType vt(2,0);
 
-	vt[0] = new TensorType(dim0);
-	vt[1] = new TensorType(dim0);
+	for (SizeType i = 0; i < vt.size(); ++i) {
+		vt[i] = new TensorType(dim0);
+		vt[i]->setToRandom();
+	}
 
 	TensorEvalType tensorEval(str,vt);
 	std::cout<<tensorEval.eval();

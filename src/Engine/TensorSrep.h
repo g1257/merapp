@@ -162,6 +162,18 @@ public:
 		return b;
 	}
 
+	SizeType maxTag(char c) const
+	{
+		SizeType ntensors = data_.size();
+		SizeType max = 0;
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType tmp = data_[i]->maxTag(c);
+			if (max < tmp) max = tmp;
+		}
+
+		return max;
+	}
+
 	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
 	{
 		os<<"tensorSrep.size="<<ts.size()<<"\n";
@@ -301,18 +313,6 @@ private:
 	bool isWhiteSpace(unsigned char c) const
 	{
 		return (c == ' ' || c == '\t' || c=='\n');
-	}
-
-	SizeType maxTag(char c) const
-	{
-		SizeType ntensors = data_.size();
-		SizeType max = 0;
-		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType tmp = data_[i]->maxTag(c);
-			if (max < tmp) max = tmp;
-		}
-
-		return max;
 	}
 
 	PsimagLite::String srep_;
