@@ -193,6 +193,8 @@ public:
 
 	SizeType uncontract(const VectorSizeType& erased, SizeType count)
 	{
+		if (type_ == TENSOR_TYPE_ERASED) return 0;
+
 		SizeType total = insSi_.size();
 		for (SizeType i = 0; i < total; ++i) {
 			if (insSi_[i].first != 's') continue;
@@ -211,6 +213,9 @@ public:
 			outsSi_[i].second = count++;
 		}
 
+		maxSummed_ = maxIndex('s');
+		maxFree_ = maxIndex('f');
+		srep_ = srepFromObject();
 		return count;
 	}
 

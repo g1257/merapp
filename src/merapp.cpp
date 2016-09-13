@@ -61,6 +61,9 @@ int main(int ,char **argv)
 	testCase(counter++,str2,3);
 
 	Mera::TensorSrep tensorSrep(str2);
+	std::cerr<<"original " + ttos(counter) + "\n";
+	tensorSrep.isValid(true);
+	std::cerr<<"---------------------\n\n";
 	Mera::TensorSrep tensorSrep2(tensorSrep);
 	tensorSrep2.conjugate();
 	testCase(counter++,tensorSrep2.sRep(),3);
@@ -70,12 +73,19 @@ int main(int ,char **argv)
 	Mera::TensorSrep::VectorSizeType indicesToContract(2,0);
 	indicesToContract[1] = 1;
 	tensorSrep.contract(tensorSrep3,indicesToContract);
+	std::cerr<<"original contracted with h" + ttos(counter) + "\n";
+	tensorSrep.isValid(true);
+	std::cerr<<"---------------------\n\n";
 	testCase(counter++,tensorSrep.sRep(),3);
 
 	tensorSrep.contract(tensorSrep2);
+	std::cerr<<"scalar tensor" + ttos(counter) + "\n";
+	tensorSrep.isValid(true);
+	std::cerr<<"---------------------\n\n";
 	testCase(counter++,tensorSrep.sRep(),3);
 
 	tensorSrep.eraseTensor(3);
+	std::cerr<<"tensor with hole" + ttos(counter) + "\n";
 	tensorSrep.isValid(true);
 	testCase(counter++,tensorSrep.sRep(),3);
 }

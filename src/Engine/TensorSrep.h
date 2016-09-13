@@ -3,7 +3,6 @@
 #include "Vector.h"
 #include "TensorStanza.h"
 #include <algorithm>
-#include "Sort.h"
 
 namespace Mera {
 
@@ -59,6 +58,7 @@ public:
 		relabelFrees(size() - copy.size());
 	}
 
+	// FIXME: Erase tensor by name/id not index
 	void eraseTensor(SizeType index)
 	{
 		assert(index < data_.size());
@@ -120,15 +120,9 @@ public:
 			}
 		}
 
-		VectorSizeType iperm(summedIndices.size(),0);
-		PsimagLite::Sort<VectorSizeType> sort;
-		sort.sort(summedIndices,iperm);
 		bool b = shouldAppear(summedIndices,2,"s",verbose);
-		if (!b) return false;
+		if (!verbose && !b) return false;
 
-		iperm.clear();
-		iperm.resize(freeIndices.size(),0);
-		sort.sort(freeIndices,iperm);
 		b = shouldAppear(freeIndices,1,"f",verbose);
 		return b;
 	}
@@ -231,20 +225,30 @@ private:
 	                  bool verbose) const
 	{
 		SizeType total = indices.size();
+		SizeType count = 0;
+		bool flag = true;
 		for (SizeType i = 0; i < total; ++i) {
-			if (indices[i] == 0 || indices[i] == times)
+			if (indices[i] == 0) continue;
+			if (indices[i] == times) {
+				count++;
 				continue;
+			}
+
 			if (verbose) {
 				PsimagLite::String str("Index " + c + ttos(i));
 				str += " should appear " + ttos(times) + " times, not ";
 				str += ttos(indices[i]) + " times\n";
 				std::cerr<<str;
+				flag = false;
+			} else {
+				return false;
 			}
-
-			return false;
 		}
 
-		return true;
+		if (verbose)
+			std::cerr<<"Found " + ttos(count) + " indices of type " + c + "\n";
+
+		return flag;
 	}
 
 	void cleanWhiteSpace(PsimagLite::String& srep) const

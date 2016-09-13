@@ -99,7 +99,7 @@ private:
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (O" + label + "F");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
-						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
+						buffer_ += ttos(y[i]+1.5*dy) + ");\n";
 						buffer_ += "\\draw[myfreelink] (O" + label + ttos(k);
 						buffer_ += ") -- (O" + label + "F" + ttos(k) + ");\n";
 					}
