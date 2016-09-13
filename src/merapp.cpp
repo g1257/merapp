@@ -84,7 +84,7 @@ int main(int ,char **argv)
 	tensorSrep2.conjugate();
 	testCase(counter++,tensorSrep2.sRep(),3);
 
-	PsimagLite::String str3 = "h0(f0,f1|f2,f3)\n";
+	PsimagLite::String str3 = "h0(f2,f3|f0,f1)\n";
 	Mera::TensorSrep tensorSrep3(str3);
 	Mera::TensorSrep::VectorSizeType indicesToContract(2,0);
 	indicesToContract[1] = 1;

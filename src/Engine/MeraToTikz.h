@@ -107,11 +107,12 @@ private:
 
 				// outs for u
 				a = dx/(outs - 1);
+				RealType doy = (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) ? dy : 0.5*dy;
 				for (SizeType j = 0; j < outs; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
 					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (O" + label;
-					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i] + dy) + ");\n";
+					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i] + doy) + ");\n";
 					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (O" + label + "F");
@@ -339,7 +340,7 @@ private:
 		str += "\\begin{tikzpicture}[\n";
 		str += "disen/.style={fill=mygreen},\n";
 		str += "isom/.style={fill=myfuchsia},\n";
-		str += "myfreelink/.style={thick,mygreen},\n";
+		str += "myfreelink/.style={very thick,mygreen},\n";
 		str += "ham/.style={fill=myyellow}\n";
 		str += "]";
 		os<<str<<"\n";

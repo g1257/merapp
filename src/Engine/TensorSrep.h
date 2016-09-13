@@ -98,6 +98,7 @@ public:
 		assert(index < data_.size());
 		VectorSizeType sErased;
 		data_[index]->eraseTensor(sErased);
+		std::cerr<<sErased;
 		SizeType ntensors = data_.size();
 		SizeType count = maxTag('f') + 1;
 		srep_ = "";
