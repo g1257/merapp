@@ -17,10 +17,14 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef PROGRAMGLOBALS_H
 #define PROGRAMGLOBALS_H
+#include "Vector.h"
+#include "RandomForTests.h"
 
 namespace Mera {
 
 struct ProgramGlobals {
+
+	typedef PsimagLite::RandomForTests<double> RngType;
 
 	static SizeType packTimeSpace(SizeType time, SizeType space, SizeType tauMax)
 	{
@@ -47,6 +51,8 @@ struct ProgramGlobals {
 
 		return str2;
 	}
+
+	static RngType rng;
 };
 } // namespace Mera
 #endif // PROGRAMGLOBALS_H
