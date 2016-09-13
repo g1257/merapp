@@ -46,9 +46,9 @@ A tensor stanza MUST have ins + outs > 0.
 A symbolic index is a string formed by a letter plus an optional non-zero integer.
 The letter can be 's' or 'f' to indicate whether the symbolic index is summed-over (s) or free (f).
 The letter 'd' indicates that the symbolic index is a dummy.
-The non-zero integer MUST be present for all symbolic letters except 'd'.
+The letter 'r' indicates that the symbolic index is the root of the mera (eye of the mera).
+The non-zero integer MUST be present for all symbolic letters except 'd' and 'r'.
 
 -- Whitespace
 One or more of the following: space, tab, eol.
-
 

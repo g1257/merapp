@@ -29,6 +29,23 @@ public:
 			data_[i] = new TensorStanzaType(*(other.data_[i]));
 	}
 
+	TensorSrep& operator=(const TensorSrep& other)
+	{
+		if (this == &other) return *this;
+
+		for (SizeType i = 0; i < data_.size(); ++i)
+			delete data_[i];
+
+		srep_ = other.srep_;
+
+		data_.clear();
+		data_.resize(other.data_.size());
+		for (SizeType i = 0; i < data_.size(); ++i)
+			data_[i] = new TensorStanzaType(*(other.data_[i]));
+
+		return *this;
+	}
+
 	~TensorSrep()
 	{
 		for (SizeType i = 0; i < data_.size(); ++i) {
@@ -138,8 +155,6 @@ public:
 	}
 
 private:
-
-	TensorSrep& operator=(const TensorSrep&);
 
 	void parseIt()
 	{

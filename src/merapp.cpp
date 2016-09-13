@@ -84,8 +84,15 @@ int main(int ,char **argv)
 	std::cerr<<"---------------------\n\n";
 	testCase(counter++,tensorSrep.sRep(),3);
 
+	tensorSrep2 = tensorSrep;
+	tensorSrep2.eraseTensor(0);
+	std::cerr<<"tensor with hole at 0, " + ttos(counter) + "\n";
+	tensorSrep2.isValid(true);
+	std::cerr<<"---------------------\n\n";
+	testCase(counter++,tensorSrep2.sRep(),3);
+
 	tensorSrep.eraseTensor(3);
-	std::cerr<<"tensor with hole" + ttos(counter) + "\n";
+	std::cerr<<"tensor with hole at 3, " + ttos(counter) + "\n";
 	tensorSrep.isValid(true);
 	testCase(counter++,tensorSrep.sRep(),3);
 }
