@@ -60,21 +60,22 @@ int main(int ,char **argv)
 	str2 += "w5(s47,s36,d|s45)r(s45,s44)";
 	testCase(counter++,str2,3);
 
-	Mera::TensorSrep tensorSep(str2);
-	Mera::TensorSrep tensorSep2(tensorSep);
-	tensorSep2.conjugate();
-	testCase(counter++,tensorSep2.sRep(),3);
+	Mera::TensorSrep tensorSrep(str2);
+	Mera::TensorSrep tensorSrep2(tensorSrep);
+	tensorSrep2.conjugate();
+	testCase(counter++,tensorSrep2.sRep(),3);
 
 	PsimagLite::String str3 = "h0(f0,f1|f2,f3)\n";
-	Mera::TensorSrep tensorSep3(str3);
+	Mera::TensorSrep tensorSrep3(str3);
 	Mera::TensorSrep::VectorSizeType indicesToContract(2,0);
 	indicesToContract[1] = 1;
-	tensorSep.contract(tensorSep3,indicesToContract);
-	testCase(counter++,tensorSep.sRep(),3);
+	tensorSrep.contract(tensorSrep3,indicesToContract);
+	testCase(counter++,tensorSrep.sRep(),3);
 
-	tensorSep.contract(tensorSep2);
-	testCase(counter++,tensorSep.sRep(),3);
+	tensorSrep.contract(tensorSrep2);
+	testCase(counter++,tensorSrep.sRep(),3);
 
-	tensorSep.eraseTensor(3);
-	testCase(counter++,tensorSep.sRep(),3);
+	tensorSrep.eraseTensor(3);
+	tensorSrep.isValid(true);
+	testCase(counter++,tensorSrep.sRep(),3);
 }

@@ -3,6 +3,7 @@
 #include "Vector.h"
 #include "TensorStanza.h"
 #include <algorithm>
+#include "Sort.h"
 
 namespace Mera {
 
@@ -90,6 +91,46 @@ public:
 	{
 		assert(ind < data_.size());
 		return *data_[ind];
+	}
+
+	bool isValid(bool verbose) const
+	{
+		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
+		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
+
+		VectorSizeType summedIndices(maxTag('s')+1,0);
+		VectorSizeType freeIndices(maxTag('f')+1,0);
+
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType legs = data_[i]->ins();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j,in) == TensorStanzaType::INDEX_TYPE_SUMMED)
+					summedIndices[data_[i]->legTag(j,in)]++;
+				else if (data_[i]->legType(j,in) == TensorStanzaType::INDEX_TYPE_FREE)
+					freeIndices[data_[i]->legTag(j,in)]++;
+			}
+
+			legs = data_[i]->outs();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j,out) == TensorStanzaType::INDEX_TYPE_SUMMED)
+					summedIndices[data_[i]->legTag(j,out)]++;
+				else if (data_[i]->legType(j,out) == TensorStanzaType::INDEX_TYPE_FREE)
+					freeIndices[data_[i]->legTag(j,out)]++;
+			}
+		}
+
+		VectorSizeType iperm(summedIndices.size(),0);
+		PsimagLite::Sort<VectorSizeType> sort;
+		sort.sort(summedIndices,iperm);
+		bool b = shouldAppear(summedIndices,2,"s",verbose);
+		if (!b) return false;
+
+		iperm.clear();
+		iperm.resize(freeIndices.size(),0);
+		sort.sort(freeIndices,iperm);
+		b = shouldAppear(freeIndices,1,"f",verbose);
+		return b;
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
@@ -182,6 +223,28 @@ private:
 			data_[i]->shiftSummedBy(ms);
 			srep_ += data_[i]->sRep();
 		}
+	}
+
+	bool shouldAppear(const VectorSizeType& indices,
+	                  SizeType times,
+	                  PsimagLite::String c,
+	                  bool verbose) const
+	{
+		SizeType total = indices.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (indices[i] == 0 || indices[i] == times)
+				continue;
+			if (verbose) {
+				PsimagLite::String str("Index " + c + ttos(i));
+				str += " should appear " + ttos(times) + " times, not ";
+				str += ttos(indices[i]) + " times\n";
+				std::cerr<<str;
+			}
+
+			return false;
+		}
+
+		return true;
 	}
 
 	void cleanWhiteSpace(PsimagLite::String& srep) const
