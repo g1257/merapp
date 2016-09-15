@@ -17,6 +17,17 @@ public:
 	    : dimensions_(1,dim0),data_(dim0)
 	{}
 
+	Tensor(const VectorSizeType& d) : dimensions_(d)
+	{
+		SizeType n = dimensions_.size();
+		if (n == 0) return;
+		assert(0 < n);
+		SizeType prod = dimensions_[0];
+		for (SizeType i = 1; i < dimensions_.size(); ++i)
+			prod *= dimensions_[i];
+		data_.resize(prod,0);
+	}
+
 	// FIXME: Take into account Hermitian and unitary properties
 	void setToRandom()
 	{

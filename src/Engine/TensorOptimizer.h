@@ -9,26 +9,9 @@
 
 namespace Mera {
 
-bool operator==(const std::pair<PsimagLite::String,SizeType>& p1,
-                const std::pair<PsimagLite::String,SizeType>& p2)
-{
-	if (p1.first != p2.first) return false;
-	if (p1.second != p2.second) return false;
-	return true;
-}
-
-bool operator!=(const std::pair<PsimagLite::String,SizeType>& p1,
-                const std::pair<PsimagLite::String,SizeType>& p2)
-{
-	if (p1.first != p2.first) return true;
-	if (p1.second != p2.second) return true;
-	return false;
-}
-
 template<typename ComplexOrRealType>
 class TensorOptimizer {
 
-	//typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
@@ -42,8 +25,42 @@ public:
 	typedef TensorEvalType::VectorTensorType VectorTensorType;
 
 	TensorOptimizer(IoInType& io,
+	                PsimagLite::String dstr,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize)
+	{
+		initTensorSreps(io,nameToOptimize,idToOptimize);
+
+		initTensorNameIds();
+
+		initTensors(dstr);
+
+		std::cerr<<"TensorOptimizer::ctor() done\n";
+	}
+
+	~TensorOptimizer()
+	{
+		SizeType terms = tensorSrep_.size();
+		for (SizeType i = 0; i < terms; ++i) {
+			delete tensorSrep_[i];
+			tensorSrep_[i] = 0;
+		}
+
+		terms = tensors_.size();
+		for (SizeType i = 0; i < terms; ++i) {
+			delete tensors_[i];
+			tensors_[i] = 0;
+		}
+	}
+
+	void optimize()
+	{}
+
+private:
+
+	void initTensorSreps(IoInType& io,
+	                     PsimagLite::String nameToOptimize,
+	                     SizeType idToOptimize)
 	{
 		SizeType terms = 0;
 		io.readline(terms,"TERMS=");
@@ -56,7 +73,10 @@ public:
 			tensorSrep_[i] = new TensorSrep(srep);
 			findTensors(*(tensorSrep_[i]),nameToOptimize,idToOptimize);
 		}
+	}
 
+	void initTensorNameIds()
+	{
 		PsimagLite::Sort<VectorPairStringSizeType> sort;
 		VectorSizeType perm(tensorNameIds_.size(),0);
 		sort.sort(tensorNameIds_,perm);
@@ -64,22 +84,53 @@ public:
 		                            tensorNameIds_.end()) -
 		                tensorNameIds_.begin());
 		tensorNameIds_.resize(end);
-		std::cerr<<"TensorOptimizer::ctor() done\n";
 	}
 
-	~TensorOptimizer()
+	void initTensors(PsimagLite::String dstr)
 	{
-		SizeType terms = tensorSrep_.size();
-		for (SizeType i = 0; i < terms; ++i) {
-			delete tensorSrep_[i];
-			tensorSrep_[i] = 0;
+		tensors_.resize(tensorNameIds_.size());
+		SizeType ntensors = tensors_.size();
+
+		TensorSrep td(dstr);
+		if (td.size() != ntensors) {
+			PsimagLite::String str("TensorOptimizer dimension string " + ttos(td.size()));
+			str += ", was expecting " + ttos(ntensors) + "\n";
+			throw PsimagLite::RuntimeError(str);
+		}
+
+		for (SizeType i = 0; i < ntensors; ++i) {
+
+			PsimagLite::String name = td(i).name();
+			SizeType id = td(i).id();
+			PairStringSizeType p(name,id);
+			VectorPairStringSizeType::iterator x = std::find(tensorNameIds_.begin(),
+			                                                 tensorNameIds_.end(),
+			                                                 p);
+			if (x == tensorNameIds_.end()) {
+				std::cerr<<"WARNING: Unused tensor name= "<<name<<" id= "<<id<<"\n";
+				continue;
+			}
+
+			SizeType ind = x - tensorNameIds_.begin();
+			assert(ind < tensors_.size());
+
+			SizeType ins = td(i).ins();
+			SizeType outs = td(i).outs();
+			VectorSizeType dimensions(ins + outs);
+			for (SizeType j = 0; j < ins; ++j) {
+				SizeType legTag = td(i).legTag(j,TensorStanza::INDEX_DIR_IN);
+				dimensions[j] = legTag;
+			}
+
+			for (SizeType j = 0; j < outs; ++j) {
+				SizeType legTag = td(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
+				dimensions[j+ins] = legTag;
+			}
+
+			assert(ind < tensors_.size());
+			tensors_[ind] = new TensorType(dimensions);
 		}
 	}
-
-	void optimize()
-	{}
-
-private:
 
 	void findTensors(const TensorSrep& t,
 	                 PsimagLite::String nameToOptimize,
@@ -92,7 +143,6 @@ private:
 			bool conjugate = t(i).isConjugate();
 			bool b = (name == nameToOptimize && id == idToOptimize && conjugate);
 			if (!b && conjugate) continue;
-			if (name == "r") continue;
 			PairStringSizeType p(name,id);
 			tensorNameIds_.push_back(p);
 		}
@@ -103,8 +153,9 @@ private:
 	TensorOptimizer& operator=(const TensorOptimizer&);
 
 	VectorTensorSrepType tensorSrep_;
-	VectorTensorType tensors_;
 	VectorPairStringSizeType tensorNameIds_;
+	VectorTensorType tensors_;
+
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H

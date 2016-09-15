@@ -20,7 +20,9 @@ int main(int argc, char** argv)
 		throw PsimagLite::RuntimeError(PsimagLite::String(argv[0])
 	        + ": Error reading Y_FOR_TENSOR\n");
 
-	TensorOptimizerType to(io,tokens[0],std::atoi(tokens[1].c_str()));
+	PsimagLite::String dstr = "u0(s2,s2|s1,s2)u3(s2,s2|s2,s2)";
+	dstr += "w0(s2,s2|s4)w3(s2,s1|s2)r(s4,s2)h0(s2,s2|s2,s2)\n";
+	TensorOptimizerType to(io,dstr,tokens[0],std::atoi(tokens[1].c_str()));
 
 	to.optimize();
 }
