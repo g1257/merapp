@@ -34,7 +34,7 @@ void testCase(SizeType num,
               PsimagLite::String srep,
               SizeType tauMax)
 {
-	std::cout<<"TEST NUMBER "<<num<<" ";
+	std::cout<<"TEST NUMBER "<<num<<"\n";
 	Mera::ParametersForSolver params(tauMax);
 	Mera::MeraSolver solver(srep,params);
 	solver.computeGroundState();
@@ -113,10 +113,27 @@ void oldTests(char **argv)
 	testCase(counter++,tensorSrep.sRep(),3);
 }
 
-int main(int ,char **argv)
+int main(int argc, char **argv)
 {
+	if (argc == 1) {
+		std::cerr<<"USAGE: "<<argv[0]<<" tauMax\n";
+		return 1;
+	}
+
+	PsimagLite::String str("");
+
+	if (argc == 2)
+		str = "u0(f0,f1|d,s0)u3(f2,f3|s1,s2)w0(s0,s1|s3)w3(s2,d|s4)r(s3,s4)\n";
+
+	if (argc > 2) {
+		char c = '\0';
+		while (std::cin>>c) {
+			str += c;
+		}
+	}
+
 	SizeType counter = 0;
 	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
-	PsimagLite::String str1 = "u0(f0,f1|d,s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2,d|s4)r(s3,s4)\n";
-	testCase(counter++,str1,3);
+
+	testCase(counter++,str,atoi(argv[1]));
 }
