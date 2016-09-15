@@ -120,6 +120,39 @@ public:
 		}
 	}
 
+	void swapFree(SizeType ind, SizeType jnd)
+	{
+		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
+		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType legs = data_[i]->ins();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j,in) != TensorStanzaType::INDEX_TYPE_FREE)
+					continue;
+
+				SizeType index = data_[i]->legTag(j,in);
+				if (index == ind)
+					data_[i]->legTag(j,in) = jnd;
+				if (index == jnd)
+					data_[i]->legTag(j,in) = ind;
+			}
+
+			legs = data_[i]->outs();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j,out) != TensorStanzaType::INDEX_TYPE_FREE)
+					continue;
+
+				SizeType index = data_[i]->legTag(j,out);
+				if (index == ind)
+					data_[i]->legTag(j,out) = jnd;
+				if (index == jnd)
+					data_[i]->legTag(j,out) = ind;
+			}
+		}
+
+	}
+
 	SizeType size() const { return data_.size(); }
 
 	const TensorStanza& operator()(SizeType ind) const
@@ -155,11 +188,11 @@ public:
 			}
 		}
 
-		bool b = shouldAppear(summedIndices,2,"s",verbose);
-		if (!verbose && !b) return false;
+		bool b1 = shouldAppear(summedIndices,2,"s",verbose);
+		if (!verbose && !b1) return false;
 
-		b = shouldAppear(freeIndices,1,"f",verbose);
-		return b;
+		bool b2 = shouldAppear(freeIndices,1,"f",verbose);
+		return (b1 & b2);
 	}
 
 	SizeType maxTag(char c) const

@@ -58,7 +58,7 @@ private:
 		if (tensorSrep_(ind).name() == "r") return;
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
-		SizeType sites = tensorSrep_.maxTag('f') + 1;
+		SizeType sites = tensorSrep_.maxTag('f');
 		std::cout<<"Y_FOR_TENSOR="<<name<<","<<id<<"\n";
 		std::cout<<"TERMS="<<sites<<"\n";
 		for (SizeType site = 0; site < sites; ++site) {
@@ -72,21 +72,25 @@ private:
 	{
 		Mera::TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();
+		tensorSrep2.swapFree(0,site);
+		tensorSrep2.swapFree(1,site+1);
 		PsimagLite::String str3("h0(f");
 		str3 += ttos(site+2) + ",f";
 		str3 += ttos(site+3) + "|f";
 		str3 += ttos(site) + ",f";
 		str3 += ttos(site+1) + ")\n";
 		Mera::TensorSrep tensorSrep3(str3);
-		Mera::TensorSrep::VectorSizeType indicesToContract(2,0);
-		indicesToContract[1] = 1;
+		Mera::TensorSrep::VectorSizeType indicesToContract(2,site);
+		indicesToContract[1] = site + 1;
 		Mera::TensorSrep tensorSrep4(tensorSrep_);
 		tensorSrep4.contract(tensorSrep3,indicesToContract);
-		tensorSrep4.isValid(true);
+		if (!tensorSrep4.isValid(true))
+			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		tensorSrep4.contract(tensorSrep2);
-		tensorSrep4.isValid(true);
 		tensorSrep4.eraseTensor(ind);
 		std::cout<<"STRING="<<tensorSrep4.sRep()<<"\n";
+		if (!tensorSrep4.isValid(true))
+			throw PsimagLite::RuntimeError("Invalid tensor\n");
 	}
 
 	const ParametersForSolver& params_;

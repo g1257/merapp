@@ -54,7 +54,9 @@ public:
 	}
 
 	void optimize()
-	{}
+	{
+
+	}
 
 private:
 
@@ -72,6 +74,7 @@ private:
 			std::cerr<<"Read string "<<srep<<"\n";
 			tensorSrep_[i] = new TensorSrep(srep);
 			findTensors(*(tensorSrep_[i]),nameToOptimize,idToOptimize);
+			std::cerr<<"Free indices= "<<(1+tensorSrep_[i]->maxTag('f'))<<"\n";
 		}
 	}
 

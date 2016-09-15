@@ -283,7 +283,18 @@ public:
 		return INDEX_TYPE_DUMMY;
 	}
 
-	SizeType legTag(SizeType ind, IndexDirectionEnum dir) const
+	const SizeType& legTag(SizeType ind, IndexDirectionEnum dir) const
+	{
+		if (dir == INDEX_DIR_IN) {
+			assert(ind < insSi_.size());
+			return insSi_[ind].second;
+		}
+
+		assert(ind < outsSi_.size());
+		return outsSi_[ind].second;
+	}
+
+	SizeType& legTag(SizeType ind, IndexDirectionEnum dir)
 	{
 		if (dir == INDEX_DIR_IN) {
 			assert(ind < insSi_.size());
