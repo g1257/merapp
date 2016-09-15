@@ -34,13 +34,10 @@ public:
 	    : params_(params), tensorSrep_(srep)
 	{}
 
-	void computeGroundState()
+	void computeEnvirons()
 	{
-		SizeType qiter = 1;
-
-		for (SizeType iter=0; iter<qiter; ++iter)
-			for (SizeType i = 0; i < tensorSrep_.size(); ++i)
-				environForTensor(iter,i);
+		for (SizeType i = 0; i < tensorSrep_.size(); ++i)
+			environForTensor(i);
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const MeraSolver& ms)
@@ -56,19 +53,19 @@ private:
 	MeraSolver& operator=(const MeraSolver&);
 
 	// find Y (environment) for this tensor
-	void environForTensor(SizeType iter, SizeType ind) const
+	void environForTensor(SizeType ind) const
 	{
 		if (tensorSrep_(ind).name() == "r") return;
 		SizeType sites = tensorSrep_.maxTag('f') + 1;
 		std::cout<<"Y_FOR_TENSOR "<<ind<<"\n";
 		for (SizeType site = 0; site < sites; ++site) {
-			environForTensor(iter,ind,site);
+			environForTensor(ind,site);
 		}
 
 		std::cout<<"\n";
 	}
 
-	void environForTensor(SizeType iter, SizeType ind, SizeType site) const
+	void environForTensor(SizeType ind, SizeType site) const
 	{
 		Mera::TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();

@@ -37,7 +37,7 @@ void testCase(SizeType num,
 	std::cout<<"TEST NUMBER "<<num<<"\n";
 	Mera::ParametersForSolver params(tauMax);
 	Mera::MeraSolver solver(srep,params);
-	solver.computeGroundState();
+	solver.computeEnvirons();
 	std::cout<<solver;
 	std::cout<<"-----------------------------------\n\n\n";
 
@@ -134,6 +134,7 @@ int main(int argc, char **argv)
 
 	SizeType counter = 0;
 	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
-
-	testCase(counter++,str,atoi(argv[1]));
+	SizeType tauMax = atoi(argv[1]);
+	std::cout<<"TauMax="<<tauMax;
+	testCase(counter++,str,tauMax);
 }
