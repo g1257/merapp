@@ -6,6 +6,7 @@
 #include "TensorEval.h"
 #include <algorithm>
 #include "Sort.h"
+#include "Matrix.h"
 
 namespace Mera {
 
@@ -15,6 +16,7 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
+	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 
 public:
@@ -23,6 +25,8 @@ public:
 	typedef Mera::TensorEval<double> TensorEvalType;
 	typedef TensorEvalType::TensorType TensorType;
 	typedef TensorEvalType::VectorTensorType VectorTensorType;
+	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
+	typedef std::pair<SizeType,SizeType> PairSizeType;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String dstr,
@@ -55,7 +59,10 @@ public:
 
 	void optimize()
 	{
-
+		SizeType terms = tensorSrep_.size();
+		for (SizeType i = 0; i < terms; ++i) {
+			appendToMatrix(*(tensorSrep_[i]));
+		}
 	}
 
 private:
@@ -102,7 +109,6 @@ private:
 		}
 
 		for (SizeType i = 0; i < ntensors; ++i) {
-
 			PsimagLite::String name = td(i).name();
 			SizeType id = td(i).id();
 			PairStringSizeType p(name,id);
@@ -151,6 +157,94 @@ private:
 		}
 	}
 
+	void appendToMatrix(const TensorSrep& t)
+	{
+		SizeType total = t.maxTag('f') + 1;
+		VectorSizeType freeIndices(total,0);
+		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
+		VectorSizeType dimensions(total,0);
+		prepareFreeIndices(dimensions,directions,t);
+		while (nextFree(freeIndices)) {
+			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
+			m_(rc.first,rc.second) += 0.0;
+		}
+	}
+
+	void prepareFreeIndices(VectorSizeType& dimensions,
+	                        VectorDirType& directions,
+	                        const TensorSrep& t) const
+	{
+		SizeType n = dimensions.size();
+		assert(n == directions.size());
+		SizeType ntensors = t.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			PsimagLite::String name = t(i).name();
+			SizeType id = t(i).id();
+			PairStringSizeType p(name,id);
+			VectorPairStringSizeType::const_iterator x = std::find(tensorNameIds_.begin(),
+			                                                       tensorNameIds_.end(),
+			                                                       p);
+			if (x == tensorNameIds_.end()) {
+				std::cerr<<"WARNING: Unused tensor name= "<<name<<" id= "<<id<<"\n";
+				continue;
+			}
+
+			SizeType ind = x - tensorNameIds_.begin();
+			assert(ind < tensors_.size());
+
+			SizeType ins = t(i).ins();
+			SizeType outs = t(i).outs();
+			for (SizeType j = 0; j < ins; ++j) {
+				TensorStanza::IndexTypeEnum legType = t(i).legType(j,
+				                                                   TensorStanza::INDEX_DIR_IN);
+				if (legType != TensorStanza::INDEX_TYPE_FREE) continue;
+				SizeType index = t(i).legTag(j,
+				                             TensorStanza::INDEX_DIR_IN);
+				assert(index < dimensions.size());
+				dimensions[index] = tensors_[ind]->dimension(j);
+			}
+
+			for (SizeType j = 0; j < outs; ++j) {
+				TensorStanza::IndexTypeEnum legType = t(i).legType(j,
+				                                                   TensorStanza::INDEX_DIR_OUT);
+				if (legType != TensorStanza::INDEX_TYPE_FREE) continue;
+				SizeType index = t(i).legTag(j,
+				                             TensorStanza::INDEX_DIR_OUT);
+				assert(index < dimensions.size());
+				dimensions[index] = tensors_[ind]->dimension(j+ins);
+			}
+		}
+	}
+
+	bool nextFree(VectorSizeType& freeIndices) const
+	{
+		return false;
+	}
+
+	PairSizeType getRowAndColFromFree(VectorSizeType& freeIndices,
+	                                  const VectorSizeType& dimensions,
+	                                  const VectorDirType& dirs) const
+	{
+		SizeType n = freeIndices.size();
+		assert(n == dirs.size());
+		assert(n == dimensions.size());
+		SizeType row = 0;
+		SizeType col = 0;
+		SizeType prodRow = 1;
+		SizeType prodCol = 1;
+		for (SizeType i = 0; i < n; ++i) {
+			if (dirs[i] == TensorStanza::INDEX_DIR_IN) {
+				row += freeIndices[i]*prodRow;
+				prodRow *= dimensions[i];
+			} else {
+				col += freeIndices[i]*prodCol;
+				prodCol *= dimensions[i];
+			}
+		}
+
+		return PairSizeType(row,col);
+	}
+
 	TensorOptimizer(const TensorOptimizer&);
 
 	TensorOptimizer& operator=(const TensorOptimizer&);
@@ -158,6 +252,7 @@ private:
 	VectorTensorSrepType tensorSrep_;
 	VectorPairStringSizeType tensorNameIds_;
 	VectorTensorType tensors_;
+	MatrixType m_;
 
 }; // class TensorOptimizer
 } // namespace Mera

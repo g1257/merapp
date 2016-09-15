@@ -35,6 +35,12 @@ public:
 			data_[i] = 10.0*ProgramGlobals::rng();
 	}
 
+	const SizeType& dimension(SizeType j) const
+	{
+		assert(j < dimensions_.size());
+		return dimensions_[j];
+	}
+
 	SizeType args() const { return dimensions_.size(); }
 
 	SizeType argSize(SizeType ind) const
