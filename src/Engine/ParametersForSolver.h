@@ -1,5 +1,6 @@
 #ifndef PARAMETERSFORSOLVER_H
 #define PARAMETERSFORSOLVER_H
+#include "Vector.h"
 
 namespace Mera {
 
