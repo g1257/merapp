@@ -16,7 +16,7 @@ int main()
 	}
 
 	TensorEvalType tensorEval(str,vt);
-	std::cout<<tensorEval.eval();
+	std::cout<<tensorEval.eval()<<"\n";
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		delete vt[i];

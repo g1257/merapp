@@ -65,7 +65,7 @@ private:
 		SizeType ntensors = tensorSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType id = tensorSrep_(i).id();
-			SizeType mid = id; //FIXME map id to order in data_ array
+			SizeType mid = idNameToIndex(tensorSrep_(i).name(),id);
 			SizeType ins = tensorSrep_(i).ins();
 			for (SizeType j = 0; j < ins; ++j) {
 				if (tensorSrep_(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
@@ -107,29 +107,42 @@ private:
 	                                 const VectorSizeType& free) const
 	{
 		SizeType id = ts.id();
-		SizeType mid = id; //FIXME map id to order in data_ array
+		SizeType mid = idNameToIndex(ts.name(),id);
 		SizeType ins = ts.ins();
 		VectorSizeType args(data_[mid]->args());
 		for (SizeType j = 0; j < ins; ++j) {
-			SizeType sIndex = ts.legTag(j,TensorStanza::INDEX_DIR_IN);
+			SizeType index = ts.legTag(j,TensorStanza::INDEX_DIR_IN);
 
 			switch (ts.legType(j,TensorStanza::INDEX_DIR_IN)) {
 
 			case TensorStanza::INDEX_TYPE_SUMMED:
-
-				assert(sIndex < summed.size());
+				assert(index < summed.size());
 				assert(j < args.size());
-				args[j] = summed[sIndex];
+				args[j] = summed[index];
 				break;
 
 			case TensorStanza::INDEX_TYPE_FREE:
+				assert(index < free.size());
+				assert(j < args.size());
+				args[j] = free[index];
 				break;
+
 			case  TensorStanza::INDEX_TYPE_DUMMY:
+				assert(j < args.size());
+				args[j] = 0;
 				break;
 			}
 		}
 
 		return data_[mid]->operator()(args);
+	}
+
+	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
+	{
+		if (name != "u")
+			throw PsimagLite::RuntimeError("idNameToIndex: only us for now, sorry\n");
+
+		return id;
 	}
 
 	TensorSrepType tensorSrep_;

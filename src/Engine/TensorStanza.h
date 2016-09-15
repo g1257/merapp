@@ -259,6 +259,8 @@ public:
 
 	const PsimagLite::String& sRep() const { return srep_; }
 
+	const PsimagLite::String& name() const { return name_; }
+
 	SizeType id() const { return id_; }
 
 	SizeType ins() const { return insSi_.size(); }
