@@ -56,8 +56,10 @@ private:
 	void environForTensor(SizeType ind) const
 	{
 		if (tensorSrep_(ind).name() == "r") return;
+		SizeType id = tensorSrep_(ind).id();
+		PsimagLite::String name = tensorSrep_(ind).name();
 		SizeType sites = tensorSrep_.maxTag('f') + 1;
-		std::cout<<"Y_FOR_TENSOR"<<ind<<"\n";
+		std::cout<<"Y_FOR_TENSOR="<<name<<","<<id<<"\n";
 		std::cout<<"TERMS="<<sites<<"\n";
 		for (SizeType site = 0; site < sites; ++site) {
 			environForTensor(ind,site);

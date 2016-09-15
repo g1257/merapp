@@ -12,7 +12,15 @@ int main(int argc, char** argv)
 	SizeType tauMax = 0;
 	io.readline(tauMax,"TauMax=");
 
-	TensorOptimizerType to(io,0);
+	PsimagLite::String str("");
+	io.readline(str,"Y_FOR_TENSOR=");
+	PsimagLite::Vector<PsimagLite::String>::Type tokens;
+	PsimagLite::tokenizer(str,tokens,",");
+	if (tokens.size() != 2)
+		throw PsimagLite::RuntimeError(PsimagLite::String(argv[0])
+	        + ": Error reading Y_FOR_TENSOR\n");
+
+	TensorOptimizerType to(io,tokens[0],std::atoi(tokens[1].c_str()));
 
 	to.optimize();
 }
