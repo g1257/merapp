@@ -39,25 +39,25 @@ public:
 			sum += evalInternal(summed,whereSummed,free);
 			std::cerr<<summed;
 			std::cerr<<"---------\n";
-		} while (nextSummed(summed,dimensions));
+		} while (nextIndex(summed,dimensions));
 
 		return sum;
 	}
 
-private:
-
-	bool nextSummed(VectorSizeType& summed,
-	                const VectorSizeType& dimmensions) const
+	static bool nextIndex(VectorSizeType& summed,
+	                      const VectorSizeType& dimensions)
 	{
 		for (SizeType i = 0; i < summed.size(); ++i) {
 			summed[i]++;
-			if (summed[i] < dimmensions[i]) break;
+			if (summed[i] < dimensions[i]) break;
 			if (i +1 == summed.size()) return false;
 			summed[i] = 0;
 		}
 
 		return true;
 	}
+
+private:
 
 	void prepare(VectorPairSizeType& whereSummed,
 	             VectorSizeType& dimmensions) const

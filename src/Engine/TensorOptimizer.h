@@ -62,6 +62,8 @@ public:
 		SizeType terms = tensorSrep_.size();
 		for (SizeType i = 0; i < terms; ++i) {
 			appendToMatrix(*(tensorSrep_[i]));
+			std::cerr<<"WARNING: DOING ONE TERM ONLY!!\n";
+			break;
 		}
 	}
 
@@ -164,10 +166,18 @@ private:
 		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
 		VectorSizeType dimensions(total,0);
 		prepareFreeIndices(dimensions,directions,t);
-		while (nextFree(freeIndices)) {
+		PairSizeType rc = getRowsAndCols(dimensions,directions);
+		if (m_.n_row() == 0) {
+			m_.resize(rc.first, rc.second);
+		} else if (m_.n_row() != rc.first || m_.n_col() != rc.second) {
+			PsimagLite::String str("Hamiltonian terms environ \n");
+			throw PsimagLite::RuntimeError(str);
+		}
+
+		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
 			m_(rc.first,rc.second) += 0.0;
-		}
+		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
 	}
 
 	void prepareFreeIndices(VectorSizeType& dimensions,
@@ -202,6 +212,8 @@ private:
 				                             TensorStanza::INDEX_DIR_IN);
 				assert(index < dimensions.size());
 				dimensions[index] = tensors_[ind]->dimension(j);
+				assert(index < directions.size());
+				directions[index] = TensorStanza::INDEX_DIR_IN;
 			}
 
 			for (SizeType j = 0; j < outs; ++j) {
@@ -212,13 +224,10 @@ private:
 				                             TensorStanza::INDEX_DIR_OUT);
 				assert(index < dimensions.size());
 				dimensions[index] = tensors_[ind]->dimension(j+ins);
+				assert(index < directions.size());
+				directions[index] = TensorStanza::INDEX_DIR_OUT;
 			}
 		}
-	}
-
-	bool nextFree(VectorSizeType& freeIndices) const
-	{
-		return false;
 	}
 
 	PairSizeType getRowAndColFromFree(VectorSizeType& freeIndices,
@@ -243,6 +252,22 @@ private:
 		}
 
 		return PairSizeType(row,col);
+	}
+
+	PairSizeType getRowsAndCols(const VectorSizeType& dimensions,
+	                            const VectorDirType& dirs) const
+	{
+		SizeType n = dimensions.size();
+		assert(n == dirs.size());
+
+		VectorSizeType freeIndices(n,0);
+		for (SizeType i = 0; i < n; ++i) {
+			if (dimensions[i] == 0) continue;
+			freeIndices[i] = dimensions[i] - 1;
+		}
+
+		PairSizeType p = getRowAndColFromFree(freeIndices,dimensions,dirs);
+		return PairSizeType(p.first + 1, p.second + 1);
 	}
 
 	TensorOptimizer(const TensorOptimizer&);
