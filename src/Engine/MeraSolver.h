@@ -57,7 +57,8 @@ private:
 	{
 		if (tensorSrep_(ind).name() == "r") return;
 		SizeType sites = tensorSrep_.maxTag('f') + 1;
-		std::cout<<"Y_FOR_TENSOR "<<ind<<"\n";
+		std::cout<<"Y_FOR_TENSOR"<<ind<<"\n";
+		std::cout<<"TERMS="<<sites<<"\n";
 		for (SizeType site = 0; site < sites; ++site) {
 			environForTensor(ind,site);
 		}
@@ -83,7 +84,7 @@ private:
 		tensorSrep4.contract(tensorSrep2);
 		tensorSrep4.isValid(true);
 		tensorSrep4.eraseTensor(ind);
-		std::cout<<"STRING: "<<tensorSrep4.sRep()<<"\n";
+		std::cout<<"STRING="<<tensorSrep4.sRep()<<"\n";
 	}
 
 	const ParametersForSolver& params_;
