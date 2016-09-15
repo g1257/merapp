@@ -24,7 +24,35 @@ public:
 			data_[i] = 10.0*ProgramGlobals::rng();
 	}
 
+	SizeType args() const { return dimensions_.size(); }
+
+	SizeType argSize(SizeType ind) const
+	{
+		assert(ind < dimensions_.size());
+		return dimensions_[ind];
+	}
+
+	const ComplexOrRealType& operator()(const VectorSizeType& args) const
+	{
+		SizeType index = pack(args);
+		assert(index < data_.size());
+		return data_[index];
+	}
+
 private:
+
+	SizeType pack(const VectorSizeType& args) const
+	{
+		SizeType index = args[0];
+		SizeType prod = dimensions_[0];
+
+		for (SizeType i = 1; i < args.size(); ++i) {
+			index += args[i]*prod;
+			prod *= dimensions_[i];
+		}
+
+		return index;
+	}
 
 	VectorSizeType dimensions_;
 	VectorComplexOrRealType data_;
