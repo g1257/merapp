@@ -55,11 +55,33 @@ private:
 
 	MeraSolver& operator=(const MeraSolver&);
 
-	void optimizeTensor(SizeType iter, SizeType ind)
+	// find Y (environment) for this tensor
+	void optimizeTensor(SizeType iter, SizeType ind) const
 	{
-		// find Y (environment) for this tensor
-		// Y = USV^+
-		// w = -VU^+
+		SizeType sites = tensorSrep_(ind).maxTag('f') + 1;
+		for (SizeType site = 0; site < sites; ++site) {
+			optimizeTensorPart(iter,ind,site);
+		}
+	}
+
+	void optimizeTensorPart(SizeType iter, SizeType ind, SizeType site) const
+	{
+		Mera::TensorSrep tensorSrep2(tensorSrep_);
+		tensorSrep2.conjugate();
+		PsimagLite::String str3("h0(f");
+		str3 += ttos(site+2) + ",f";
+		str3 += ttos(site+3) + "|f";
+		str3 += ttos(site) + ",f";
+		str3 += ttos(site+1) + ")\n";
+		Mera::TensorSrep tensorSrep3(str3);
+		Mera::TensorSrep::VectorSizeType indicesToContract(2,0);
+		indicesToContract[1] = 1;
+		Mera::TensorSrep tensorSrep4(tensorSrep_);
+		tensorSrep4.contract(tensorSrep3,indicesToContract);
+		tensorSrep4.isValid(true);
+		tensorSrep4.contract(tensorSrep2);
+		tensorSrep4.isValid(true);
+		tensorSrep4.eraseTensor(ind);
 	}
 
 	const ParametersForSolver& params_;

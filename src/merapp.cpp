@@ -50,7 +50,7 @@ void testCase(SizeType num,
 	fout.close();
 }
 
-int main(int ,char **argv)
+void oldTests(char **argv)
 {
 	SizeType counter = 0;
 	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
@@ -111,4 +111,12 @@ int main(int ,char **argv)
 	std::cerr<<"tensor with hole at 3, " + ttos(counter) + "\n";
 	tensorSrep.isValid(true);
 	testCase(counter++,tensorSrep.sRep(),3);
+}
+
+int main(int ,char **argv)
+{
+	SizeType counter = 0;
+	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
+	PsimagLite::String str1 = "u0(f0,f1|d,s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2,d|s4)r(s3,s4)\n";
+	testCase(counter++,str1,3);
 }

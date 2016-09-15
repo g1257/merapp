@@ -269,7 +269,15 @@ public:
 
 	IndexTypeEnum legType(SizeType ind, IndexDirectionEnum dir) const
 	{
-		char c = (dir == INDEX_DIR_IN) ? insSi_[ind].first : outsSi_[ind].first;
+		char c = '\0';
+		if (dir == INDEX_DIR_IN) {
+			assert(ind < insSi_.size());
+			c = insSi_[ind].first;
+		}  else {
+			assert(ind < outsSi_.size());
+			c = outsSi_[ind].first;
+		}
+
 		if (c == 's') return INDEX_TYPE_SUMMED;
 		if (c == 'f') return INDEX_TYPE_FREE;
 		return INDEX_TYPE_DUMMY;
@@ -277,7 +285,13 @@ public:
 
 	SizeType legTag(SizeType ind, IndexDirectionEnum dir) const
 	{
-		return (dir == INDEX_DIR_IN) ? insSi_[ind].second : outsSi_[ind].second;
+		if (dir == INDEX_DIR_IN) {
+			assert(ind < insSi_.size());
+			return insSi_[ind].second;
+		}
+
+		assert(ind < outsSi_.size());
+		return outsSi_[ind].second;
 	}
 
 	TensorTypeEnum type() const { return type_; }
