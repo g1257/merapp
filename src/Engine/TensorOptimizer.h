@@ -196,11 +196,15 @@ private:
 			throw PsimagLite::RuntimeError(str);
 		}
 
+		SizeType count = 0;
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
 			TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
-			m_(rc.first,rc.second) += eval.eval(freeIndices);
+			ComplexOrRealType tmp = eval(freeIndices);
+			m_(rc.first,rc.second) += tmp;
+			count++;
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
+		std::cerr<<count<<"\n";
 	}
 
 	void prepareFreeIndices(VectorSizeType& dimensions,

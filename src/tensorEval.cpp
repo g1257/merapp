@@ -20,7 +20,7 @@ int main()
 	idNames.push_back(TensorEvalType::PairStringSizeType("u",1));
 	TensorEvalType tensorEval(str,vt,idNames);
 	TensorEvalType::VectorSizeType freeIndices;
-	std::cout<<tensorEval.eval(freeIndices)<<"\n";
+	std::cout<<tensorEval(freeIndices)<<"\n";
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		delete vt[i];

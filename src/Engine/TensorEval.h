@@ -28,7 +28,7 @@ public:
 	    : tensorSrep_(srep), data_(vt), tensorNameIds_(tensorNameIds)
 	{}
 
-	ComplexOrRealType eval(const VectorSizeType& free) const
+	ComplexOrRealType operator()(const VectorSizeType& free) const
 	{
 		SizeType total = tensorSrep_.maxTag('s') + 1;
 		VectorSizeType summed(total,0);
