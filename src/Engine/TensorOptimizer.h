@@ -32,7 +32,10 @@ public:
 	                PsimagLite::String dstr,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize)
+	    : twoSiteHam_(4,4)
 	{
+		setTwoSiteHam();
+
 		initTensorSreps(io,nameToOptimize,idToOptimize);
 
 		initTensorNameIds();
@@ -63,11 +66,24 @@ public:
 		for (SizeType i = 0; i < terms; ++i) {
 			appendToMatrix(*(tensorSrep_[i]));
 			std::cerr<<"WARNING: DOING ONE TERM ONLY!!\n";
+			std::cout<<m_;
 			break;
 		}
 	}
 
 private:
+
+	// FIXME: pick up model dependency here
+	void setTwoSiteHam()
+	{
+		for (SizeType i = 0; i < 4; ++i) {
+			twoSiteHam_(i,i) = 0.25; // Sz Sz
+			if (i == 3) continue;
+			for (SizeType j = 0; j < 3; ++j) {
+				twoSiteHam_(i,j) = 0.5; // S+S- + S-S+
+			}
+		}
+	}
 
 	void initTensorSreps(IoInType& io,
 	                     PsimagLite::String nameToOptimize,
@@ -140,6 +156,11 @@ private:
 
 			assert(ind < tensors_.size());
 			tensors_[ind] = new TensorType(dimensions);
+			if (name == "h") {
+				tensors_[ind]->setToMatrix(ins,twoSiteHam_);
+			} else {
+				tensors_[ind]->setToIdentity(ins);
+			}
 		}
 	}
 
@@ -279,6 +300,7 @@ private:
 	VectorTensorSrepType tensorSrep_;
 	VectorPairStringSizeType tensorNameIds_;
 	VectorTensorType tensors_;
+	MatrixType twoSiteHam_;
 	MatrixType m_;
 
 }; // class TensorOptimizer
