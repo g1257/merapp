@@ -16,6 +16,7 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
+	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 
 public:
 
@@ -32,7 +33,7 @@ public:
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize)
 	    : twoSiteHam_(4,4)
-	{	
+	{
 		setTwoSiteHam(false);
 
 		initTensorSreps(io,nameToOptimize,idToOptimize);
@@ -40,6 +41,7 @@ public:
 		initTensorNameIds();
 
 		PsimagLite::String dstr("");
+		io.rewind();
 		io.readline(dstr,"DIMENSION_SREP=");
 		initTensors(dstr);
 
@@ -80,11 +82,11 @@ private:
 	void setTwoSiteHam(bool testWithIdentity)
 	{
 		for (SizeType i = 0; i < 4; ++i)
-				twoSiteHam_(i,i) = 1.0;
+			twoSiteHam_(i,i) = 1.0;
 		if (testWithIdentity) return;
 
 		for (SizeType i = 0; i < 4; ++i) {
-			 // Sz Sz
+			// Sz Sz
 			twoSiteHam_(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
 			if (i == 3) continue;
 			for (SizeType j = 0; j < 3; ++j) {
@@ -213,10 +215,15 @@ private:
 		VectorSizeType freeIndices(total,0);
 		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
 		VectorSizeType dimensions(total,0);
-		prepareFreeIndices(dimensions,directions,t);
+		VectorBoolType conjugate(total,false);
+		prepareFreeIndices(dimensions,directions,conjugate,t);
+		modifyDirections(directions,conjugate);
 		PairSizeType rc = getRowsAndCols(dimensions,directions);
+		bool invert = false;
 		if (m_.n_row() == 0) {
 			m_.resize(rc.first, rc.second);
+		} else if (m_.n_row() == rc.second && m_.n_col() == rc.first) {
+			invert = true;
 		} else if (m_.n_row() != rc.first || m_.n_col() != rc.second) {
 			PsimagLite::String str("Hamiltonian terms environ \n");
 			throw PsimagLite::RuntimeError(str);
@@ -227,7 +234,10 @@ private:
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
 			TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
 			ComplexOrRealType tmp = eval(freeIndices);
-			m_(rc.first,rc.second) += tmp;
+			if (invert)
+				m_(rc.second,rc.first) += tmp;
+			else
+				m_(rc.first,rc.second) += tmp;
 			count++;
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
 		std::cerr<<count<<"\n";
@@ -235,10 +245,13 @@ private:
 
 	void prepareFreeIndices(VectorSizeType& dimensions,
 	                        VectorDirType& directions,
+	                        VectorBoolType& conjugate,
 	                        const TensorSrep& t) const
 	{
 		SizeType n = dimensions.size();
 		assert(n == directions.size());
+		assert(n = conjugate.size());
+
 		SizeType ntensors = t.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			PsimagLite::String name = t(i).name();
@@ -257,6 +270,7 @@ private:
 
 			SizeType ins = t(i).ins();
 			SizeType outs = t(i).outs();
+			bool conjugate1 = t(i).isConjugate();
 			for (SizeType j = 0; j < ins; ++j) {
 				TensorStanza::IndexTypeEnum legType = t(i).legType(j,
 				                                                   TensorStanza::INDEX_DIR_IN);
@@ -267,6 +281,7 @@ private:
 				dimensions[index] = tensors_[ind]->dimension(j);
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_IN;
+				conjugate[index] = conjugate1;
 			}
 
 			for (SizeType j = 0; j < outs; ++j) {
@@ -279,6 +294,7 @@ private:
 				dimensions[index] = tensors_[ind]->dimension(j+ins);
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_OUT;
+				conjugate[index] = conjugate1;
 			}
 		}
 	}
@@ -321,6 +337,23 @@ private:
 
 		PairSizeType p = getRowAndColFromFree(freeIndices,dimensions,dirs);
 		return PairSizeType(p.first + 1, p.second + 1);
+	}
+
+	void modifyDirections(VectorDirType& dirs,
+	                      const VectorBoolType& conjugate) const
+	{
+		SizeType n = dirs.size();
+		assert(n == conjugate.size());
+
+		for (SizeType i = 0; i < n; ++i)
+			if (conjugate[i]) dirs[i] = oppositeDir(dirs[i]);
+	}
+
+	TensorStanza::IndexDirectionEnum oppositeDir(TensorStanza::IndexDirectionEnum dir) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+		return (dir == in) ? out : in;
 	}
 
 	TensorOptimizer(const TensorOptimizer&);

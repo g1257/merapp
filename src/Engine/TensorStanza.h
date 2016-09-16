@@ -380,6 +380,13 @@ private:
 			throw PsimagLite::RuntimeError(str + token + "\n");
 		}
 
+		std::size_t index = token.find_first_of("0123456789");
+
+		if (index == 0) {
+			// all numeric
+			return PairCharSizeType('d',atoi(token.c_str()));
+		}
+
 		if (l == 1 && token != "d") {
 			PsimagLite::String str("TensorStanza: malformed stanza, expecting a dummy, got ");
 			throw PsimagLite::RuntimeError(str + token + "\n");
