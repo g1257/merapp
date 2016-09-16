@@ -37,6 +37,12 @@ public:
 			data_[i] = 10.0*ProgramGlobals::rng();
 	}
 
+	void setTo(ComplexOrRealType value)
+	{
+		for (SizeType i = 0; i < data_.size(); ++i)
+			data_[i] = value;
+	}
+
 	void setToIdentity(SizeType ins)
 	{
 		if (ins == 0) return;

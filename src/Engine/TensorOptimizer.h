@@ -29,17 +29,18 @@ public:
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 
 	TensorOptimizer(IoInType& io,
-	                PsimagLite::String dstr,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize)
 	    : twoSiteHam_(4,4)
-	{
+	{	
 		setTwoSiteHam();
 
 		initTensorSreps(io,nameToOptimize,idToOptimize);
 
 		initTensorNameIds();
 
+		PsimagLite::String dstr("");
+		io.readline(dstr,"DIMENSION_SREP=");
 		initTensors(dstr);
 
 		std::cerr<<"TensorOptimizer::ctor() done\n";
@@ -158,6 +159,8 @@ private:
 			tensors_[ind] = new TensorType(dimensions);
 			if (name == "h") {
 				tensors_[ind]->setToMatrix(ins,twoSiteHam_);
+			} else if (name == "r") {
+				tensors_[ind]->setTo(1.0);
 			} else {
 				tensors_[ind]->setToIdentity(ins);
 			}

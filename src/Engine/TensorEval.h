@@ -99,6 +99,7 @@ private:
 		SizeType ntensors = tensorSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			prod *= evalThisTensor(tensorSrep_(i),summed,free);
+			if (prod == 0) break;
 		}
 
 		return prod;
