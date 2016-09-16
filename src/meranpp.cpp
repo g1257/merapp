@@ -22,5 +22,5 @@ int main(int argc, char** argv)
 
 	TensorOptimizerType to(io,tokens[0],std::atoi(tokens[1].c_str()));
 
-	to.optimize();
+	to.optimize(10);
 }

@@ -11,7 +11,7 @@ CXX = g++
 
 # Here add your lapack and blas libraries or say NO_LAPACK
 # CPPFLAGS += -DNO_LAPACK
-#LDFLAGS += /usr/lib64/liblapack.so.3 /usr/lib64/libblas.so.3 
+LDFLAGS += /usr/lib64/liblapack.so.3 /usr/lib64/libblas.so.3 
 
 # Here add -lpthread if threading is needed and also 
 # set -DUSE_PTHREADS below
