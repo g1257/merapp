@@ -33,7 +33,7 @@ public:
 	                SizeType idToOptimize)
 	    : twoSiteHam_(4,4)
 	{	
-		setTwoSiteHam();
+		setTwoSiteHam(false);
 
 		initTensorSreps(io,nameToOptimize,idToOptimize);
 
@@ -43,6 +43,8 @@ public:
 		io.readline(dstr,"DIMENSION_SREP=");
 		initTensors(dstr);
 
+		evalEnergies();
+
 		std::cerr<<"TensorOptimizer::ctor() done\n";
 	}
 
@@ -51,7 +53,8 @@ public:
 		SizeType terms = tensorSrep_.size();
 		for (SizeType i = 0; i < terms; ++i) {
 			delete tensorSrep_[i];
-			tensorSrep_[i] = 0;
+			delete energySrep_[i];
+			tensorSrep_[i] = energySrep_[i] = 0;
 		}
 
 		terms = tensors_.size();
@@ -66,23 +69,37 @@ public:
 		SizeType terms = tensorSrep_.size();
 		for (SizeType i = 0; i < terms; ++i) {
 			appendToMatrix(*(tensorSrep_[i]));
-			std::cerr<<"WARNING: DOING ONE TERM ONLY!!\n";
 			std::cout<<m_;
-			break;
+			std::cout<<"------------------\n";
 		}
 	}
 
 private:
 
 	// FIXME: pick up model dependency here
-	void setTwoSiteHam()
+	void setTwoSiteHam(bool testWithIdentity)
 	{
+		for (SizeType i = 0; i < 4; ++i)
+				twoSiteHam_(i,i) = 1.0;
+		if (testWithIdentity) return;
+
 		for (SizeType i = 0; i < 4; ++i) {
-			twoSiteHam_(i,i) = 0.25; // Sz Sz
+			 // Sz Sz
+			twoSiteHam_(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
 			if (i == 3) continue;
 			for (SizeType j = 0; j < 3; ++j) {
+				if (i == j) continue;
 				twoSiteHam_(i,j) = 0.5; // S+S- + S-S+
 			}
+		}
+	}
+
+	void evalEnergies() const
+	{
+		VectorSizeType freeIndices;
+		for (SizeType i = 0; i < energySrep_.size(); ++i) {
+			TensorEvalType eval(energySrep_[i]->sRep(),tensors_,tensorNameIds_);
+			std::cout<<"energy="<<eval(freeIndices)<<"\n";
 		}
 	}
 
@@ -94,10 +111,15 @@ private:
 		io.readline(terms,"TERMS=");
 		std::cerr<<"Read "<<terms<<" for tensor id "<<idToOptimize<<"\n";
 		tensorSrep_.resize(terms,0);
+		energySrep_.resize(terms,0);
+
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
+			io.readline(srep,"ENERGY=");
+			energySrep_[i] = new TensorSrep(srep);
+			std::cerr<<"Free indices= "<<(1+energySrep_[i]->maxTag('f'))<<"\n";
+
 			io.readline(srep,"STRING=");
-			std::cerr<<"Read string "<<srep<<"\n";
 			tensorSrep_[i] = new TensorSrep(srep);
 			findTensors(*(tensorSrep_[i]),nameToOptimize,idToOptimize);
 			std::cerr<<"Free indices= "<<(1+tensorSrep_[i]->maxTag('f'))<<"\n";
@@ -160,9 +182,10 @@ private:
 			if (name == "h") {
 				tensors_[ind]->setToMatrix(ins,twoSiteHam_);
 			} else if (name == "r") {
-				tensors_[ind]->setTo(1.0);
+				assert(0 < dimensions.size());
+				tensors_[ind]->setToIdentity(1,1.0/sqrt(2.0));
 			} else {
-				tensors_[ind]->setToIdentity(ins);
+				tensors_[ind]->setToIdentity(ins,1.0);
 			}
 		}
 	}
@@ -305,6 +328,7 @@ private:
 	TensorOptimizer& operator=(const TensorOptimizer&);
 
 	VectorTensorSrepType tensorSrep_;
+	VectorTensorSrepType energySrep_;
 	VectorPairStringSizeType tensorNameIds_;
 	VectorTensorType tensors_;
 	MatrixType twoSiteHam_;

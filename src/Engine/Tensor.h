@@ -43,7 +43,7 @@ public:
 			data_[i] = value;
 	}
 
-	void setToIdentity(SizeType ins)
+	void setToIdentity(SizeType ins, ComplexOrRealType value)
 	{
 		if (ins == 0) return;
 		if (dimensions_.size() <= ins) return;
@@ -55,8 +55,10 @@ public:
 		SizeType douts = 1;
 		for (SizeType i = ins; i < dimensions_.size(); ++i)
 			douts *= dimensions_[i];
+
 		for (SizeType x = 0; x < dins; ++x)
-			if (x < douts) data_[x + x*dins] = 1.0;
+			if (x < douts)
+				data_[x + x*dins] = value;
 	}
 
 	void setToMatrix(SizeType ins, const MatrixType& m)
