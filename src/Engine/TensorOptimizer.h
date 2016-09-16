@@ -15,14 +15,14 @@ class TensorOptimizer {
 
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
-	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
-	typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 
 public:
 
 	typedef PsimagLite::IoSimple::In IoInType;
 	typedef Mera::TensorEval<double> TensorEvalType;
+	typedef TensorEvalType::PairStringSizeType PairStringSizeType;
+	typedef TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef TensorEvalType::TensorType TensorType;
 	typedef TensorEvalType::VectorTensorType VectorTensorType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
@@ -161,6 +161,7 @@ private:
 
 	void appendToMatrix(const TensorSrep& t)
 	{
+		//std::cerr<<"SREP= "<<t.sRep()<<"\n";
 		SizeType total = t.maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
 		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
@@ -176,7 +177,8 @@ private:
 
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
-			m_(rc.first,rc.second) += 0.0;
+			TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
+			m_(rc.first,rc.second) += eval.eval(freeIndices);
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
 	}
 

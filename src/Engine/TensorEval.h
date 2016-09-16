@@ -19,24 +19,26 @@ public:
 	typedef std::pair<SizeType, SizeType> PairSizeType;
 	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
+	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
+	typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 
-	TensorEval(PsimagLite::String srep,const VectorTensorType& vt)
-	    : tensorSrep_(srep), data_(vt)
+	TensorEval(PsimagLite::String srep,
+	           const VectorTensorType& vt,
+	           const VectorPairStringSizeType& tensorNameIds)
+	    : tensorSrep_(srep), data_(vt), tensorNameIds_(tensorNameIds)
 	{}
 
-	ComplexOrRealType eval() const
+	ComplexOrRealType eval(const VectorSizeType& free) const
 	{
 		SizeType total = tensorSrep_.maxTag('s') + 1;
 		VectorSizeType summed(total,0);
-		VectorPairSizeType whereSummed(total,PairSizeType(0,0));
 		VectorSizeType dimensions(total,0);
 
-		prepare(whereSummed,dimensions);
+		prepare(dimensions);
 
-		VectorSizeType free;
 		ComplexOrRealType sum = 0.0;
 		do {
-			sum += evalInternal(summed,whereSummed,free);
+			sum += evalInternal(summed,free);
 			std::cerr<<summed;
 			std::cerr<<"---------\n";
 		} while (nextIndex(summed,dimensions));
@@ -59,22 +61,22 @@ public:
 
 private:
 
-	void prepare(VectorPairSizeType& whereSummed,
-	             VectorSizeType& dimmensions) const
+	void prepare(VectorSizeType& dimensions) const
 	{
 		SizeType ntensors = tensorSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType id = tensorSrep_(i).id();
 			SizeType mid = idNameToIndex(tensorSrep_(i).name(),id);
+			assert(mid < data_.size());
 			SizeType ins = tensorSrep_(i).ins();
 			for (SizeType j = 0; j < ins; ++j) {
 				if (tensorSrep_(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
 				        TensorStanza::INDEX_TYPE_SUMMED) continue;
 				SizeType sIndex = tensorSrep_(i).legTag(j,TensorStanza::INDEX_DIR_IN);
-				assert(sIndex < whereSummed.size());
-				whereSummed[sIndex] = PairSizeType(i,j);
-				assert(sIndex < data_[mid]->args());
-				dimmensions[sIndex] = data_[mid]->argSize(j);
+
+				assert(j < data_[mid]->args());
+				assert(sIndex < dimensions.size());
+				dimensions[sIndex] = data_[mid]->argSize(j);
 			}
 
 			SizeType outs = tensorSrep_(i).outs();
@@ -82,20 +84,21 @@ private:
 				if (tensorSrep_(i).legType(j,TensorStanza::INDEX_DIR_OUT) !=
 				        TensorStanza::INDEX_TYPE_SUMMED) continue;
 				SizeType sIndex = tensorSrep_(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
-				whereSummed[sIndex] = PairSizeType(i,j+ins);
-				dimmensions[sIndex] = data_[mid]->argSize(j+ins);
+
+				assert(sIndex < dimensions.size());
+				assert(j + ins < data_[mid]->args());
+				dimensions[sIndex] = data_[mid]->argSize(j+ins);
 			}
 		}
 	}
 
 	ComplexOrRealType evalInternal(const VectorSizeType& summed,
-	                               const VectorPairSizeType& whereSummed,
 	                               const VectorSizeType& free) const
 	{
 		ComplexOrRealType prod = 1.0;
 		SizeType ntensors = tensorSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			prod *= evalThisTensor(tensorSrep_(i),summed,whereSummed,free);
+			prod *= evalThisTensor(tensorSrep_(i),summed,free);
 		}
 
 		return prod;
@@ -103,7 +106,6 @@ private:
 
 	ComplexOrRealType evalThisTensor(const TensorStanza& ts,
 	                                 const VectorSizeType& summed,
-	                                 const VectorPairSizeType& whereSummed,
 	                                 const VectorSizeType& free) const
 	{
 		SizeType id = ts.id();
@@ -139,14 +141,22 @@ private:
 
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
 	{
-		if (name != "u")
-			throw PsimagLite::RuntimeError("idNameToIndex: only us for now, sorry\n");
+		PairStringSizeType p(name,id);
+		VectorPairStringSizeType::const_iterator it = std::find(tensorNameIds_.begin(),
+		                                                        tensorNameIds_.end(),
+		                                                        p);
+		if (it == tensorNameIds_.end()) {
+			PsimagLite::String str("TensorEval: ");
+			str += "could not find index for " + name + " " + ttos(id) + "\n";
+			throw PsimagLite::RuntimeError(str);
+		}
 
-		return id;
+		return it - tensorNameIds_.begin();
 	}
 
 	TensorSrepType tensorSrep_;
 	const VectorTensorType& data_;
+	const VectorPairStringSizeType& tensorNameIds_;
 };
 }
 #endif // MERA_TENSOREVAL_H

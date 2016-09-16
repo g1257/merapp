@@ -15,8 +15,12 @@ int main()
 		vt[i]->setToRandom();
 	}
 
-	TensorEvalType tensorEval(str,vt);
-	std::cout<<tensorEval.eval()<<"\n";
+	TensorEvalType::VectorPairStringSizeType idNames;
+	idNames.push_back(TensorEvalType::PairStringSizeType("u",0));
+	idNames.push_back(TensorEvalType::PairStringSizeType("u",1));
+	TensorEvalType tensorEval(str,vt,idNames);
+	TensorEvalType::VectorSizeType freeIndices;
+	std::cout<<tensorEval.eval(freeIndices)<<"\n";
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		delete vt[i];
