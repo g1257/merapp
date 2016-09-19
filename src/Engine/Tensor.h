@@ -89,6 +89,8 @@ public:
 		return dimensions_[j];
 	}
 
+	SizeType ins() const { return ins_; }
+
 	SizeType args() const { return dimensions_.size(); }
 
 	SizeType argSize(SizeType ind) const

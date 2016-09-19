@@ -38,8 +38,19 @@ public:
 	                VectorTensorType& tensors)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
 	      tensorNameIds_(tensorNameAndIds),
-	      tensors_(tensors)
+	      tensors_(tensors),
+	      indToOptimize_(0)
 	{
+		typename VectorPairStringSizeType::const_iterator it = std::find(tensorNameIds_.begin(),
+		                                                                 tensorNameIds_.end(),
+		                                                                 tensorToOptimize_);
+		if (it == tensorNameIds_.end()) {
+			PsimagLite::String str("Not found tensor to optimize in tensors\n");
+			throw PsimagLite::RuntimeError(str);
+		}
+
+		indToOptimize_ = it - tensorNameIds_.begin();
+
 		SizeType terms = 0;
 		io.readline(terms,"TERMS=");
 		std::cerr<<"Read "<<terms<<"\n";
@@ -70,15 +81,62 @@ public:
 
 	void optimize(SizeType iters)
 	{
+		SizeType ins = tensors_[indToOptimize_]->ins();
+		SizeType outs = tensors_[indToOptimize_]->args() - ins;
+		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
+		std::cout<<"cond="<<cond<<"\n";
+		TensorSrep condSrep(cond);
+
 		for (SizeType iter = 0; iter < iters; ++iter) {
-			optimizeInternal(iter);
-			std::cout<<"energy="<<calcEnergy()<<"\n";
+			RealType s = optimizeInternal(iter);
+			RealType e = calcEnergy();
+			std::cout<<"energy="<<e<<"\n";
+			std::cout<<"s="<<s<<"\n";
+			std::cout<<"energy-s="<<(e-s)<<"\n";
+			std::cout<<"Cond matrix follows\n";
+			MatrixType condMatrix;
+			appendToMatrix(condMatrix,condSrep);
+			std::cout<<condMatrix;
 		}
 	}
 
 private:
 
-	void optimizeInternal(SizeType)
+	PsimagLite::String conditionToSrep(PairStringSizeType nameId,
+	                                   SizeType ins,
+	                                   SizeType outs) const
+	{
+		PsimagLite::String name = nameId.first;
+		SizeType id = nameId.second;
+		PsimagLite::String srep = name + ttos(id) + "(";
+		for (SizeType j = 0; j < ins; ++j) {
+			srep += "s" + ttos(j);
+			if (j < ins - 1) srep += ",";
+		}
+
+		if (outs > 0) srep += "|";
+		for (SizeType j = 0; j < outs; ++j) {
+			srep += "f" + ttos(j);
+			if (j < ins - 1) srep += ",";
+		}
+
+		srep += ")" + name + "*" + ttos(id) + "(";
+		for (SizeType j = 0; j < ins; ++j) {
+			srep += "s" + ttos(j);
+			if (j < ins - 1) srep += ",";
+		}
+
+		if (outs > 0) srep += "|";
+		for (SizeType j = 0; j < outs; ++j) {
+			srep += "f" + ttos(j + outs);
+			if (j < ins - 1) srep += ",";
+		}
+
+		srep += ")";
+		return srep;
+	}
+
+	RealType optimizeInternal(SizeType)
 	{
 		SizeType terms = tensorSrep_.size();
 		MatrixType m;
@@ -93,6 +151,10 @@ private:
 		MatrixType vt(m.n_col(),m.n_col());
 		svd('A',m,s,vt);
 		page14StepL3(m,vt);
+		RealType result = 0.0;
+		for (SizeType i = 0; i < s.size(); ++i)
+			result += s[i];
+		return result;
 	}
 
 	void page14StepL3(const MatrixType& m,
@@ -112,16 +174,7 @@ private:
 			}
 		}
 
-		typename VectorPairStringSizeType::const_iterator it = std::find(tensorNameIds_.begin(),
-		                                                                 tensorNameIds_.end(),
-		                                                                 tensorToOptimize_);
-		if (it == tensorNameIds_.end()) {
-			PsimagLite::String str("Not found tensor to optimize in tensors\n");
-			throw PsimagLite::RuntimeError(str);
-		}
-
-		SizeType ind = it - tensorNameIds_.begin();
-		tensors_[ind]->setToMatrix(t);
+		tensors_[indToOptimize_]->setToMatrix(t);
 	}
 
 	ComplexOrRealType calcEnergy() const
@@ -137,7 +190,7 @@ private:
 	}
 
 
-	void appendToMatrix(MatrixType& m, const TensorSrep& t)
+	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
 	{
 		//std::cerr<<"SREP= "<<t.sRep()<<"\n";
 		SizeType total = t.maxTag('f') + 1;
@@ -150,6 +203,7 @@ private:
 		PairSizeType rc = getRowsAndCols(dimensions,directions);
 		if (m.n_row() == 0) {
 			m.resize(rc.first, rc.second);
+			m.setTo(0.0);
 		} else if (m.n_row() != rc.first || m.n_col() != rc.second) {
 			PsimagLite::String str("Hamiltonian terms environ \n");
 			throw PsimagLite::RuntimeError(str);
@@ -287,6 +341,7 @@ private:
 	VectorTensorSrepType energySrep_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	VectorTensorType& tensors_;
+	SizeType indToOptimize_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
