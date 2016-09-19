@@ -1,5 +1,5 @@
 #ifndef MERA_VERSION
-#define MERA_VERSION 0.08
+#define MERA_VERSION 0.10
 #endif
 
 
