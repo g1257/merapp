@@ -149,11 +149,8 @@ private:
 		prepareFreeIndices(dimensions,directions,conjugate,t);
 		modifyDirections(directions,conjugate);
 		PairSizeType rc = getRowsAndCols(dimensions,directions);
-		bool invert = false;
 		if (m.n_row() == 0) {
 			m.resize(rc.first, rc.second);
-		} else if (m.n_row() == rc.second && m.n_col() == rc.first) {
-			invert = true;
 		} else if (m.n_row() != rc.first || m.n_col() != rc.second) {
 			PsimagLite::String str("Hamiltonian terms environ \n");
 			throw PsimagLite::RuntimeError(str);
@@ -164,10 +161,7 @@ private:
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
 			TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
 			ComplexOrRealType tmp = eval(freeIndices);
-			if (invert)
-				m(rc.second,rc.first) += tmp;
-			else
-				m(rc.first,rc.second) += tmp;
+			m(rc.first,rc.second) += tmp;
 			count++;
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
 		std::cerr<<count<<"\n";

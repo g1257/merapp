@@ -135,6 +135,6 @@ int main(int argc, char **argv)
 	SizeType counter = 0;
 	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	SizeType tauMax = atoi(argv[1]);
-	std::cout<<"TauMax="<<tauMax;
+	std::cout<<"TauMax="<<tauMax<<"\n";
 	testCase(counter++,str,tauMax);
 }
