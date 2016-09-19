@@ -127,28 +127,6 @@ private:
 		SizeType id = nameId.second;
 		PsimagLite::String srep = name + ttos(id) + "(";
 		for (SizeType j = 0; j < ins; ++j) {
-			srep += "f" + ttos(j);
-			if (j < ins - 1) srep += ",";
-		}
-
-		if (outs > 0) srep += "|";
-		for (SizeType j = 0; j < outs; ++j) {
-			srep += "f" + ttos(j+ins);
-			if (j < ins - 1) srep += ",";
-		}
-
-		srep += ")";
-		return srep;
-	}
-
-	PsimagLite::String conditionToSrepCorrect(PairStringSizeType nameId,
-	                                          SizeType ins,
-	                                          SizeType outs) const
-	{
-		PsimagLite::String name = nameId.first;
-		SizeType id = nameId.second;
-		PsimagLite::String srep = name + ttos(id) + "(";
-		for (SizeType j = 0; j < ins; ++j) {
 			srep += "s" + ttos(j);
 			if (j < ins - 1) srep += ",";
 		}
@@ -156,7 +134,7 @@ private:
 		if (outs > 0) srep += "|";
 		for (SizeType j = 0; j < outs; ++j) {
 			srep += "f" + ttos(j);
-			if (j < ins - 1) srep += ",";
+			if (j < outs - 1) srep += ",";
 		}
 
 		srep += ")" + name + "*" + ttos(id) + "(";
@@ -168,7 +146,7 @@ private:
 		if (outs > 0) srep += "|";
 		for (SizeType j = 0; j < outs; ++j) {
 			srep += "f" + ttos(j + outs);
-			if (j < ins - 1) srep += ",";
+			if (j < outs - 1) srep += ",";
 		}
 
 		srep += ")";
@@ -222,7 +200,9 @@ private:
 		ComplexOrRealType sum = 0.0;
 		for (SizeType i = 0; i < energySrep_.size(); ++i) {
 			TensorEvalType eval(energySrep_[i]->sRep(),tensors_,tensorNameIds_);
-			sum += eval(freeIndices);
+			ComplexOrRealType tmp = eval(freeIndices);
+			sum += tmp;
+			std::cerr<<"Energy term= "<<tmp<<"\n";
 		}
 
 		return sum;

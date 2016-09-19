@@ -56,8 +56,6 @@ public:
 		ComplexOrRealType sum = 0.0;
 		do {
 			sum += evalInternal(summed,free);
-			//std::cerr<<summed;
-			//std::cerr<<"---------\n";
 		} while (nextIndex(summed,dimensions));
 
 		return sum;

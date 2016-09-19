@@ -186,7 +186,7 @@ private:
 				tensors_[ind]->setToMatrix(twoSiteHam_);
 			} else if (name == "r") {
 				assert(0 < dimensions.size());
-				tensors_[ind]->setToIdentityEx(1.0/2.0,1);
+				tensors_[ind]->setToIdentityEx(1.0/sqrt(2.0),1);
 			} else {
 				tensors_[ind]->setToIdentity(1.0);
 			}
