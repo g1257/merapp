@@ -199,7 +199,7 @@ private:
 		VectorSizeType freeIndices;
 		ComplexOrRealType sum = 0.0;
 		for (SizeType i = 0; i < energySrep_.size(); ++i) {
-			TensorEvalType eval(energySrep_[i]->sRep(),tensors_,tensorNameIds_);
+			TensorEvalType eval(*(energySrep_[i]),tensors_,tensorNameIds_);
 			ComplexOrRealType tmp = eval(freeIndices);
 			sum += tmp;
 			std::cerr<<"Energy term= "<<tmp<<"\n";
@@ -227,7 +227,7 @@ private:
 			throw PsimagLite::RuntimeError(str);
 		}
 
-		TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
+		TensorEvalType eval(t,tensors_,tensorNameIds_);
 		SizeType count = 0;
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);

@@ -41,10 +41,22 @@ class MeraSolver {
 public:
 
 	MeraSolver(PsimagLite::String file)
-	    : tauMax_(0),twoSiteHam_(4,4)
+	    : tauMax_(0), iterMera_(2), iterTensor_(5), twoSiteHam_(4,4)
 	{
 		IoInType io(file);
 		io.readline(tauMax_,"TauMax=");
+
+		try {
+			io.readline(iterMera_,"IterMera=");
+		} catch (std::exception&) {
+			io.rewind();
+		}
+
+		try {
+			io.readline(iterTensor_,"IterTensor=");
+		} catch (std::exception&) {
+			io.rewind();
+		}
 
 		PsimagLite::String srepMera;
 		io.readline(srepMera,"MERA=");
@@ -102,14 +114,20 @@ public:
 		}
 	}
 
-	void optimize(SizeType iter)
+	void optimize()
 	{
-		SizeType ntensors = tensorOptimizer_.size();
-		for (SizeType i = 0; i < ntensors; ++i)
-			tensorOptimizer_[i]->optimize(iter);
+		for (SizeType i = 0; i < iterMera_; ++i)
+			optimizeAllTensors();
 	}
 
 private:
+
+	void optimizeAllTensors()
+	{
+		SizeType ntensors = tensorOptimizer_.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			tensorOptimizer_[i]->optimize(iterTensor_);
+	}
 
 	// FIXME: pick up model dependency here
 	void setTwoSiteHam(bool testWithIdentity)
@@ -124,7 +142,7 @@ private:
 			if (i == 3) continue;
 			for (SizeType j = 0; j < 3; ++j) {
 				if (i == j) continue;
-				twoSiteHam_(i,j) = 0.0; //0.5; // S+S- + S-S+
+				twoSiteHam_(i,j) = 0.5; // S+S- + S-S+
 			}
 		}
 	}
@@ -210,6 +228,8 @@ private:
 	MeraSolver& operator=(const MeraSolver&);
 
 	SizeType tauMax_;
+	SizeType iterMera_;
+	SizeType iterTensor_;
 	VectorPairStringSizeType tensorNameIds_;
 	VectorTensorType tensors_;
 	MatrixType twoSiteHam_;

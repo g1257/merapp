@@ -42,12 +42,29 @@ public:
 	TensorEval(PsimagLite::String srep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds)
-	    : tensorSrep_(srep), data_(vt), tensorNameIds_(tensorNameIds)
+	    : tensorSrep_(new TensorSrepType(srep)),
+	      ownsSrep_(true),
+	      data_(vt),
+	      tensorNameIds_(tensorNameIds)
 	{}
+
+	TensorEval(const TensorSrepType& tSrep,
+	           const VectorTensorType& vt,
+	           const VectorPairStringSizeType& tensorNameIds)
+	    : tensorSrep_(&tSrep),
+	      ownsSrep_(false),
+	      data_(vt),
+	      tensorNameIds_(tensorNameIds)
+	{}
+
+	~TensorEval()
+	{
+		if (ownsSrep_) delete tensorSrep_;
+	}
 
 	ComplexOrRealType operator()(const VectorSizeType& free) const
 	{
-		SizeType total = tensorSrep_.maxTag('s') + 1;
+		SizeType total = tensorSrep_->maxTag('s') + 1;
 		VectorSizeType summed(total,0);
 		VectorSizeType dimensions(total,0);
 
@@ -78,27 +95,28 @@ private:
 
 	void prepare(VectorSizeType& dimensions) const
 	{
-		SizeType ntensors = tensorSrep_.size();
+		const TensorSrepType& tensorSrep = *tensorSrep_;
+		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType id = tensorSrep_(i).id();
-			SizeType mid = idNameToIndex(tensorSrep_(i).name(),id);
+			SizeType id = tensorSrep(i).id();
+			SizeType mid = idNameToIndex(tensorSrep(i).name(),id);
 			assert(mid < data_.size());
-			SizeType ins = tensorSrep_(i).ins();
+			SizeType ins = tensorSrep(i).ins();
 			for (SizeType j = 0; j < ins; ++j) {
-				if (tensorSrep_(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
+				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
 				        TensorStanza::INDEX_TYPE_SUMMED) continue;
-				SizeType sIndex = tensorSrep_(i).legTag(j,TensorStanza::INDEX_DIR_IN);
+				SizeType sIndex = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_IN);
 
 				assert(j < data_[mid]->args());
 				assert(sIndex < dimensions.size());
 				dimensions[sIndex] = data_[mid]->argSize(j);
 			}
 
-			SizeType outs = tensorSrep_(i).outs();
+			SizeType outs = tensorSrep(i).outs();
 			for (SizeType j = 0; j < outs; ++j) {
-				if (tensorSrep_(i).legType(j,TensorStanza::INDEX_DIR_OUT) !=
+				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) !=
 				        TensorStanza::INDEX_TYPE_SUMMED) continue;
-				SizeType sIndex = tensorSrep_(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
+				SizeType sIndex = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
 
 				assert(sIndex < dimensions.size());
 				assert(j + ins < data_[mid]->args());
@@ -111,9 +129,9 @@ private:
 	                               const VectorSizeType& free) const
 	{
 		ComplexOrRealType prod = 1.0;
-		SizeType ntensors = tensorSrep_.size();
+		SizeType ntensors = tensorSrep_->size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			prod *= evalThisTensor(tensorSrep_(i),summed,free);
+			prod *= evalThisTensor(tensorSrep_->operator()(i),summed,free);
 			if (prod == 0) break;
 		}
 
@@ -196,7 +214,12 @@ private:
 		return it - tensorNameIds_.begin();
 	}
 
-	TensorSrepType tensorSrep_;
+	TensorEval(const TensorEval& other);
+
+	TensorEval& operator=(const TensorEval& other);
+
+	const TensorSrepType* tensorSrep_;
+	bool ownsSrep_;
 	const VectorTensorType& data_;
 	const VectorPairStringSizeType& tensorNameIds_;
 };

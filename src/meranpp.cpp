@@ -26,5 +26,5 @@ int main(int argc, char** argv)
 	std::cout<<"#MERA_VERSION="<<MERA_VERSION<<"\n";
 	Mera::MeraSolver<double> meraSolver(file);
 
-	meraSolver.optimize(10);
+	meraSolver.optimize();
 }
