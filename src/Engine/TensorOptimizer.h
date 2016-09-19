@@ -287,7 +287,6 @@ private:
 	VectorTensorSrepType energySrep_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	VectorTensorType& tensors_;
-	/* MatrixType twoSiteHam_*/;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
