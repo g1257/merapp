@@ -1,12 +1,12 @@
 #ifndef TENSOROPTIMIZER_H
 #define TENSOROPTIMIZER_H
 #include "Vector.h"
-#include "IoSimple.h"
 #include "TensorSrep.h"
 #include "TensorEval.h"
 #include <algorithm>
 #include "Sort.h"
 #include "Matrix.h"
+#include "IoSimple.h"
 
 namespace Mera {
 
@@ -17,10 +17,10 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
+	typedef PsimagLite::IoSimple::In IoInType;
 
 public:
 
-	typedef PsimagLite::IoSimple::In IoInType;
 	typedef Mera::TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
@@ -33,22 +33,29 @@ public:
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
-	                SizeType idToOptimize)
-	    : tensorToOptimize_(nameToOptimize,idToOptimize),twoSiteHam_(4,4)
+	                SizeType idToOptimize,
+	                const VectorPairStringSizeType& tensorNameAndIds,
+	                VectorTensorType& tensors)
+	    : tensorToOptimize_(nameToOptimize,idToOptimize),
+	      tensorNameIds_(tensorNameAndIds),
+	      tensors_(tensors)
 	{
-		bool makeHamTheIdentity = false;
-		setTwoSiteHam(makeHamTheIdentity);
+		SizeType terms = 0;
+		io.readline(terms,"TERMS=");
+		std::cerr<<"Read "<<terms<<"\n";
+		tensorSrep_.resize(terms,0);
+		energySrep_.resize(terms,0);
 
-		initTensorSreps(io,nameToOptimize,idToOptimize);
+		for (SizeType i = 0; i < terms; ++i) {
+			PsimagLite::String srep;
+			io.readline(srep,"ENERGY=");
+			energySrep_[i] = new TensorSrep(srep);
+			std::cerr<<"Free indices= "<<(1+energySrep_[i]->maxTag('f'))<<"\n";
 
-		initTensorNameIds();
-
-		PsimagLite::String dstr("");
-		io.rewind();
-		io.readline(dstr,"DIMENSION_SREP=");
-		initTensors(dstr);
-
-		std::cerr<<"TensorOptimizer::ctor() done\n";
+			io.readline(srep,"STRING=");
+			tensorSrep_[i] = new TensorSrep(srep);
+			std::cerr<<"Free indices= "<<(1+tensorSrep_[i]->maxTag('f'))<<"\n";
+		}
 	}
 
 	~TensorOptimizer()
@@ -58,12 +65,6 @@ public:
 			delete tensorSrep_[i];
 			delete energySrep_[i];
 			tensorSrep_[i] = energySrep_[i] = 0;
-		}
-
-		terms = tensors_.size();
-		for (SizeType i = 0; i < terms; ++i) {
-			delete tensors_[i];
-			tensors_[i] = 0;
 		}
 	}
 
@@ -92,24 +93,6 @@ private:
 		MatrixType vt(m.n_col(),m.n_col());
 		svd('A',m,s,vt);
 		page14StepL3(m,vt);
-	}
-
-	// FIXME: pick up model dependency here
-	void setTwoSiteHam(bool testWithIdentity)
-	{
-		for (SizeType i = 0; i < 4; ++i)
-			twoSiteHam_(i,i) = 1.0;
-		if (testWithIdentity) return;
-
-		for (SizeType i = 0; i < 4; ++i) {
-			// Sz Sz
-			twoSiteHam_(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
-			if (i == 3) continue;
-			for (SizeType j = 0; j < 3; ++j) {
-				if (i == j) continue;
-				twoSiteHam_(i,j) = 0.5; // S+S- + S-S+
-			}
-		}
 	}
 
 	void page14StepL3(const MatrixType& m,
@@ -154,108 +137,6 @@ private:
 		return sum;
 	}
 
-	void initTensorSreps(IoInType& io,
-	                     PsimagLite::String nameToOptimize,
-	                     SizeType idToOptimize)
-	{
-		SizeType terms = 0;
-		io.readline(terms,"TERMS=");
-		std::cerr<<"Read "<<terms<<" for tensor id "<<idToOptimize<<"\n";
-		tensorSrep_.resize(terms,0);
-		energySrep_.resize(terms,0);
-
-		for (SizeType i = 0; i < terms; ++i) {
-			PsimagLite::String srep;
-			io.readline(srep,"ENERGY=");
-			energySrep_[i] = new TensorSrep(srep);
-			std::cerr<<"Free indices= "<<(1+energySrep_[i]->maxTag('f'))<<"\n";
-
-			io.readline(srep,"STRING=");
-			tensorSrep_[i] = new TensorSrep(srep);
-			findTensors(*(tensorSrep_[i]),nameToOptimize,idToOptimize);
-			std::cerr<<"Free indices= "<<(1+tensorSrep_[i]->maxTag('f'))<<"\n";
-		}
-	}
-
-	void initTensorNameIds()
-	{
-		PsimagLite::Sort<VectorPairStringSizeType> sort;
-		VectorSizeType perm(tensorNameIds_.size(),0);
-		sort.sort(tensorNameIds_,perm);
-		SizeType end = (std::unique(tensorNameIds_.begin(),
-		                            tensorNameIds_.end()) -
-		                tensorNameIds_.begin());
-		tensorNameIds_.resize(end);
-	}
-
-	void initTensors(PsimagLite::String dstr)
-	{
-		tensors_.resize(tensorNameIds_.size());
-		SizeType ntensors = tensors_.size();
-
-		TensorSrep td(dstr);
-		if (td.size() != ntensors) {
-			PsimagLite::String str("TensorOptimizer dimension string " + ttos(td.size()));
-			str += ", was expecting " + ttos(ntensors) + "\n";
-			throw PsimagLite::RuntimeError(str);
-		}
-
-		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = td(i).name();
-			SizeType id = td(i).id();
-			PairStringSizeType p(name,id);
-			typename VectorPairStringSizeType::iterator x = std::find(tensorNameIds_.begin(),
-			                                                          tensorNameIds_.end(),
-			                                                          p);
-			if (x == tensorNameIds_.end()) {
-				std::cerr<<"WARNING: Unused tensor name= "<<name<<" id= "<<id<<"\n";
-				continue;
-			}
-
-			SizeType ind = x - tensorNameIds_.begin();
-			assert(ind < tensors_.size());
-
-			SizeType ins = td(i).ins();
-			SizeType outs = td(i).outs();
-			VectorSizeType dimensions(ins + outs);
-			for (SizeType j = 0; j < ins; ++j) {
-				SizeType legTag = td(i).legTag(j,TensorStanza::INDEX_DIR_IN);
-				dimensions[j] = legTag;
-			}
-
-			for (SizeType j = 0; j < outs; ++j) {
-				SizeType legTag = td(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
-				dimensions[j+ins] = legTag;
-			}
-
-			assert(ind < tensors_.size());
-			tensors_[ind] = new TensorType(dimensions);
-			if (name == "h") {
-				tensors_[ind]->setToMatrix(ins,twoSiteHam_);
-			} else if (name == "r") {
-				assert(0 < dimensions.size());
-				tensors_[ind]->setToIdentity(1,1.0/sqrt(2.0));
-			} else {
-				tensors_[ind]->setToIdentity(ins,1.0);
-			}
-		}
-	}
-
-	void findTensors(const TensorSrep& t,
-	                 PsimagLite::String nameToOptimize,
-	                 SizeType idToOptimize)
-	{
-		SizeType ntensors = t.size();
-		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = t(i).name();
-			SizeType id = t(i).id();
-			bool conjugate = t(i).isConjugate();
-			bool b = (name == nameToOptimize && id == idToOptimize && conjugate);
-			if (!b && conjugate) continue;
-			PairStringSizeType p(name,id);
-			tensorNameIds_.push_back(p);
-		}
-	}
 
 	void appendToMatrix(MatrixType& m, const TensorSrep& t)
 	{
@@ -412,9 +293,9 @@ private:
 	PairStringSizeType tensorToOptimize_;
 	VectorTensorSrepType tensorSrep_;
 	VectorTensorSrepType energySrep_;
-	VectorPairStringSizeType tensorNameIds_;
-	VectorTensorType tensors_;
-	MatrixType twoSiteHam_;
+	const VectorPairStringSizeType& tensorNameIds_;
+	VectorTensorType& tensors_;
+	/* MatrixType twoSiteHam_*/;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H

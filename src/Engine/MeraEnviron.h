@@ -36,6 +36,7 @@ public:
 
 	void computeEnvirons()
 	{
+		std::cout<<"MERA="<<tensorSrep_.sRep()<<"\n";
 		for (SizeType i = 0; i < tensorSrep_.size(); ++i)
 			environForTensor(i);
 	}
@@ -70,7 +71,6 @@ private:
 
 	void environForTensor(SizeType ind, SizeType site) const
 	{
-		std::cout<<"MERA="<<tensorSrep_.sRep()<<"\n";
 		Mera::TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();
 		tensorSrep2.swapFree(0,site);
