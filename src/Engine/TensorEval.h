@@ -112,7 +112,8 @@ private:
 		SizeType id = ts.id();
 		SizeType mid = idNameToIndex(ts.name(),id);
 		SizeType ins = ts.ins();
-		VectorSizeType args(data_[mid]->args());
+		VectorSizeType args(data_[mid]->args(),0);
+
 		for (SizeType j = 0; j < ins; ++j) {
 			SizeType index = ts.legTag(j,TensorStanza::INDEX_DIR_IN);
 
@@ -133,6 +134,31 @@ private:
 			case  TensorStanza::INDEX_TYPE_DUMMY:
 				assert(j < args.size());
 				args[j] = 0;
+				break;
+			}
+		}
+
+		SizeType outs = ts.outs();
+		for (SizeType j = 0; j < outs; ++j) {
+			SizeType index = ts.legTag(j,TensorStanza::INDEX_DIR_OUT);
+
+			switch (ts.legType(j,TensorStanza::INDEX_DIR_OUT)) {
+
+			case TensorStanza::INDEX_TYPE_SUMMED:
+				assert(index < summed.size());
+				assert(j+ins < args.size());
+				args[j+ins] = summed[index];
+				break;
+
+			case TensorStanza::INDEX_TYPE_FREE:
+				assert(index < free.size());
+				assert(j+ins < args.size());
+				args[j+ins] = free[index];
+				break;
+
+			case  TensorStanza::INDEX_TYPE_DUMMY:
+				assert(j+ins < args.size());
+				args[j+ins] = 0;
 				break;
 			}
 		}

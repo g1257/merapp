@@ -110,6 +110,28 @@ private:
 		SizeType id = nameId.second;
 		PsimagLite::String srep = name + ttos(id) + "(";
 		for (SizeType j = 0; j < ins; ++j) {
+			srep += "f" + ttos(j);
+			if (j < ins - 1) srep += ",";
+		}
+
+		if (outs > 0) srep += "|";
+		for (SizeType j = 0; j < outs; ++j) {
+			srep += "f" + ttos(j+ins);
+			if (j < ins - 1) srep += ",";
+		}
+
+		srep += ")";
+		return srep;
+	}
+
+	PsimagLite::String conditionToSrepCorrect(PairStringSizeType nameId,
+	                                          SizeType ins,
+	                                          SizeType outs) const
+	{
+		PsimagLite::String name = nameId.first;
+		SizeType id = nameId.second;
+		PsimagLite::String srep = name + ttos(id) + "(";
+		for (SizeType j = 0; j < ins; ++j) {
 			srep += "s" + ttos(j);
 			if (j < ins - 1) srep += ",";
 		}
@@ -192,7 +214,6 @@ private:
 
 	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
 	{
-		//std::cerr<<"SREP= "<<t.sRep()<<"\n";
 		SizeType total = t.maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
 		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
@@ -209,11 +230,12 @@ private:
 			throw PsimagLite::RuntimeError(str);
 		}
 
+		TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
 		SizeType count = 0;
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
-			TensorEvalType eval(t.sRep(),tensors_,tensorNameIds_);
 			ComplexOrRealType tmp = eval(freeIndices);
+			//std::cerr<<"MATRIX i=" <<rc.first<<" j="<<rc.second<<"\n";
 			m(rc.first,rc.second) += tmp;
 			count++;
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
@@ -226,7 +248,7 @@ private:
 	                        const TensorSrep& t) const
 	{
 		assert(dimensions.size() == directions.size());
-		assert(dimensions.size() = conjugate.size());
+		assert(dimensions.size() == conjugate.size());
 
 		SizeType ntensors = t.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
