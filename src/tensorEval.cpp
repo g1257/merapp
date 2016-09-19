@@ -11,7 +11,7 @@ int main()
 	TensorEvalType::VectorTensorType vt(2,0);
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
-		vt[i] = new TensorType(dim0);
+		vt[i] = new TensorType(dim0,1);
 		vt[i]->setToRandom();
 	}
 

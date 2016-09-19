@@ -121,8 +121,7 @@ private:
 		}
 
 		SizeType ind = it - tensorNameIds_.begin();
-		SizeType ins = 2; // FIXME
-		tensors_[ind]->setToMatrix(ins,t);
+		tensors_[ind]->setToMatrix(t);
 	}
 
 	ComplexOrRealType calcEnergy() const
@@ -172,9 +171,8 @@ private:
 	                        VectorBoolType& conjugate,
 	                        const TensorSrep& t) const
 	{
-		SizeType n = dimensions.size();
-		assert(n == directions.size());
-		assert(n = conjugate.size());
+		assert(dimensions.size() == directions.size());
+		assert(dimensions.size() = conjugate.size());
 
 		SizeType ntensors = t.size();
 		for (SizeType i = 0; i < ntensors; ++i) {

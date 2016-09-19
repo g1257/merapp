@@ -15,11 +15,11 @@ public:
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 
-	Tensor(SizeType dim0)
-	    : dimensions_(1,dim0),data_(dim0)
+	Tensor(SizeType dim0, SizeType ins)
+	    : dimensions_(1,dim0),data_(dim0),ins_(ins)
 	{}
 
-	Tensor(const VectorSizeType& d) : dimensions_(d)
+	Tensor(const VectorSizeType& d, SizeType ins) : dimensions_(d),ins_(ins)
 	{
 		SizeType n = dimensions_.size();
 		if (n == 0) return;
@@ -43,7 +43,12 @@ public:
 			data_[i] = value;
 	}
 
-	void setToIdentity(SizeType ins, ComplexOrRealType value)
+	void setToIdentity(ComplexOrRealType value)
+	{
+		setToIdentityEx(value,ins_);
+	}
+
+	void setToIdentityEx(ComplexOrRealType value, SizeType ins)
 	{
 		if (ins == 0) return;
 		if (dimensions_.size() <= ins) return;
@@ -61,17 +66,17 @@ public:
 				data_[x + x*dins] = value;
 	}
 
-	void setToMatrix(SizeType ins, const MatrixType& m)
+	void setToMatrix(const MatrixType& m)
 	{
-		if (ins == 0) return;
-		if (dimensions_.size() <= ins) return;
+		if (ins_ == 0) return;
+		if (dimensions_.size() <= ins_) return;
 
 		SizeType dins = 1;
-		for (SizeType i = 0; i < ins; ++i)
+		for (SizeType i = 0; i < ins_; ++i)
 			dins *= dimensions_[i];
 
 		SizeType douts = 1;
-		for (SizeType i = ins; i < dimensions_.size(); ++i)
+		for (SizeType i = ins_; i < dimensions_.size(); ++i)
 			douts *= dimensions_[i];
 		for (SizeType x = 0; x < dins; ++x)
 			for (SizeType y = 0; y < douts; ++y)
@@ -116,6 +121,7 @@ private:
 
 	VectorSizeType dimensions_;
 	VectorComplexOrRealType data_;
+	SizeType ins_;
 };
 }
 #endif // TENSOR_H
