@@ -15,22 +15,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef MERASOLVER_H
-#define MERASOLVER_H
+#ifndef MERA_ENVIRON_H
+#define MERA_ENVIRON_H
 #include <iostream>
 #include "ParametersForSolver.h"
 #include "TensorSrep.h"
 
 namespace Mera {
 
-class MeraSolver {
+class MeraEnviron {
 
 	typedef ParametersForSolver ParametersForSolverType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 public:
 
-	MeraSolver(PsimagLite::String srep, const ParametersForSolver& params)
+	MeraEnviron(PsimagLite::String srep, const ParametersForSolver& params)
 	    : params_(params), tensorSrep_(srep)
 	{}
 
@@ -40,7 +40,7 @@ public:
 			environForTensor(i);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const MeraSolver& ms)
+	friend std::ostream& operator<<(std::ostream& os, const MeraEnviron& ms)
 	{
 		os<<ms.tensorSrep_<<"\n";
 		return os;
@@ -48,9 +48,9 @@ public:
 
 private:
 
-	MeraSolver(const MeraSolver&);
+	MeraEnviron(const MeraEnviron&);
 
-	MeraSolver& operator=(const MeraSolver&);
+	MeraEnviron& operator=(const MeraEnviron&);
 
 	// find Y (environment) for this tensor
 	void environForTensor(SizeType ind) const

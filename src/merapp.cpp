@@ -25,7 +25,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <unistd.h>
-#include "MeraSolver.h"
+#include "MeraEnviron.h"
 #include <fstream>
 #include "MeraToTikz.h"
 #include "Version.h"
@@ -36,9 +36,9 @@ void testCase(SizeType num,
 {
 	std::cout<<"TEST NUMBER "<<num<<"\n";
 	Mera::ParametersForSolver params(tauMax);
-	Mera::MeraSolver solver(srep,params);
-	solver.computeEnvirons();
-	std::cout<<solver;
+	Mera::MeraEnviron environ(srep,params);
+	environ.computeEnvirons();
+	std::cout<<environ;
 	std::cout<<"-----------------------------------\n\n\n";
 
 	PsimagLite::String file("meraTikzTestNumber");
