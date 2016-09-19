@@ -8,7 +8,5 @@ int main(int argc, char** argv)
 
 	Mera::MeraSolver<double> meraSolver(file);
 
-//	TensorOptimizerType to(io,tokens[0],std::atoi(tokens[1].c_str()));
-
-//	to.optimize(10);
+	meraSolver.optimize(10);
 }
