@@ -136,15 +136,12 @@ private:
 			twoSiteHam_(i,i) = 1.0;
 		if (testWithIdentity) return;
 
-		for (SizeType i = 0; i < 4; ++i) {
-			// Sz Sz
+		// Sz Sz
+		for (SizeType i = 0; i < 4; ++i)
 			twoSiteHam_(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
-			if (i == 3) continue;
-			for (SizeType j = 0; j < 3; ++j) {
-				if (i == j) continue;
-				twoSiteHam_(i,j) = 0.5; // S+S- + S-S+
-			}
-		}
+
+		// S+S- S-S+
+		twoSiteHam_(1,2) = twoSiteHam_(2,1) = 0.5;
 	}
 
 	void initTensorNameIds()

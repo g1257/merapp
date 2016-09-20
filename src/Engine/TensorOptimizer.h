@@ -70,19 +70,19 @@ public:
 
 		SizeType terms = 0;
 		io.readline(terms,"TERMS=");
-		std::cerr<<"Read "<<terms<<"\n";
 		tensorSrep_.resize(terms,0);
 		energySrep_.resize(terms,0);
+		io.readline(ignore_,"IGNORE=");
 
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
 			io.readline(srep,"ENERGY=");
 			energySrep_[i] = new TensorSrep(srep);
-			std::cerr<<"Free indices= "<<(1+energySrep_[i]->maxTag('f'))<<"\n";
+			//std::cerr<<"Free indices= "<<(1+energySrep_[i]->maxTag('f'))<<"\n";
 
 			io.readline(srep,"STRING=");
 			tensorSrep_[i] = new TensorSrep(srep);
-			std::cerr<<"Free indices= "<<(1+tensorSrep_[i]->maxTag('f'))<<"\n";
+			//std::cerr<<"Free indices= "<<(1+tensorSrep_[i]->maxTag('f'))<<"\n";
 		}
 	}
 
@@ -101,7 +101,7 @@ public:
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
 		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
-		std::cout<<"cond="<<cond<<"\n";
+		//std::cout<<"cond="<<cond<<"\n";
 		TensorSrep condSrep(cond);
 
 		for (SizeType iter = 0; iter < iters; ++iter) {
@@ -109,11 +109,12 @@ public:
 			RealType e = calcEnergy();
 			std::cout<<"energy="<<e<<"\n";
 			std::cout<<"s="<<s<<"\n";
-			std::cout<<"energy-s="<<(e-s)<<"\n";
-			std::cout<<"Cond matrix follows\n";
+			std::cout<<"energy/s="<<(e/s)<<"\n";
+			//std::cout<<"Cond matrix follows\n";
 			MatrixType condMatrix;
 			appendToMatrix(condMatrix,condSrep);
-			std::cout<<condMatrix;
+			//std::cout<<condMatrix;
+			assert(isTheIdentity(condMatrix));
 		}
 	}
 
@@ -157,10 +158,12 @@ private:
 	{
 		SizeType terms = tensorSrep_.size();
 		MatrixType m;
+		std::cerr<<"ignore="<<ignore_<<"\n";
 		for (SizeType i = 0; i < terms; ++i) {
+			if (i == ignore_) continue;
 			appendToMatrix(m,*(tensorSrep_[i]));
-			std::cerr<<m;
-			std::cerr<<"------------------\n";
+			//std::cerr<<m;
+			//std::cerr<<"------------------\n";
 		}
 
 		std::cerr<<"About to do svd...\n";
@@ -236,7 +239,7 @@ private:
 			m(rc.first,rc.second) += tmp;
 			count++;
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
-		std::cerr<<count<<"\n";
+		//std::cerr<<count<<"\n";
 	}
 
 	void prepareFreeIndices(VectorSizeType& dimensions,
@@ -361,6 +364,7 @@ private:
 	const VectorPairStringSizeType& tensorNameIds_;
 	VectorTensorType& tensors_;
 	SizeType indToOptimize_;
+	SizeType ignore_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
