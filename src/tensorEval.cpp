@@ -29,13 +29,16 @@ int main()
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		vt[i] = new TensorType(dim0,1);
-		vt[i]->setToRandom();
+		vt[i]->setToIdentity(1.0);
 	}
 
 	TensorEvalType::VectorPairStringSizeType idNames;
 	idNames.push_back(TensorEvalType::PairStringSizeType("u",0));
 	idNames.push_back(TensorEvalType::PairStringSizeType("u",1));
-	TensorEvalType tensorEval(str,vt,idNames);
+	TensorEvalType::MapPairStringSizeType nameIdTensor;
+	nameIdTensor[idNames[0]] = 0;
+	nameIdTensor[idNames[1]] = 1;
+	TensorEvalType tensorEval(str,vt,idNames,nameIdTensor);
 	TensorEvalType::VectorSizeType freeIndices;
 	std::cout<<tensorEval(freeIndices)<<"\n";
 

@@ -130,6 +130,9 @@ public:
 	void conjugate()
 	{
 		conjugate_ = (!conjugate_);
+//		VectorPairCharSizeType tmp = outsSi_;
+//		outsSi_ = insSi_;
+//		insSi_ = tmp;
 		srep_ = srepFromObject();
 	}
 

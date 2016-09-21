@@ -20,6 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 #include "TensorSrep.h"
 #include "Tensor.h"
+#include <map>
 
 namespace Mera {
 
@@ -38,23 +39,28 @@ public:
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
 	typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
 
 	TensorEval(PsimagLite::String srep,
 	           const VectorTensorType& vt,
-	           const VectorPairStringSizeType& tensorNameIds)
+	           const VectorPairStringSizeType& tensorNameIds,
+	           MapPairStringSizeType& nameIdsTensor)
 	    : tensorSrep_(new TensorSrepType(srep)),
 	      ownsSrep_(true),
 	      data_(vt),
-	      tensorNameIds_(tensorNameIds)
+	      tensorNameIds_(tensorNameIds),
+	      nameIdsTensor_(nameIdsTensor)
 	{}
 
 	TensorEval(const TensorSrepType& tSrep,
 	           const VectorTensorType& vt,
-	           const VectorPairStringSizeType& tensorNameIds)
+	           const VectorPairStringSizeType& tensorNameIds,
+	           MapPairStringSizeType& nameIdsTensor)
 	    : tensorSrep_(&tSrep),
 	      ownsSrep_(false),
 	      data_(vt),
-	      tensorNameIds_(tensorNameIds)
+	      tensorNameIds_(tensorNameIds),
+	      nameIdsTensor_(nameIdsTensor)
 	{}
 
 	~TensorEval()
@@ -62,7 +68,7 @@ public:
 		if (ownsSrep_) delete tensorSrep_;
 	}
 
-	ComplexOrRealType operator()(const VectorSizeType& free) const
+	ComplexOrRealType operator()(const VectorSizeType& free)
 	{
 		SizeType total = tensorSrep_->maxTag('s') + 1;
 		VectorSizeType summed(total,0);
@@ -93,7 +99,7 @@ public:
 
 private:
 
-	void prepare(VectorSizeType& dimensions) const
+	void prepare(VectorSizeType& dimensions)
 	{
 		const TensorSrepType& tensorSrep = *tensorSrep_;
 		SizeType ntensors = tensorSrep.size();
@@ -126,7 +132,7 @@ private:
 	}
 
 	ComplexOrRealType evalInternal(const VectorSizeType& summed,
-	                               const VectorSizeType& free) const
+	                               const VectorSizeType& free)
 	{
 		ComplexOrRealType prod = 1.0;
 		SizeType ntensors = tensorSrep_->size();
@@ -140,11 +146,13 @@ private:
 
 	ComplexOrRealType evalThisTensor(const TensorStanza& ts,
 	                                 const VectorSizeType& summed,
-	                                 const VectorSizeType& free) const
+	                                 const VectorSizeType& free)
 	{
 		SizeType id = ts.id();
 		SizeType mid = idNameToIndex(ts.name(),id);
 		SizeType ins = ts.ins();
+		SizeType outs = ts.outs();
+		assert(data_[mid]->args() == ins + outs);
 		VectorSizeType args(data_[mid]->args(),0);
 
 		for (SizeType j = 0; j < ins; ++j) {
@@ -171,7 +179,6 @@ private:
 			}
 		}
 
-		SizeType outs = ts.outs();
 		for (SizeType j = 0; j < outs; ++j) {
 			SizeType index = ts.legTag(j,TensorStanza::INDEX_DIR_OUT);
 
@@ -196,22 +203,20 @@ private:
 			}
 		}
 
-		return data_[mid]->operator()(args);
+		//if (!ts.isConjugate())
+			return data_[mid]->operator()(args);
+
+//		VectorSizeType args2 = args;
+//		for (SizeType i = ins; i < args.size(); ++i)
+//			args2[i-ins] = args[i];
+//		for (SizeType i = 0; i < ins; ++i)
+//			args2[i+outs] = args[i];
+//		return std::conj(data_[mid]->operator()(args2));
 	}
 
-	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
+	SizeType idNameToIndex(PsimagLite::String name, SizeType id)
 	{
-		PairStringSizeType p(name,id);
-		VectorPairStringSizeType::const_iterator it = std::find(tensorNameIds_.begin(),
-		                                                        tensorNameIds_.end(),
-		                                                        p);
-		if (it == tensorNameIds_.end()) {
-			PsimagLite::String str("TensorEval: ");
-			str += "could not find index for " + name + " " + ttos(id) + "\n";
-			throw PsimagLite::RuntimeError(str);
-		}
-
-		return it - tensorNameIds_.begin();
+		return nameIdsTensor_[PairStringSizeType(name,id)];
 	}
 
 	TensorEval(const TensorEval& other);
@@ -222,6 +227,7 @@ private:
 	bool ownsSrep_;
 	const VectorTensorType& data_;
 	const VectorPairStringSizeType& tensorNameIds_;
+	MapPairStringSizeType& nameIdsTensor_;
 };
 }
 #endif // MERA_TENSOREVAL_H

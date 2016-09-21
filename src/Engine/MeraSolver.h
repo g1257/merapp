@@ -37,6 +37,7 @@ class MeraSolver {
 	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
+	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 
 public:
 
@@ -95,6 +96,7 @@ public:
 			                                                   name,
 			                                                   id,
 			                                                   tensorNameIds_,
+			                                                   nameIdsTensor_,
 			                                                   tensors_));
 		}
 
@@ -153,6 +155,8 @@ private:
 		                            tensorNameIds_.end()) -
 		                tensorNameIds_.begin());
 		tensorNameIds_.resize(end);
+		for (SizeType i = 0; i < tensorNameIds_.size(); ++i)
+			nameIdsTensor_[tensorNameIds_[i]] = i;
 	}
 
 	void initTensors(PsimagLite::String dstr)
@@ -228,6 +232,7 @@ private:
 	SizeType iterMera_;
 	SizeType iterTensor_;
 	VectorPairStringSizeType tensorNameIds_;
+	MapPairStringSizeType nameIdsTensor_;
 	VectorTensorType tensors_;
 	MatrixType twoSiteHam_;
 	VectorTensorOptimizerType tensorOptimizer_;
