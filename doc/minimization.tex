@@ -1,0 +1,49 @@
+\documentclass[twocolumn,showpacs,preprintnumbers,amsmath,amssymb,prb]{revtex4}
+\usepackage{graphicx,amssymb,amsmath}
+\usepackage[usenames]{xcolor}
+\newcommand{\etalter}{{\it et al.}}
+\newcommand{\eg}{{\it e.\ g.}}
+\newcommand{\ie}{{\it i.\ e.}}
+
+\begin{document}
+
+\title{Title goes here}
+\author{G. Alvarez}
+\affiliation{Computer Science \& Mathematics 
+Division and Center for Nanophase Materials Sciences, Oak Ridge National Laboratory, \mbox{Oak Ridge, TN 37831}}
+
+\begin{abstract}
+Here goes the abstract....
+\end{abstract}
+
+\maketitle
+
+Proposition:
+Let $E(A) = Tr(AB)$ and $B = USV^\dagger$ the svd decomposition of $B$.
+Then minimum of $E$ with respect to $A$ under the condition that $A^\dagger A = I$
+is realized for $A = -VU^\dagger.$
+
+
+Proof: 
+\begin{align}
+E(A) = Tr(AB) =& Tr(AUSV^\dagger)\nonumber\\
+ =& Tr(V^\dagger A U S) = Tr(\bar{A} S)
+\label{eq:trace}
+\end{align}
+where $\bar{A} \equiv V^\dagger A U.$  Then $\bar{A}^\dagger \bar{A} = I$ or
+$\sum_k \bar{A}^*_{k,i}\bar{A}_{k,j} = \delta_{i,j}$ for all $i,j$.
+$\sum_k |\bar{A}_{k,i}|^2 = 1$ for all $i$ or
+$|\bar{A}_{i,i}|^2 + \sum_{k\neq i} |\bar{A}_{k,i}|^2 = 1$ for all $i$ or
+$|\bar{A}_{i,i}| <= 1$ for all $i$ or
+$\bar{A}_{i,i} >= -1$ for all $i$.
+Then 
+\begin{equation}
+E(A) = Tr(\bar{A} S) = \sum_i \bar{A}_{i,i} S_i \le -\sum_i S_i
+\end{equation}
+because $S_i \ge 0$ for all $i$.
+The minimum is realized if $\bar{A}_{i,i} = -1$ for all $i$, and 
+from Eq.~(\ref{eq:trace}) we get
+then $|\bar{A}_{k,i}|^2 = 0$ for all $k\neq i$,
+implying $\bar{A}_{k,i} = 0$ for all $k\neq i$
+Then $\bar{A} = -I$, implying $V^\dagger A U = -I$, from which the end result follows.
+\end{document}
