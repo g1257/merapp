@@ -89,11 +89,11 @@ public:
 
 	void optimize(SizeType iters)
 	{
-		SizeType ins = tensors_[indToOptimize_]->ins();
-		SizeType outs = tensors_[indToOptimize_]->args() - ins;
-		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
+		//SizeType ins = tensors_[indToOptimize_]->ins();
+		//SizeType outs = tensors_[indToOptimize_]->args() - ins;
+		//PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
 		//std::cout<<"cond="<<cond<<"\n";
-		TensorSrep condSrep(cond);
+		//TensorSrep condSrep(cond);
 		VectorRealType ev(energySrep_.size(),0);
 
 		for (SizeType iter = 0; iter < iters; ++iter) {
@@ -104,8 +104,8 @@ public:
 			RealType tmp = -s;
 			if (ignore_ < ev.size()) tmp += ev[ignore_];
 			std::cout<<"e[ignore]-s= "<<tmp<<"\n";
-			MatrixType condMatrix;
-			appendToMatrix(condMatrix,condSrep);
+			//MatrixType condMatrix;
+			//appendToMatrix(condMatrix,condSrep);
 			//assert(isTheIdentity(condMatrix));
 		}
 	}
@@ -327,8 +327,17 @@ private:
 		SizeType n = dirs.size();
 		assert(n == conjugate.size());
 
-		for (SizeType i = 0; i < n; ++i)
+		SizeType counter = 0;
+		for (SizeType i = 0; i < n; ++i) {
 			if (conjugate[i]) dirs[i] = oppositeDir(dirs[i]);
+			if (dirs[i] == dirs[0]) counter++;
+		}
+
+		if (counter < n) return;
+		assert(!(counter & 1));
+		counter /= 2;
+		for (SizeType i = counter; i < n; ++i)
+			dirs[i] = oppositeDir(dirs[0]);
 	}
 
 	TensorStanza::IndexDirectionEnum oppositeDir(TensorStanza::IndexDirectionEnum dir) const
