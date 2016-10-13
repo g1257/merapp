@@ -65,12 +65,16 @@ public:
 		io.readline(terms,"TERMS=");
 		tensorSrep_.resize(terms,0);
 		energySrep_.resize(terms,0);
+		normOfMera_.resize(terms,0);
 		io.readline(ignore_,"IGNORE=");
 
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
 			io.readline(srep,"ENERGY=");
 			energySrep_[i] = new TensorSrep(srep);
+
+			io.readline(srep,"NORM_OF_MERA=");
+			normOfMera_[i] = new TensorSrep(srep);
 
 			io.readline(srep,"STRING=");
 			tensorSrep_[i] = new TensorSrep(srep);
@@ -83,7 +87,8 @@ public:
 		for (SizeType i = 0; i < terms; ++i) {
 			delete tensorSrep_[i];
 			delete energySrep_[i];
-			tensorSrep_[i] = energySrep_[i] = 0;
+			delete normOfMera_[i];
+			tensorSrep_[i] = energySrep_[i] = normOfMera_[i] = 0;
 		}
 	}
 
@@ -95,10 +100,13 @@ public:
 		std::cout<<"cond="<<cond<<"\n";
 		TensorSrep condSrep(cond);
 		VectorRealType ev(energySrep_.size(),0);
+		VectorRealType nmv(normOfMera_.size(),0);
 
 		for (SizeType iter = 0; iter < iters; ++iter) {
 			RealType s = optimizeInternal(iter);
-			RealType e = calcEnergyTerms(ev);
+			RealType e = calcEnergyTerms(ev,energySrep_,"Energy");
+			RealType nm = calcEnergyTerms(nmv,normOfMera_,"Norm");
+			std::cout<<"normOfMera="<<nm<<"\n";
 			std::cout<<"energy="<<e<<"\n";
 			std::cout<<"s="<<s<<"\n";
 			RealType tmp = -s;
@@ -188,17 +196,19 @@ private:
 		tensors_[indToOptimize_]->setToMatrix(t);
 	}
 
-	ComplexOrRealType calcEnergyTerms(VectorRealType& e) const
+	ComplexOrRealType calcEnergyTerms(VectorRealType& e,
+	                                  const VectorTensorSrepType& eSrep,
+	                                  PsimagLite::String what) const
 	{
 		VectorSizeType freeIndices;
 		ComplexOrRealType sum = 0.0;
-		assert(e.size() == energySrep_.size());
-		for (SizeType i = 0; i < energySrep_.size(); ++i) {
-			TensorEvalType eval(*(energySrep_[i]),tensors_,tensorNameIds_,nameIdsTensor_);
+		assert(e.size() == eSrep.size());
+		for (SizeType i = 0; i < eSrep.size(); ++i) {
+			TensorEvalType eval(*(eSrep[i]),tensors_,tensorNameIds_,nameIdsTensor_);
 			assert(i < e.size());
 			e[i] = eval(freeIndices);
 			sum += e[i];
-			std::cerr<<"Energy term= "<<e[i]<<"\n";
+			std::cerr<<what<<" term= "<<e[i]<<"\n";
 		}
 
 		return sum;
@@ -355,6 +365,7 @@ private:
 	PairStringSizeType tensorToOptimize_;
 	VectorTensorSrepType tensorSrep_;
 	VectorTensorSrepType energySrep_;
+	VectorTensorSrepType normOfMera_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;

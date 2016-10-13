@@ -76,8 +76,18 @@ public:
 	void setRandom()
 	{
 		SizeType n = data_.size();
+		ComplexOrRealType sum = 0.0;
+		for (SizeType i = 0; i < n; ++i) {
+			ComplexOrRealType value = rng_();
+			data_[i] = value;
+			sum += value*PsimagLite::conj(value);
+		}
+
+		RealType tmp = PsimagLite::real(sum);
+		assert(tmp > 1e-6);
+		tmp = 1.0/sqrt(tmp);
 		for (SizeType i = 0; i < n; ++i)
-			data_[i] = rng_();
+			data_[i] *= tmp;
 	}
 
 	void setToMatrix(const MatrixType& m)
