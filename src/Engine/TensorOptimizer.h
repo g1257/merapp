@@ -89,11 +89,11 @@ public:
 
 	void optimize(SizeType iters)
 	{
-		//SizeType ins = tensors_[indToOptimize_]->ins();
-		//SizeType outs = tensors_[indToOptimize_]->args() - ins;
-		//PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
-		//std::cout<<"cond="<<cond<<"\n";
-		//TensorSrep condSrep(cond);
+		SizeType ins = tensors_[indToOptimize_]->ins();
+		SizeType outs = tensors_[indToOptimize_]->args() - ins;
+		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
+		std::cout<<"cond="<<cond<<"\n";
+		TensorSrep condSrep(cond);
 		VectorRealType ev(energySrep_.size(),0);
 
 		for (SizeType iter = 0; iter < iters; ++iter) {
@@ -104,9 +104,10 @@ public:
 			RealType tmp = -s;
 			if (ignore_ < ev.size()) tmp += ev[ignore_];
 			std::cout<<"e[ignore]-s= "<<tmp<<"\n";
-			//MatrixType condMatrix;
-			//appendToMatrix(condMatrix,condSrep);
-			//assert(isTheIdentity(condMatrix));
+			if (condSrep.maxTag('f') == 0) continue;
+			MatrixType condMatrix;
+			appendToMatrix(condMatrix,condSrep);
+			assert(isTheIdentity(condMatrix));
 		}
 	}
 

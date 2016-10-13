@@ -1,8 +1,8 @@
 DIMENSION_SREP=u0(2,2|4)u1(2,2|4)w0(4,4)h0(2,2|2,2)
 ./merapp version 0.1
 TauMax=3
-IterMera=20
-IterTensor=50
+IterMera=2
+IterTensor=5
 MERA=u0(f0,f1|s0)w0(s0,s1)u1(f2,f3|s1)
 TEST NUMBER 0
 Y_FOR_TENSOR=u,0
