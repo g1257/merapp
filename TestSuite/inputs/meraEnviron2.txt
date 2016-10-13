@@ -1,0 +1,17 @@
+DIMENSION_SREP=u0(2,2|4)w0(4,4)
+./merapp version 0.1
+TauMax=3
+MERA=u0(f0,f1|s0)w0(s0,f2)
+TEST NUMBER 0
+Y_FOR_TENSOR=u,0
+TERMS=1
+IGNORE=100
+ENERGY=u0(s0,s1|s2)w0(s2,s3)u0*(s0,s1|s4)w0*(s4,s3)
+STRING=w0(f0,s0)w0*(s0,s1)u0*(f1,f2|s1)
+
+Y_FOR_TENSOR=w,0
+TERMS=1
+IGNORE=100
+ENERGY=u0(s0,s1|s2)w0(s2,s3)u0*(s0,s1|s4)w0*(s4,s3)
+STRING=w0(s0,f0)u0*(s1,s2|s0)u0(s1,s2|f1)
+
