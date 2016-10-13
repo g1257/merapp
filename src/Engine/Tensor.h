@@ -20,6 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include "ProgramGlobals.h"
 #include "Matrix.h"
+#include "RandomForTests.h"
 
 namespace Mera {
 
@@ -28,15 +29,17 @@ class Tensor {
 
 public:
 
+	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 
 	Tensor(SizeType dim0, SizeType ins)
-	    : dimensions_(1,dim0),data_(dim0),ins_(ins)
+	    : dimensions_(1,dim0),data_(dim0),ins_(ins),rng_(1234)
 	{}
 
-	Tensor(const VectorSizeType& d, SizeType ins) : dimensions_(d),ins_(ins)
+	Tensor(const VectorSizeType& d, SizeType ins)
+	    : dimensions_(d),ins_(ins),rng_(1234)
 	{
 		SizeType n = dimensions_.size();
 		if (n == 0) return;
@@ -70,10 +73,21 @@ public:
 				data_[x + x*dins] = value;
 	}
 
+	void setRandom()
+	{
+		SizeType n = data_.size();
+		for (SizeType i = 0; i < n; ++i)
+			data_[i] = rng_();
+	}
+
 	void setToMatrix(const MatrixType& m)
 	{
 		if (ins_ == 0) return;
-		if (dimensions_.size() <= ins_) return;
+		if (dimensions_.size() < ins_) return;
+		if (dimensions_.size() == ins_) {
+			data_ = m();
+			return;
+		}
 
 		SizeType dins = 1;
 		for (SizeType i = 0; i < ins_; ++i)
@@ -128,6 +142,7 @@ private:
 	VectorSizeType dimensions_;
 	VectorComplexOrRealType data_;
 	SizeType ins_;
+	PsimagLite::RandomForTests<RealType> rng_;
 };
 }
 #endif // TENSOR_H

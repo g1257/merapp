@@ -61,7 +61,7 @@ public:
 
 		PsimagLite::String srepMera;
 		io.readline(srepMera,"MERA=");
-		srepMera += "h0(2,2,2,2)";
+		//srepMera += "h0(2,2,2,2)";
 		findTensors(srepMera);
 
 		bool makeHamTheIdentity = false;
@@ -119,16 +119,19 @@ public:
 	void optimize()
 	{
 		for (SizeType i = 0; i < iterMera_; ++i)
-			optimizeAllTensors();
+			optimizeAllTensors(i);
 	}
 
 private:
 
-	void optimizeAllTensors()
+	void optimizeAllTensors(SizeType iter)
 	{
 		SizeType ntensors = tensorOptimizer_.size();
-		for (SizeType i = 0; i < ntensors; ++i)
+		for (SizeType i = 0; i < ntensors; ++i) {
+			std::cout<<"MeraSolver: Optimizing tensor ";
+			std::cout<<ttos(i)<<" iteration "<<iter<<"\n";
 			tensorOptimizer_[i]->optimize(iterTensor_);
+		}
 	}
 
 	// FIXME: pick up model dependency here
@@ -206,8 +209,10 @@ private:
 			} else if (name == "r") {
 				assert(0 < dimensions.size());
 				tensors_[ind]->setToIdentityEx(1.0/sqrt(2.0),1);
-			} else {
+			} else if (name == "u") {
 				tensors_[ind]->setToIdentity(1.0);
+			} else {
+				tensors_[ind]->setRandom();
 			}
 		}
 	}

@@ -106,7 +106,7 @@ public:
 			std::cout<<"e[ignore]-s= "<<tmp<<"\n";
 			MatrixType condMatrix;
 			appendToMatrix(condMatrix,condSrep);
-			assert(isTheIdentity(condMatrix));
+			//assert(isTheIdentity(condMatrix));
 		}
 	}
 
