@@ -61,7 +61,7 @@ public:
 
 		PsimagLite::String srepMera;
 		io.readline(srepMera,"MERA=");
-		//srepMera += "h0(2,2,2,2)";
+		srepMera += "h0(2,2,2,2)";
 		findTensors(srepMera);
 
 		bool makeHamTheIdentity = false;
