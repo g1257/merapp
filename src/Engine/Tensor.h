@@ -85,7 +85,7 @@ public:
 
 		RealType tmp = PsimagLite::real(sum);
 		assert(tmp > 1e-6);
-		tmp = 1.0/sqrt(tmp);
+		tmp = 2.0/sqrt(tmp);
 		for (SizeType i = 0; i < n; ++i)
 			data_[i] *= tmp;
 	}

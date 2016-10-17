@@ -101,18 +101,33 @@ public:
 		TensorSrep condSrep(cond);
 		VectorRealType ev(energySrep_.size(),0);
 		VectorRealType nmv(normOfMera_.size(),0);
+		VectorSizeType freeIndices;
 
+		if (condSrep.maxTag('f') == 0) {
+			TensorEvalType eval(condSrep,
+			                    tensors_,
+			                    tensorNameIds_,
+			                    nameIdsTensor_);
+			ComplexOrRealType tmp = eval(freeIndices);
+			std::cout<<"ww*========= "<<tmp<<"\n";
+		}
+
+		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
 			RealType s = optimizeInternal(iter);
 			RealType e = calcEnergyTerms(ev,energySrep_,"Energy");
+			if (ignore_ == 100) std::cout<<"energy="<<e<<"\n";
+			if (iter > 0 && fabs(eprev-e)<1e-4) break;
+			eprev = e;
 			RealType nm = calcEnergyTerms(nmv,normOfMera_,"Norm");
 			std::cout<<"normOfMera="<<nm<<"\n";
-			std::cout<<"energy="<<e<<"\n";
 			std::cout<<"s="<<s<<"\n";
 			RealType tmp = -s;
 			if (ignore_ < ev.size()) tmp += ev[ignore_];
 			std::cout<<"e[ignore]-s= "<<tmp<<"\n";
+
 			if (condSrep.maxTag('f') == 0) continue;
+
 			MatrixType condMatrix;
 			appendToMatrix(condMatrix,condSrep);
 			assert(isTheIdentity(condMatrix));
@@ -165,7 +180,8 @@ private:
 			appendToMatrix(m,*(tensorSrep_[i]));
 		}
 
-		std::cerr<<"About to do svd...\n";
+		RealType tmp = PsimagLite::norm2(m);
+		std::cerr<<"About to do svd matrix with norm2= "<<tmp<<"\n";
 		VectorRealType s(m.n_row(),0);
 		MatrixType vt(m.n_col(),m.n_col());
 		svd('A',m,s,vt);
