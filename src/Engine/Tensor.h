@@ -95,7 +95,11 @@ public:
 		if (ins_ == 0) return;
 		if (dimensions_.size() < ins_) return;
 		if (dimensions_.size() == ins_) {
-			data_ = m();
+			SizeType rows = m.n_row();
+			SizeType cols = m.n_col();
+			for (SizeType i = 0; i < rows; ++i)
+				for (SizeType j = 0; j < cols; ++j)
+					data_[i+j*rows] = m(i,j);
 			return;
 		}
 
