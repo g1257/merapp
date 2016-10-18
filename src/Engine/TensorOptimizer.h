@@ -205,7 +205,7 @@ private:
 				ComplexOrRealType sum = 0.0;
 				for (SizeType k = 0; k < cols; ++k)
 					sum -= vt(k,i)*m(j,k);
-				t(i,j) = std::conj(sum);
+				t(i,j) = PsimagLite::conj(sum);
 			}
 		}
 
