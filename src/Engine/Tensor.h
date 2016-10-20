@@ -35,11 +35,11 @@ public:
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 
 	Tensor(SizeType dim0, SizeType ins)
-	    : dimensions_(1,dim0),data_(dim0),ins_(ins),rng_(1234)
+	    : dimensions_(1,dim0),data_(dim0),ins_(ins)
 	{}
 
 	Tensor(const VectorSizeType& d, SizeType ins)
-	    : dimensions_(d),ins_(ins),rng_(1234)
+	    : dimensions_(d),ins_(ins)
 	{
 		SizeType n = dimensions_.size();
 		if (n == 0) return;
@@ -153,10 +153,13 @@ private:
 		return index;
 	}
 
+	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
 	VectorSizeType dimensions_;
 	VectorComplexOrRealType data_;
 	SizeType ins_;
-	PsimagLite::RandomForTests<RealType> rng_;
 };
+
+template<typename ComplexOrRealType>
+PsimagLite::RandomForTests<ComplexOrRealType> Tensor<ComplexOrRealType>::rng_(1234);
 }
 #endif // TENSOR_H

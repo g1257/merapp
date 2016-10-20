@@ -101,16 +101,6 @@ public:
 		TensorSrep condSrep(cond);
 		VectorRealType ev(energySrep_.size(),0);
 		VectorRealType nmv(normOfMera_.size(),0);
-		VectorSizeType freeIndices;
-
-		if (condSrep.maxTag('f') == 0) {
-			TensorEvalType eval(condSrep,
-			                    tensors_,
-			                    tensorNameIds_,
-			                    nameIdsTensor_);
-			ComplexOrRealType tmp = eval(freeIndices);
-			std::cout<<"ww*========= "<<tmp<<"\n";
-		}
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
@@ -180,9 +170,17 @@ private:
 			appendToMatrix(m,*(tensorSrep_[i]));
 		}
 
+
+		VectorRealType s(m.n_row(),0);
+		if (tensorToOptimize_.first == "r") { // diagonalize
+			diag(m,s,'V');
+			topTensorFoldVector(m,s);
+			tensors_[indToOptimize_]->setToMatrix(m);
+			return 0.0;
+		}
+
 		RealType tmp = PsimagLite::norm2(m);
 		std::cerr<<"About to do svd matrix with norm2= "<<tmp<<"\n";
-		VectorRealType s(m.n_row(),0);
 		MatrixType vt(m.n_col(),m.n_col());
 		svd('A',m,s,vt);
 		page14StepL3(m,vt);
@@ -210,6 +208,23 @@ private:
 		}
 
 		tensors_[indToOptimize_]->setToMatrix(t);
+	}
+
+	void topTensorFoldVector(MatrixType& m,
+	                         const VectorRealType& e) const
+	{
+		m.reset(0,0);
+		assert(tensorToOptimize_.first == "r");
+		SizeType rows = tensors_[indToOptimize_]->argSize(0);
+		SizeType cols = tensors_[indToOptimize_]->argSize(1);
+		assert(rows*cols == e.size());
+		m.resize(rows,cols);
+		for (SizeType i = 0; i < rows; ++i) {
+			for (SizeType j = 0; j < cols; ++j) {
+				assert(i + j*rows < e.size());
+				m(i,j) = e[i + j*rows];
+			}
+		}
 	}
 
 	ComplexOrRealType calcEnergyTerms(VectorRealType& e,
