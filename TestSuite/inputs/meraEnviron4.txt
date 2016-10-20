@@ -7,7 +7,7 @@ TensorId=u,0
 Layer=0
 Ignore=200
 Terms=1
-Environ=w0(f0,s0|s1)r(s1,s2)r*(s3,s2)w0*(s4,s0|s3)u0*(s5,s6;s4)h0(f2,f3|s5,s6)
+Environ=w0(f0,s0|s1)r(s1,s2)r*(s3,s2)w0*(s4,s0|s3)u0*(s5,s6|s4)h0(f1,f2|s5,s6)
 
 TensorId=w,0
 Layer=0

@@ -67,7 +67,6 @@ public:
 		SizeType terms = 0;
 		io.readline(terms,"Terms=");
 		tensorSrep_.resize(terms,0);
-		normOfMera_.resize(terms,0);
 
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
@@ -81,8 +80,7 @@ public:
 		SizeType terms = tensorSrep_.size();
 		for (SizeType i = 0; i < terms; ++i) {
 			delete tensorSrep_[i];
-			delete normOfMera_[i];
-			tensorSrep_[i] = normOfMera_[i] = 0;
+			tensorSrep_[i] = 0;
 		}
 	}
 
@@ -93,7 +91,6 @@ public:
 		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
 		std::cout<<"cond="<<cond<<"\n";
 		TensorSrep condSrep(cond);
-		VectorRealType nmv(normOfMera_.size(),0);
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
@@ -348,7 +345,6 @@ private:
 		}
 
 		if (counter < n) return;
-		assert(!(counter & 1));
 		counter /= 2;
 		for (SizeType i = counter; i < n; ++i)
 			dirs[i] = oppositeDir(dirs[0]);
@@ -367,7 +363,6 @@ private:
 
 	PairStringSizeType tensorToOptimize_;
 	VectorTensorSrepType tensorSrep_;
-	VectorTensorSrepType normOfMera_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;

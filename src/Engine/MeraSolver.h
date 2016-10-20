@@ -84,7 +84,7 @@ public:
 			PsimagLite::Vector<PsimagLite::String>::Type tokens;
 			PsimagLite::tokenizer(str,tokens,",");
 			if (tokens.size() != 2) {
-				PsimagLite::String str("MeraSolver: Error reading Y_FOR_TENSOR");
+				PsimagLite::String str("MeraSolver: Error reading TensorId=");
 				str += "from file " + file + "\n";
 				throw PsimagLite::RuntimeError(str);
 			}
