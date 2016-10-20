@@ -181,8 +181,10 @@ private:
 		VectorRealType eigs(n,0.0);
 		diag(m,eigs,'N');
 		assert(n - 1 < eigs.size());
+		RealType diagCorrection = eigs[n-1];
+		std::cout<<"MeraSolver: DiagonalCorrection= "<<diagCorrection<<"\n";
 		for (SizeType i = 0; i < n; ++i)
-			twoSiteHam_(i,i) -= eigs[n-1];
+			twoSiteHam_(i,i) -= diagCorrection;
 	}
 
 	void initTensorNameIds()

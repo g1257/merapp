@@ -95,7 +95,8 @@ public:
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
 			RealType e = optimizeInternal(iter);
-			std::cout<<"energy="<<e<<"\n";
+			if (tensorToOptimize_.first == "r")
+				std::cout<<"energy="<<e<<"\n";
 			if (iter > 0 && fabs(eprev-e)<1e-4) break;
 			eprev = e;
 
@@ -161,9 +162,11 @@ private:
 		VectorRealType s(m.n_row(),0);
 		if (tensorToOptimize_.first == "r") { // diagonalize
 			diag(m,s,'V');
-			topTensorFoldVector(m,s);
-			tensors_[indToOptimize_]->setToMatrix(m);
-			return 0.0;
+			MatrixType t;
+			topTensorFoldVector(t,m);
+			tensors_[indToOptimize_]->setToMatrix(t);
+			assert(0 < s.size());
+			return s[0];
 		}
 
 		RealType tmp = PsimagLite::norm2(m);
@@ -197,21 +200,17 @@ private:
 		tensors_[indToOptimize_]->setToMatrix(t);
 	}
 
-	void topTensorFoldVector(MatrixType& m,
-	                         const VectorRealType& e) const
+	void topTensorFoldVector(MatrixType& t,
+	                         const MatrixType& eigenvector) const
 	{
-		m.reset(0,0);
 		assert(tensorToOptimize_.first == "r");
 		SizeType rows = tensors_[indToOptimize_]->argSize(0);
 		SizeType cols = tensors_[indToOptimize_]->argSize(1);
-		assert(rows*cols == e.size());
-		m.resize(rows,cols);
-		for (SizeType i = 0; i < rows; ++i) {
-			for (SizeType j = 0; j < cols; ++j) {
-				assert(i + j*rows < e.size());
-				m(i,j) = e[i + j*rows];
-			}
-		}
+		assert(rows*cols == eigenvector.n_row());
+		t.resize(rows,cols);
+		for (SizeType i = 0; i < rows; ++i)
+			for (SizeType j = 0; j < cols; ++j)
+				t(i,j) = eigenvector(i + j*rows,0);
 	}
 
 	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
