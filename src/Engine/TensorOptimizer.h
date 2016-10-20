@@ -59,24 +59,27 @@ public:
 	      tensorNameIds_(tensorNameAndIds),
 	      nameIdsTensor_(nameIdsTensor),
 	      tensors_(tensors),
-	      indToOptimize_(nameIdsTensor_[tensorToOptimize_])
+	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
+	      layer_(0)
 	{
 		SizeType terms = 0;
-		io.readline(terms,"TERMS=");
+		io.readline(terms,"Terms=");
 		tensorSrep_.resize(terms,0);
 		energySrep_.resize(terms,0);
 		normOfMera_.resize(terms,0);
-		io.readline(ignore_,"IGNORE=");
+
+		try {
+			io.readline(ignore_,"Ignore=");
+		} catch (std::exception&) {
+			io.rewind();
+			io.advance("TensorId="+nameToOptimize+","+ttos(idToOptimize));
+		}
+
+		io.readline(layer_,"Layer=");
 
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
-			io.readline(srep,"ENERGY=");
-			energySrep_[i] = new TensorSrep(srep);
-
-			io.readline(srep,"NORM_OF_MERA=");
-			normOfMera_[i] = new TensorSrep(srep);
-
-			io.readline(srep,"STRING=");
+			io.readline(srep,"Environ=");
 			tensorSrep_[i] = new TensorSrep(srep);
 		}
 	}
@@ -123,6 +126,10 @@ public:
 			assert(isTheIdentity(condMatrix));
 		}
 	}
+
+	const PairSizeType& nameId() const { return tensorToOptimize_; }
+
+	SizeType layer() const { return layer_; }
 
 private:
 
@@ -402,6 +409,7 @@ private:
 	VectorTensorType& tensors_;
 	SizeType indToOptimize_;
 	SizeType ignore_;
+	SizeType layer_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H

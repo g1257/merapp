@@ -44,7 +44,7 @@ class MeraSolver {
 public:
 
 	MeraSolver(PsimagLite::String file)
-	    : tauMax_(0), iterMera_(2), iterTensor_(5), twoSiteHam_(4,4)
+	    : tauMax_(0), iterMera_(2), iterTensor_(5), indexOfRootTensor_(0),twoSiteHam_(4,4)
 	{
 		IoInType io(file);
 		io.readline(tauMax_,"TauMax=");
@@ -73,13 +73,14 @@ public:
 
 		PsimagLite::String dstr("");
 		io.rewind();
-		io.readline(dstr,"DIMENSION_SREP=");
+		io.readline(dstr,"DimensionSrep=");
 		initTensors(dstr);
+		bool rootTensorFound = false;
 
 		while (!io.eof()) {
 			PsimagLite::String str("");
 			try {
-				io.readline(str,"Y_FOR_TENSOR=");
+				io.readline(str,"TensorId=");
 			} catch (std::exception&) {
 				break;
 			}
@@ -100,6 +101,22 @@ public:
 			                                                   tensorNameIds_,
 			                                                   nameIdsTensor_,
 			                                                   tensors_));
+
+			if (name == "r") {
+				if (rootTensorFound) {
+					PsimagLite::String msg("FATAL: File " + file);
+					throw PsimagLite::RuntimeError(msg + " more than one root tensor found\n");
+				}
+
+				assert(tensorOptimizer_.size() > 0);
+				indexOfRootTensor_ = tensorOptimizer_.size() - 1;
+				rootTensorFound = true;
+			}
+		}
+
+		if (!rootTensorFound) {
+			PsimagLite::String msg("FATAL: File " + file);
+			throw PsimagLite::RuntimeError(msg + " root tensor not found\n");
 		}
 
 		std::cerr<<"MeraSolver::ctor() done\n";
@@ -129,9 +146,15 @@ private:
 	void optimizeAllTensors(SizeType iter)
 	{
 		SizeType ntensors = tensorOptimizer_.size();
+		SizeType prevLayer = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
-			std::cout<<"MeraSolver: Optimizing tensor ";
-			std::cout<<ttos(i)<<" iteration "<<iter<<"\n";
+			SizeType thisLayer = tensorOptimizer_[i]->layer();
+			if (prevLayer != thisLayer || i == 0) {
+				tensorOptimizer_[indexOfRootTensor_]->optimize(iterTensor_);
+				prevLayer = thisLayer;
+			}
+
+			if (i == indexOfRootTensor_) continue;
 			tensorOptimizer_[i]->optimize(iterTensor_);
 		}
 	}
@@ -253,6 +276,7 @@ private:
 	SizeType tauMax_;
 	SizeType iterMera_;
 	SizeType iterTensor_;
+	SizeType indexOfRootTensor_;
 	VectorPairStringSizeType tensorNameIds_;
 	MapPairStringSizeType nameIdsTensor_;
 	VectorTensorType tensors_;
