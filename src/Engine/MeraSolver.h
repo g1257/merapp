@@ -61,22 +61,18 @@ public:
 			io.rewind();
 		}
 
-		PsimagLite::String srepMera;
-		io.readline(srepMera,"MERA=");
-		srepMera += "h0(2,2,2,2)";
-		findTensors(srepMera);
+		PsimagLite::String dstr("");
+		io.readline(dstr,"DimensionSrep=");
+		findTensors(dstr);
+
+		initTensorNameIds();
 
 		bool makeHamTheIdentity = false;
 		setTwoSiteHam(makeHamTheIdentity);
 
-		initTensorNameIds();
-
-		PsimagLite::String dstr("");
-		io.rewind();
-		io.readline(dstr,"DimensionSrep=");
 		initTensors(dstr);
-		bool rootTensorFound = false;
 
+		bool rootTensorFound = false;
 		while (!io.eof()) {
 			PsimagLite::String str("");
 			try {

@@ -62,20 +62,12 @@ public:
 	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
 	      layer_(0)
 	{
+		io.readline(layer_,"Layer=");
+		io.readline(ignore_,"Ignore=");
 		SizeType terms = 0;
 		io.readline(terms,"Terms=");
 		tensorSrep_.resize(terms,0);
-		energySrep_.resize(terms,0);
 		normOfMera_.resize(terms,0);
-
-		try {
-			io.readline(ignore_,"Ignore=");
-		} catch (std::exception&) {
-			io.rewind();
-			io.advance("TensorId="+nameToOptimize+","+ttos(idToOptimize));
-		}
-
-		io.readline(layer_,"Layer=");
 
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
@@ -89,9 +81,8 @@ public:
 		SizeType terms = tensorSrep_.size();
 		for (SizeType i = 0; i < terms; ++i) {
 			delete tensorSrep_[i];
-			delete energySrep_[i];
 			delete normOfMera_[i];
-			tensorSrep_[i] = energySrep_[i] = normOfMera_[i] = 0;
+			tensorSrep_[i] = normOfMera_[i] = 0;
 		}
 	}
 
@@ -102,22 +93,14 @@ public:
 		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
 		std::cout<<"cond="<<cond<<"\n";
 		TensorSrep condSrep(cond);
-		VectorRealType ev(energySrep_.size(),0);
 		VectorRealType nmv(normOfMera_.size(),0);
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
-			RealType s = optimizeInternal(iter);
-			RealType e = calcEnergyTerms(ev,energySrep_,"Energy");
-			if (ignore_ == 100) std::cout<<"energy="<<e<<"\n";
+			RealType e = optimizeInternal(iter);
+			std::cout<<"energy="<<e<<"\n";
 			if (iter > 0 && fabs(eprev-e)<1e-4) break;
 			eprev = e;
-			RealType nm = calcEnergyTerms(nmv,normOfMera_,"Norm");
-			std::cout<<"normOfMera="<<nm<<"\n";
-			std::cout<<"s="<<s<<"\n";
-			RealType tmp = -s;
-			if (ignore_ < ev.size()) tmp += ev[ignore_];
-			std::cout<<"e[ignore]-s= "<<tmp<<"\n";
 
 			if (condSrep.maxTag('f') == 0) continue;
 
@@ -232,24 +215,6 @@ private:
 				m(i,j) = e[i + j*rows];
 			}
 		}
-	}
-
-	ComplexOrRealType calcEnergyTerms(VectorRealType& e,
-	                                  const VectorTensorSrepType& eSrep,
-	                                  PsimagLite::String what) const
-	{
-		VectorSizeType freeIndices;
-		ComplexOrRealType sum = 0.0;
-		assert(e.size() == eSrep.size());
-		for (SizeType i = 0; i < eSrep.size(); ++i) {
-			TensorEvalType eval(*(eSrep[i]),tensors_,tensorNameIds_,nameIdsTensor_);
-			assert(i < e.size());
-			e[i] = eval(freeIndices);
-			sum += e[i];
-			std::cerr<<what<<" term= "<<e[i]<<"\n";
-		}
-
-		return sum;
 	}
 
 	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
@@ -402,7 +367,6 @@ private:
 
 	PairStringSizeType tensorToOptimize_;
 	VectorTensorSrepType tensorSrep_;
-	VectorTensorSrepType energySrep_;
 	VectorTensorSrepType normOfMera_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
