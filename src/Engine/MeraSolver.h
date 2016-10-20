@@ -28,7 +28,9 @@ template<typename ComplexOrRealType>
 class MeraSolver {
 
 	typedef PsimagLite::IoSimple::In IoInType;
+	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 	typedef TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef typename TensorEvalType::TensorType TensorType;
 	typedef TensorOptimizer<ComplexOrRealType> TensorOptimizerType;
@@ -137,16 +139,31 @@ private:
 	// FIXME: pick up model dependency here
 	void setTwoSiteHam(bool testWithIdentity)
 	{
-		for (SizeType i = 0; i < 4; ++i)
+		SizeType n = twoSiteHam_.n_row();
+		assert(n = twoSiteHam_.n_col());
+		for (SizeType i = 0; i < n; ++i)
 			twoSiteHam_(i,i) = 1.0;
 		if (testWithIdentity) return;
 
 		// Sz Sz
-		for (SizeType i = 0; i < 4; ++i)
+		for (SizeType i = 0; i < n; ++i)
 			twoSiteHam_(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
 
 		// S+S- S-S+
 		twoSiteHam_(1,2) = twoSiteHam_(2,1) = 0.5;
+
+		normalizeHam();
+	}
+
+	void normalizeHam()
+	{
+		MatrixType m = twoSiteHam_;
+		SizeType n = m.n_row();
+		VectorRealType eigs(n,0.0);
+		diag(m,eigs,'N');
+		assert(n - 1 < eigs.size());
+		for (SizeType i = 0; i < n; ++i)
+			twoSiteHam_(i,i) -= eigs[n-1];
 	}
 
 	void initTensorNameIds()
