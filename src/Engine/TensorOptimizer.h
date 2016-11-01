@@ -95,10 +95,12 @@ public:
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
 			RealType e = optimizeInternal(iter);
-			if (tensorToOptimize_.first == "r")
+			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
-			if (iter > 0 && fabs(eprev-e)<1e-4) break;
-			eprev = e;
+				if (iter > 0 && fabs(eprev-e)<1e-4)
+					break;
+				eprev = e;
+			}
 
 			if (condSrep.maxTag('f') == 0) continue;
 
