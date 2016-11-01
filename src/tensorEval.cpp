@@ -25,7 +25,7 @@ int main()
 	SizeType dim0 = 5;
 	typedef Mera::TensorEval<double> TensorEvalType;
 	typedef TensorEvalType::TensorType TensorType;
-	TensorEvalType::VectorTensorType vt(2,0);
+	TensorEvalType::VectorTensorType vt(2);
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		vt[i] = new TensorType(dim0,1);
