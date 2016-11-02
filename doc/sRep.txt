@@ -43,11 +43,11 @@ A tensor stanza MUST have ins + outs > 0.
 
 -- Symbolic indices of legs
 
-A symbolic index is a string formed by a letter plus an optional non-zero integer.
+A symbolic index is a string formed by a letter plus an optional non-negative integer.
 The letter can be 's' or 'f' to indicate whether the symbolic index is summed-over (s) or free (f).
 The letter 'd' indicates that the symbolic index is a dummy.
 The letter 'r' indicates that the symbolic index is the root of the mera (eye of the mera).
-The non-zero integer MUST be present for all symbolic letters except 'd' and 'r'.
+The non-negative integer MUST be present for all symbolic letters except 'd' and 'r'.
 
 -- Whitespace
 One or more of the following: space, tab, eol.
