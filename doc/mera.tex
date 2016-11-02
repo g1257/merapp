@@ -1,0 +1,67 @@
+\documentclass[showpacs,preprintnumbers,prb]{revtex4}
+\usepackage{graphicx,amssymb,amsmath}
+\usepackage[usenames]{xcolor}
+\newcommand{\etalter}{{\it et al.}}
+\newcommand{\eg}{{\it e.\ g.}}
+\newcommand{\ie}{{\it i.\ e.}}
+
+\begin{document}
+
+\title{Title goes here}
+\author{G. Alvarez}
+\affiliation{Computer Science \& Mathematics 
+Division and Center for Nanophase Materials Sciences, Oak Ridge National Laboratory, \mbox{Oak Ridge, TN 37831}}
+
+\author{A. Nocera}
+\affiliation{Computer Science \& Mathematics 
+Division and Center for Nanophase Materials Sciences, Oak Ridge National Laboratory, \mbox{Oak Ridge, TN 37831}}
+
+\begin{abstract}
+Here goes the abstract....
+\end{abstract}
+
+\maketitle
+\section{Entaglement Entropy}
+
+\subsection{Properties of ``Area Laws'' Hamiltonians}
+We are going to work with a class $\mathcal{C}$ of strongly correlated Hamiltonians that
+are short-ranged in some $d$ dimensional geometry.
+The ground state of a strongly correlated 
+Hamiltonian $H\in\mathcal{C}$ in $d=1$ noncritical (gapped) has a entaglement entropy 
+$S_\text{exact} \propto C$, where $C$ is a constant independent of system length $L$. 
+The ground state of a strongly correlated  Hamiltonian $H\in\mathcal{C}$ 
+ in $d=1$ critical (gapless) has a entaglement entropy 
+$S_\text{exact} \propto \ln(L)$.
+The ground state of a strongly correlated  Hamiltonian $H\in\mathcal{C}$
+in $d>1$ noncritical(gapped) has a entaglement entropy 
+$S_\text{exact} \propto L^{d-1}$, and for critical (gapless) it is $L^{d-1}\ln{L}$.
+
+EXPAND GAPLESS/GAPPED, DIMENSION, AND DIMENSION OF FERMI SUFACE.
+ 
+CRITICAL IN 1D IS ALSO PERIODIC BOUNDARY CONDITION?
+
+\subsection{DMRG and MPS}
+The entaglement entropy of a MPS of length $L^d$ and bond dimension $m$
+is $S_\text{MPS}(L^d,m) \propto \ln(m)$. 
+To match the entaglement entropy growth, the $m$ required to simulate a problem 
+with MPS or DMRG is as follows: $m\propto C$ for $d=1$ noncritical, $m\propto L$ for
+$d=1$ critical, $m\propto \exp(L^{d-1})$ for $d>1$ noncritical and
+$m\propto L^{L^{d-1}}$ for $d>1$ critical.
+
+\subsection{PEPS}
+The entaglement entropy of PEPS with length $L$ and bond dimension $m$
+is $S_\text{PEPS}(L,d,m) \propto L^{d-1}\ln(m)$.
+To match the entaglement entropy growth, the $m$ required to simulate a problem 
+with PEPS is as shown in the table. Note that even though the PEPS has
+large entropy and thus should produce good scaling for $m$, the main problem of
+PEPS is that contraction has exponential cost.
+
+\subsection{MERA}
+The entaglement entropy of scale invariant 
+MERA with length $L$, dimension $d=1$, and bond dimension $m$
+is $S_\text{MERA}(L,d=1,m) \propto \ln(L)\ln(m)$.
+The entaglement entropy of MERA with length $L$, dimension $d>1$, and bond dimension $m$
+is $S_\text{MERA}(L,d,m) \propto L^{d-1}\ln(m)$.
+To match the entaglement entropy growth, the $m$ required to simulate a problem 
+with MERA is as shown in the table.
+\end{document}
