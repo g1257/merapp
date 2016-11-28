@@ -1,6 +1,6 @@
 TauMax=3
-IterMera=50
-IterTensor=5
+IterMera=20
+IterTensor=100
 DimensionSrep=u0(2,2|2,2)w0(2,2|4)h0(2,2|2,2)w1(2,2|4)r(4,4)
 
 TensorId=u,0

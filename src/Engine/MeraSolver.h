@@ -146,12 +146,14 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType thisLayer = tensorOptimizer_[i]->layer();
 			if (prevLayer != thisLayer || i == 0) {
-				tensorOptimizer_[indexOfRootTensor_]->optimize(iterTensor_);
+				tensorOptimizer_[indexOfRootTensor_]->optimize(iterTensor_,
+				                                               iter);
 				prevLayer = thisLayer;
 			}
 
 			if (i == indexOfRootTensor_) continue;
-			tensorOptimizer_[i]->optimize(iterTensor_);
+			tensorOptimizer_[i]->optimize(iterTensor_,
+			                              iter);
 		}
 	}
 

@@ -60,7 +60,8 @@ public:
 	      nameIdsTensor_(nameIdsTensor),
 	      tensors_(tensors),
 	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
-	      layer_(0)
+	      layer_(0),
+	      indexOfRootTensor_(0)
 	{
 		io.readline(layer_,"Layer=");
 		io.readline(ignore_,"Ignore=");
@@ -73,6 +74,18 @@ public:
 			io.readline(srep,"Environ=");
 			tensorSrep_[i] = new TensorSrep(srep);
 		}
+
+		bool flag = false;
+		for (SizeType i = 0; i < tensorNameIds_.size(); ++i) {
+			if (tensorNameIds_[i].first == "r") {
+				indexOfRootTensor_ = i;
+				flag = true;
+				break;
+			}
+		}
+
+		if (!flag)
+			throw PsimagLite::RuntimeError("TensorOptimizer: Root tensor not found\n");
 	}
 
 	~TensorOptimizer()
@@ -84,7 +97,7 @@ public:
 		}
 	}
 
-	void optimize(SizeType iters)
+	void optimize(SizeType iters, SizeType upIter)
 	{
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
@@ -94,13 +107,14 @@ public:
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
-			RealType e = optimizeInternal(iter);
+			RealType e = optimizeInternal(iter, upIter);
 			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
-				if (iter > 0 && fabs(eprev-e)<1e-4)
-					break;
-				eprev = e;
 			}
+
+			if (iter > 0 && fabs(eprev-e)<1e-4)
+				break;
+			eprev = e;
 
 			if (condSrep.maxTag('f') == 0) continue;
 
@@ -150,7 +164,7 @@ private:
 		return srep;
 	}
 
-	RealType optimizeInternal(SizeType)
+	RealType optimizeInternal(SizeType iter, SizeType upIter)
 	{
 		SizeType terms = tensorSrep_.size();
 		MatrixType m;
@@ -160,15 +174,18 @@ private:
 			appendToMatrix(m,*(tensorSrep_[i]));
 		}
 
-
+		MatrixType mSrc = m;
 		VectorRealType s(m.n_row(),0);
 		if (tensorToOptimize_.first == "r") { // diagonalize
+			RealType e = computeRyR(mSrc);
+			std::cerr<<"r*Y(r)r="<<e<<"\n";
+
 			diag(m,s,'V');
 			MatrixType t;
 			topTensorFoldVector(t,m);
 			tensors_[indToOptimize_]->setToMatrix(t);
 			assert(0 < s.size());
-			return s[0];
+			return computeRyR(mSrc);
 		}
 
 		RealType tmp = PsimagLite::norm2(m);
@@ -179,6 +196,7 @@ private:
 		RealType result = 0.0;
 		for (SizeType i = 0; i < s.size(); ++i)
 			result += s[i];
+		std::cerr<<"TensorOptimizer["<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
 		return result;
 	}
 
@@ -358,6 +376,34 @@ private:
 		return (dir == in) ? out : in;
 	}
 
+	RealType computeRyR(const MatrixType& y) const
+	{
+		RealType sum = 0.0;
+		const TensorType& r = *tensors_[indexOfRootTensor_];
+		assert(r.args() == 2);
+		SizeType rows = r.argSize(0);
+		SizeType cols = r.argSize(1);
+		assert(rows*cols == y.n_col());
+		assert(y.n_row() == y.n_col());
+		VectorSizeType args1(2,0);
+		VectorSizeType args2(2,0);
+		for (SizeType i = 0; i < rows; ++i) {
+			args1[0] = i;
+			for (SizeType j = 0; j < cols; ++j) {
+				args1[1] = j;
+				for (SizeType k = 0; k < rows; ++k) {
+					args2[0] = k;
+					for (SizeType l = 0; l < cols; ++l) {
+						args2[1] = l;
+						sum += PsimagLite::conj(r(args1))*y(i+j*rows,k+l*rows)*r(args2);
+					}
+				}
+			}
+		}
+
+		return sum;
+	}
+
 	TensorOptimizer(const TensorOptimizer&);
 
 	TensorOptimizer& operator=(const TensorOptimizer&);
@@ -370,6 +416,7 @@ private:
 	SizeType indToOptimize_;
 	SizeType ignore_;
 	SizeType layer_;
+	SizeType indexOfRootTensor_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
