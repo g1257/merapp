@@ -177,15 +177,19 @@ private:
 		MatrixType mSrc = m;
 		VectorRealType s(m.n_row(),0);
 		if (tensorToOptimize_.first == "r") { // diagonalize
-			RealType e = computeRyR(mSrc);
-			std::cerr<<"r*Y(r)r="<<e<<"\n";
-
+			if (!isHermitian(m,true))
+				throw PsimagLite::RuntimeError("Not Hermitian H\n");
 			diag(m,s,'V');
 			MatrixType t;
 			topTensorFoldVector(t,m);
 			tensors_[indToOptimize_]->setToMatrix(t);
 			assert(0 < s.size());
-			return computeRyR(mSrc);
+
+			RealType e = computeRyR(mSrc);
+//			RealType e = computeRyR(mSrc, m);
+			std::cerr<<"r*Y(r)r="<<e<<"\n";
+
+			return s[0];
 		}
 
 		RealType tmp = PsimagLite::norm2(m);
@@ -376,10 +380,49 @@ private:
 		return (dir == in) ? out : in;
 	}
 
+//	RealType computeRyR(const MatrixType& orig, const MatrixType& eigv) const
+//	{
+//		RealType sum = 0.0;
+//		SizeType rows = eigv.n_row();
+//		SizeType cols = eigv.n_col();
+
+//		for (SizeType i = 0; i < rows; ++i) {
+//			for (SizeType j = 0; j < cols; ++j) {
+//				sum += PsimagLite::conj(eigv(i,0))*orig(i,j)*eigv(j,0);
+//			}
+//		}
+
+//		return sum;
+//	}
+
+	//	RealType computeRyR(const MatrixType& y, const MatrixType& t) const
+	//	{
+	//		RealType sum = 0.0;
+	//		SizeType rows = t.n_row();
+	//		SizeType cols = t.n_col();
+	//		assert(rows*cols == y.n_col());
+	//		assert(y.n_row() == y.n_col());
+
+	//		for (SizeType i = 0; i < rows; ++i) {
+	//			for (SizeType j = 0; j < cols; ++j) {
+	//				for (SizeType k = 0; k < rows; ++k) {
+	//					for (SizeType l = 0; l < cols; ++l) {
+	//						sum += PsimagLite::conj(t(i,j))*y(i+j*rows,k+l*rows)*t(k,l);
+	//					}
+	//				}
+	//			}
+	//		}
+
+	//		return sum;
+	//	}
+
 	RealType computeRyR(const MatrixType& y) const
 	{
+		if (indToOptimize_ != indexOfRootTensor_)
+			throw PsimagLite::RuntimeError("Don't call computeRyR unless optimizing root\n");
+
 		RealType sum = 0.0;
-		const TensorType& r = *tensors_[indexOfRootTensor_];
+		const TensorType& r = *tensors_[indToOptimize_];
 		assert(r.args() == 2);
 		SizeType rows = r.argSize(0);
 		SizeType cols = r.argSize(1);

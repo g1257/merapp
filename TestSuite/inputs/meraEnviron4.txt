@@ -19,4 +19,4 @@ TensorId=r,0
 Layer=0
 Ignore=200
 Terms=1
-Environ=w0(s0,s1|f0)u0(s2,s3|s0)h0(s2,s3|s4,s5)u0*(s4,s5|s6)w0*(s6,s1|f2)u99(f1|f3)
+Environ=w0(s0,s1|f0)u0(s2,s3|s0)h0(s2,s3|s4,s5)u0*(s4,s5|s6)w0*(s6,s1|f2)u99(f3|f1)
