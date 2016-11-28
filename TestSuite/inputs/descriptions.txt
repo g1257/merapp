@@ -1,0 +1,14 @@
+meraEnviron1.txt
+Heisenberg 4 sites, MERA uuw, H = H_{01} + H_{23}
+
+meraEnviron2.txt
+Heisenberg 4 sites, MERA uuw, H = H_{01} + H_{12} + H_{23}
+
+meraEnviron3.txt
+Heisenberg 4 sites, MERA uuw, H = H_{01} + H_{12}
+
+meraEnviron4.txt
+Heisenberg 4 sites, MERA uuw, H = H_{01}
+
+meraEnviron5.txt
+Heisenberg 4 sites, MERA uww, H = H_{01} + H_{12}
