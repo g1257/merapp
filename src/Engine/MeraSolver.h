@@ -40,13 +40,21 @@ class MeraSolver {
 	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
+	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
 
 public:
 
 	MeraSolver(PsimagLite::String file)
-	    : tauMax_(0), iterMera_(2), iterTensor_(5), indexOfRootTensor_(0),twoSiteHam_(4,4)
+	    : tauMax_(0),
+	      iterMera_(2),
+	      iterTensor_(5),
+	      indexOfRootTensor_(0),
+	      twoSiteHam_(4,4),
+	      paramsForLanczos_(0)
 	{
 		IoInType io(file);
+		paramsForLanczos_ = new ParametersForSolverType(io,"Mera");
+		io.rewind();
 		io.readline(tauMax_,"TauMax=");
 
 		try {
@@ -96,7 +104,8 @@ public:
 			                                                   id,
 			                                                   tensorNameIds_,
 			                                                   nameIdsTensor_,
-			                                                   tensors_));
+			                                                   tensors_,
+			                                                   *paramsForLanczos_));
 
 			if (name == "r") {
 				if (rootTensorFound) {
@@ -129,6 +138,8 @@ public:
 			delete tensors_[i];
 			tensors_[i] = 0;
 		}
+
+		delete paramsForLanczos_;
 	}
 
 	void optimize()
@@ -282,6 +293,7 @@ private:
 	VectorTensorType tensors_;
 	MatrixType twoSiteHam_;
 	VectorTensorOptimizerType tensorOptimizer_;
+	ParametersForSolverType* paramsForLanczos_;
 }; // class MeraSolver
 } // namespace Mera
 #endif // MERASOLVER_H

@@ -24,6 +24,8 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Sort.h"
 #include "Matrix.h"
 #include "IoSimple.h"
+#include "LanczosSolver.h"
+#include "CrsMatrix.h"
 
 namespace Mera {
 
@@ -48,20 +50,27 @@ public:
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 	typedef typename TensorEvalType::MapPairStringSizeType MapPairStringSizeType;
-
+	typedef PsimagLite::ParametersForSolver<RealType> ParametersForSolverType;
+	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
+	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
+	typedef PsimagLite::LanczosSolver<ParametersForSolverType,
+	                                  SparseMatrixType,
+	                                  VectorType> LanczosSolverType;
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize,
 	                const VectorPairStringSizeType& tensorNameAndIds,
 	                MapPairStringSizeType& nameIdsTensor,
-	                VectorTensorType& tensors)
+	                VectorTensorType& tensors,
+	                const ParametersForSolverType& params)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
 	      tensorNameIds_(tensorNameAndIds),
 	      nameIdsTensor_(nameIdsTensor),
 	      tensors_(tensors),
 	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
 	      layer_(0),
-	      indexOfRootTensor_(0)
+	      indexOfRootTensor_(0),
+	      params_(params)
 	{
 		io.readline(layer_,"Layer=");
 		io.readline(ignore_,"Ignore=");
@@ -179,9 +188,19 @@ private:
 		if (tensorToOptimize_.first == "r") { // diagonalize
 			if (!isHermitian(m,true))
 				throw PsimagLite::RuntimeError("Not Hermitian H\n");
-			diag(m,s,'V');
-			MatrixType t;
-			topTensorFoldVector(t,m);
+
+			SizeType rows = tensors_[indToOptimize_]->argSize(0);
+			SizeType cols = tensors_[indToOptimize_]->argSize(1);
+			assert(rows*cols == m.n_row());
+			MatrixType t(rows,cols);
+			bool fullDiag = (params_.options.find("fulldiag") != PsimagLite::String::npos);
+			if (fullDiag) {
+				diag(m,s,'V');
+				topTensorFoldVector(t,m);
+			} else {
+				lanczosDiag(t,s,m);
+			}
+
 			tensors_[indToOptimize_]->setToMatrix(t);
 			assert(0 < s.size());
 
@@ -227,13 +246,30 @@ private:
 	                         const MatrixType& eigenvector) const
 	{
 		assert(tensorToOptimize_.first == "r");
-		SizeType rows = tensors_[indToOptimize_]->argSize(0);
-		SizeType cols = tensors_[indToOptimize_]->argSize(1);
-		assert(rows*cols == eigenvector.n_row());
-		t.resize(rows,cols);
+		SizeType rows = t.n_row();
+		SizeType cols = t.n_col();
 		for (SizeType i = 0; i < rows; ++i)
 			for (SizeType j = 0; j < cols; ++j)
 				t(i,j) = eigenvector(i + j*rows,0);
+	}
+
+	void lanczosDiag(MatrixType& t, VectorRealType& s, const MatrixType& src) const
+	{
+		SizeType n = src.n_row();
+		assert(tensorToOptimize_.first == "r");
+		SizeType rows = t.n_row();
+		SizeType cols = t.n_col();
+		assert(n == rows*cols);
+		t.resize(rows,cols);
+		SparseMatrixType srcSparse(src);
+		LanczosSolverType lanczosSolver(srcSparse,params_);
+		VectorType gsVector(n,0.0);
+		if (s.size() == 0) s.resize(1,0.0);
+		lanczosSolver.computeGroundState(s[0],gsVector);
+		for (SizeType i = 0; i < rows; ++i)
+			for (SizeType j = 0; j < cols; ++j)
+				t(i,j) = gsVector[i + j*rows];
+
 	}
 
 	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
@@ -423,6 +459,7 @@ private:
 	SizeType ignore_;
 	SizeType layer_;
 	SizeType indexOfRootTensor_;
+	const ParametersForSolverType& params_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
