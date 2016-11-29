@@ -22,23 +22,24 @@ Here goes the abstract....
 
 \maketitle
 \section{Entaglement Entropy}
-
-\subsection{Properties of ``Area Laws'' Hamiltonians}
+\subsection{Criticality}
 We are going to work with a class $\mathcal{C}$ of strongly correlated Hamiltonians that
 are short-ranged in some $d$ dimensional geometry.
+A system is critical if it is gapless \emph{and} $d-d_\Gamma=1$, where $d$ is the
+dimension of the geometry, and $d_\Gamma$ the dimension of the Fermi surface.
+See citation at the end.
+
+\subsection{Properties of ``Area Laws'' Hamiltonians}
+
 The ground state of a strongly correlated 
-Hamiltonian $H\in\mathcal{C}$ in $d=1$ noncritical (gapped) has a entaglement entropy 
+Hamiltonian $H\in\mathcal{C}$ in $d=1$ noncritical has a entaglement entropy 
 $S_\text{exact} \propto C$, where $C$ is a constant independent of system length $L$. 
 The ground state of a strongly correlated  Hamiltonian $H\in\mathcal{C}$ 
- in $d=1$ critical (gapless) has a entaglement entropy 
+ in $d=1$ critical has a entaglement entropy 
 $S_\text{exact} \propto \ln(L)$.
 The ground state of a strongly correlated  Hamiltonian $H\in\mathcal{C}$
-in $d>1$ noncritical(gapped) has a entaglement entropy 
-$S_\text{exact} \propto L^{d-1}$, and for critical (gapless) it is $L^{d-1}\ln{L}$.
-
-EXPAND GAPLESS/GAPPED, DIMENSION, AND DIMENSION OF FERMI SUFACE.
- 
-CRITICAL IN 1D IS ALSO PERIODIC BOUNDARY CONDITION?
+in $d>1$ noncritical has a entaglement entropy 
+$S_\text{exact} \propto L^{d-1}$, and for critical it is $L^{d-1}\ln{L}$.
 
 \subsection{DMRG and MPS}
 The entaglement entropy of a MPS of length $L^d$ and bond dimension $m$
@@ -65,3 +66,17 @@ is $S_\text{MERA}(L,d,m) \propto L^{d-1}\ln(m)$.
 To match the entaglement entropy growth, the $m$ required to simulate a problem 
 with MERA is as shown in the table.
 \end{document}
+%@article{PhysRevB.89.235113,
+%  title = {Scaling of entanglement entropy in the (branching) multiscale entanglement renormalization ansatz},
+%  author = {Evenbly, G. and Vidal, G.},
+%  journal = {Phys. Rev. B},
+%  volume = {89},
+%  issue = {23},
+%  pages = {235113},
+%  numpages = {15},
+%  year = {2014},
+%  month = {Jun},
+%  publisher = {American Physical Society},
+%  doi = {10.1103/PhysRevB.89.235113},
+%  url = {http://link.aps.org/doi/10.1103/PhysRevB.89.235113}
+%}

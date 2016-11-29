@@ -269,7 +269,6 @@ private:
 		for (SizeType i = 0; i < rows; ++i)
 			for (SizeType j = 0; j < cols; ++j)
 				t(i,j) = gsVector[i + j*rows];
-
 	}
 
 	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
