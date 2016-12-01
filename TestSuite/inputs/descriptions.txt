@@ -14,6 +14,11 @@ meraEnviron4.txt
 Heisenberg 4 sites, MERA uuw, H = H_{01}
 -1 = -0.75 - 0.25*1
 
+meraEnviron5.txt
+Heisenberg 4 sites, MERA uuw, H = H_{01} + H_{12} + H_{23}
+Truncated to m=6 max
+-2.3660 = -1.6160 - 3*(-1/4)
+
 ----------------------------
 
 meraEnviron20.txt
