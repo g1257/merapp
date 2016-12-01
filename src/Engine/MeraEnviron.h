@@ -60,8 +60,9 @@ private:
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
 		SizeType sites = tensorSrep_.maxTag('f');
-		std::cout<<"Y_FOR_TENSOR="<<name<<","<<id<<"\n";
-		std::cout<<"TERMS="<<sites<<"\n";
+		std::cout<<"TensorId="<<name<<","<<id<<"\n";
+		std::cout<<"Terms="<<sites<<"\n";
+		std::cout<<"IgnoreTerm="<<(2*sites+1)<<"\n";
 		for (SizeType site = 0; site < sites; ++site) {
 			environForTensor(ind,site);
 		}
@@ -88,9 +89,9 @@ private:
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		tensorSrep4.contract(tensorSrep2);
-		std::cout<<"ENERGY="<<tensorSrep4.sRep()<<"\n";
+		std::cerr<<"ENERGY="<<tensorSrep4.sRep()<<"\n";
 		tensorSrep4.eraseTensor(ind);
-		std::cout<<"STRING="<<tensorSrep4.sRep()<<"\n";
+		std::cout<<"Environ="<<tensorSrep4.sRep()<<"\n";
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 	}

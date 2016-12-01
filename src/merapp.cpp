@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 	PsimagLite::String str("");
 
 	if (argc == 2)
-		str = "u0(f0,f1|d,s0)u3(f2,f3|s1,s2)w0(s0,s1|s3)w3(s2,d|s4)r(s3,s4)\n";
+		str = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
 
 	if (argc > 2) {
 		char c = '\0';
