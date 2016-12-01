@@ -17,23 +17,24 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef MERASOLVER_H
 #define MERASOLVER_H
-#include "IoSimple.h"
+#include "InputNg.h"
 #include "TensorSrep.h"
 #include "TensorEval.h"
 #include "TensorOptimizer.h"
+#include "InputCheck.h"
 
 namespace Mera {
 
 template<typename ComplexOrRealType>
 class MeraSolver {
 
-	typedef PsimagLite::IoSimple::In IoInType;
+	typedef PsimagLite::InputNg<InputCheck> InputNgType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 	typedef TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef typename TensorEvalType::TensorType TensorType;
-	typedef TensorOptimizer<ComplexOrRealType> TensorOptimizerType;
+	typedef TensorOptimizer<ComplexOrRealType,InputNgType::Readable> TensorOptimizerType;
 	typedef typename PsimagLite::Vector<TensorOptimizerType*>::Type VectorTensorOptimizerType;
 	typedef typename TensorEvalType::PairStringSizeType PairStringSizeType;
 	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
@@ -44,7 +45,7 @@ class MeraSolver {
 
 public:
 
-	MeraSolver(PsimagLite::String file)
+	MeraSolver(PsimagLite::String filename)
 	    : tauMax_(0),
 	      iterMera_(2),
 	      iterTensor_(5),
@@ -52,22 +53,20 @@ public:
 	      twoSiteHam_(4,4),
 	      paramsForLanczos_(0)
 	{
-		IoInType io(file);
+		InputCheck inputCheck;
+		InputNgType::Writeable ioWriteable(filename,inputCheck);
+		InputNgType::Readable io(ioWriteable);
+
 		paramsForLanczos_ = new ParametersForSolverType(io,"Mera");
-		io.rewind();
 		io.readline(tauMax_,"TauMax=");
 
 		try {
 			io.readline(iterMera_,"IterMera=");
-		} catch (std::exception&) {
-			io.rewind();
-		}
+		} catch (std::exception&) {}
 
 		try {
 			io.readline(iterTensor_,"IterTensor=");
-		} catch (std::exception&) {
-			io.rewind();
-		}
+		} catch (std::exception&) {}
 
 		PsimagLite::String dstr("");
 		io.readline(dstr,"DimensionSrep=");
@@ -81,7 +80,7 @@ public:
 		initTensors(dstr);
 
 		bool rootTensorFound = false;
-		while (!io.eof()) {
+		while (true) {
 			PsimagLite::String str("");
 			try {
 				io.readline(str,"TensorId=");
@@ -93,7 +92,7 @@ public:
 			PsimagLite::tokenizer(str,tokens,",");
 			if (tokens.size() != 2) {
 				PsimagLite::String str("MeraSolver: Error reading TensorId=");
-				str += "from file " + file + "\n";
+				str += "from file " + filename + "\n";
 				throw PsimagLite::RuntimeError(str);
 			}
 
@@ -109,7 +108,7 @@ public:
 
 			if (name == "r") {
 				if (rootTensorFound) {
-					PsimagLite::String msg("FATAL: File " + file);
+					PsimagLite::String msg("FATAL: File " + filename);
 					throw PsimagLite::RuntimeError(msg + " more than one root tensor found\n");
 				}
 
@@ -120,7 +119,7 @@ public:
 		}
 
 		if (!rootTensorFound) {
-			PsimagLite::String msg("FATAL: File " + file);
+			PsimagLite::String msg("FATAL: File " + filename);
 			throw PsimagLite::RuntimeError(msg + " root tensor not found\n");
 		}
 

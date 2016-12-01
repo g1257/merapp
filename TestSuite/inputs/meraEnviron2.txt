@@ -5,21 +5,21 @@ DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|8)w1(2,2)h0(2,2|2,2)r(8,2)u99(2|2)
 
 TensorId=u,0
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=2
 Environ=w0(f0,s0|s1)r(s1,s2)r*(s3,s2)w0*(s4,s0|s3)u0*(s5,s6|s4)h0(s5,s6|f1,f2)
 Environ=r(s0,s1)w0(f0,s2|s0)w1(s3|s1)u1(s4,s5|s2,s3)h0(s6,s7|f2,s4)u0*(f1,s6|s8)u1(s7,s5|s9,s10)w0*(s8,s9|s11)w1*(s10|s12)r*(s11|s12)
 
 TensorId=u,1
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=2
 Environ=r(s0,s1)w0(s2,f0|s0)w1(f1|s1)u0(s3,s4|s2)h0(s5,s6|s4,f2)u0*(s3,s5|s7)u1*(s6,f3|s8,s9)w0*(s7,s8|s10)w1*(s9|s11)r*(s10,s11)
 Environ=r(s0,s1)w0(s8,f0|s0)w1(f1|s1)h0(f2,f3|s2,s3)u1*(s2,s3|s4,s5)w0*(s8,s4|s6)w1*(s5|s7)r*(s6,s7)
 
 TensorId=w,0
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=3
 Environ=r(f0,s0)r*(s1,s0)w0*(s2,f2|s1)u0*(s3,s4|s2)h0(s3,s4|s5,s6)u0(s5,s6|f1)
 Environ=r(f0,s0)u0(s2,s3|f1)u1(s4,s5|f2,s1)w1(s1|s0)h0(s6,s7|s3,s4)u0*(s2,s6|s8)u1*(s7,s5|s9,s10)w0*(s8,s9|s11)w1*(s10|s12)r*(s11|s12)
@@ -27,14 +27,14 @@ Environ=r(f0,s8)w1(s9|s8)u1(s0,s1|f2,s9)h0(s0,s1|s2,s3)u1*(s2,s3|s4,s5)w0*(f1,s4
 
 TensorId=w,1
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=2
 Environ=r(s0,f0)w0(s1,s2|s0)u0(s3,s4|s1)u1(s5,s6|s2,f1)h0(s4,s5|s7,s8)u0*(s3,s7|s9)u1*(s8,s6|s10,s11)w0*(s9,s10|s12)w1*(s11|s13)r*(s12,s13)
 Environ=r(s9,f0)w0(s8,s10|s9)u1(s0,s1|s10,f1)h0(s0,s1|s2,s3)u1*(s2,s3|s4,s5)w0*(s8,s4|s6)w1*(s5,s7)r*(s6|s7)
 
 TensorId=r,0
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=3
 Environ=w0(s0,s1|f0)u0(s2,s3|s0)h0(s4,s5|s2,s3)u0*(s4,s5|s6)w0*(s6,s1|f2)u99(f3|f1)
 Environ=w0(s0,s1|f0)w1(s2|f1)u0(s3,s4|s0)u1(s5,s6|s1,s2)h0(s7,s8|s4,s5)u0*(s3,s7|s9)u1*(s8,s6|s10,s11)w0*(s9,s10|f2)w1*(s11|f3)

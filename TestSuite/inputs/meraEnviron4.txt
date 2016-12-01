@@ -5,18 +5,18 @@ DimensionSrep=u0(2,2|4)w0(4,2|8)h0(2,2|2,2)r(8,2)u99(2|2)
 
 TensorId=u,0
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=1
 Environ=w0(f0,s0|s1)r(s1,s2)r*(s3,s2)w0*(s4,s0|s3)u0*(s5,s6|s4)h0(f1,f2|s5,s6)
 
 TensorId=w,0
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=1
 Environ=r(f0,s0)r*(s1,s0)w0*(s2,f2|s1)u0*(s3,s4|s2)h0(s5,s6|s3,s4)u0(s5,s6|f1)
 
 TensorId=r,0
 Layer=0
-Ignore=200
+IgnoreTerm=200
 Terms=1
 Environ=w0(s0,s1|f0)u0(s2,s3|s0)h0(s2,s3|s4,s5)u0*(s4,s5|s6)w0*(s6,s1|f2)u99(f3|f1)

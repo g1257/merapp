@@ -23,20 +23,18 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include "Sort.h"
 #include "Matrix.h"
-#include "IoSimple.h"
 #include "LanczosSolver.h"
 #include "CrsMatrix.h"
 
 namespace Mera {
 
-template<typename ComplexOrRealType>
+template<typename ComplexOrRealType, typename IoInType>
 class TensorOptimizer {
 
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
-	typedef PsimagLite::IoSimple::In IoInType;
 
 public:
 
@@ -73,7 +71,7 @@ public:
 	      params_(params)
 	{
 		io.readline(layer_,"Layer=");
-		io.readline(ignore_,"Ignore=");
+		io.readline(ignore_,"IgnoreTerm=");
 		SizeType terms = 0;
 		io.readline(terms,"Terms=");
 		tensorSrep_.resize(terms,0);
