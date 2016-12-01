@@ -210,8 +210,8 @@ private:
 
 		RealType tmp = PsimagLite::norm2(m);
 		std::cerr<<"About to do svd matrix with norm2= "<<tmp<<"\n";
-		MatrixType vt(m.n_col(),m.n_col());
-		svd('A',m,s,vt);
+		MatrixType vt;
+		svd('S',m,s,vt);
 		page14StepL3(m,vt);
 		RealType result = 0.0;
 		for (SizeType i = 0; i < s.size(); ++i)
