@@ -258,6 +258,47 @@ public:
 		return count;
 	}
 
+	void setSummed(const VectorSizeType& summed)
+	{
+		if (type_ == TENSOR_TYPE_ERASED) return;
+
+		SizeType total = insSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (insSi_[i].first != 's') continue;
+			SizeType ind = insSi_[i].second;
+			assert(ind < summed.size());
+			insSi_[i].second = summed[ind];
+		}
+
+		total = outsSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			SizeType ind = outsSi_[i].second;
+			assert(ind < summed.size());
+			outsSi_[i].second = summed[ind];
+		}
+
+		maxSummed_ = maxIndex('s');
+		srep_ = srepFromObject();
+	}
+
+	void loadSummed(VectorSizeType& summed) const
+	{
+		if (type_ == TENSOR_TYPE_ERASED) return;
+
+		SizeType total = insSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (insSi_[i].first != 's') continue;
+			summed.push_back(insSi_[i].second);
+		}
+
+		total = outsSi_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			summed.push_back(outsSi_[i].second);
+		}
+	}
+
 	bool isConjugate() const { return conjugate_; }
 
 	const PsimagLite::String& sRep() const { return srep_; }

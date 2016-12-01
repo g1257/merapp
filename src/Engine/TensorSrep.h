@@ -20,6 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include "TensorStanza.h"
 #include <algorithm>
+#include "Sort.h"
 
 namespace Mera {
 
@@ -106,6 +107,8 @@ public:
 			count = data_[i]->uncontract(sErased,count);
 			srep_ += data_[i]->sRep();
 		}
+
+		canonicalize();
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -258,6 +261,50 @@ private:
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			data_[i]->contract(indicesToContract,ms);
+			srep_ += data_[i]->sRep();
+		}
+
+		canonicalize();
+	}
+
+	bool verifySummed(VectorSizeType* usummed) const
+	{
+		VectorSizeType summed;
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			data_[i]->loadSummed(summed);
+
+		SizeType n = summed.size();
+		if (n&1)
+			return false;
+
+		PsimagLite::Sort<VectorSizeType> sort;
+		VectorSizeType iperm(n);
+		sort.sort(summed,iperm);
+
+		if (usummed) usummed->resize(n,1000);
+		for (SizeType i = 0; i < n; i+=2) {
+			if (summed[i] != summed[i + 1])
+				return false;
+			if (i > 0 && summed[i] == summed[i - 1])
+				return false;
+			if (!usummed) continue;
+			usummed->operator[](summed[i]) = usummed->operator[](summed[i + 1]) = i/2;
+		}
+
+		return true;
+	}
+
+	void canonicalize()
+	{
+		VectorSizeType usummed;
+		if (!verifySummed(&usummed))
+			throw PsimagLite::RuntimeError("canonicalize: Invalid Srep\n");
+
+		SizeType ntensors = data_.size();
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->setSummed(usummed);
 			srep_ += data_[i]->sRep();
 		}
 	}

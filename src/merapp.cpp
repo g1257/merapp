@@ -41,13 +41,13 @@ void main1(SizeType num,
 	std::cout<<environ;
 	std::cout<<"-----------------------------------\n\n\n";
 
-	PsimagLite::String file("meraTikzTestNumber");
-	file += ttos(num);
-	file += ".tex";
-	std::ofstream fout(file.c_str());
-	Mera::MeraToTikz<double> obj(srep,params.tauMax);
-	fout<<obj;
-	fout.close();
+//	PsimagLite::String file("meraTikzTestNumber");
+//	file += ttos(num);
+//	file += ".tex";
+//	std::ofstream fout(file.c_str());
+//	Mera::MeraToTikz<double> obj(srep,params.tauMax);
+//	fout<<obj;
+//	fout.close();
 }
 
 int main(int argc, char **argv)
