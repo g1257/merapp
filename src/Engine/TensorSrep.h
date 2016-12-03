@@ -212,6 +212,21 @@ public:
 		return max;
 	}
 
+	SizeType findConjugate(SizeType ind) const
+	{
+		SizeType ntensors = data_.size();
+		SizeType id = data_[ind]->id();
+		PsimagLite::String name = data_[ind]->name();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
+			if (data_[i]->isConjugate() && data_[i]->name()==name && data_[i]->id() == id)
+				return i;
+		}
+
+		return ntensors;
+	}
+
 	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
 	{
 		os<<"tensorSrep.size="<<ts.size()<<"\n";
@@ -441,18 +456,6 @@ private:
 		}
 
 		return true;
-	}
-
-	SizeType findConjugate(SizeType ind) const
-	{
-		SizeType ntensors = data_.size();
-		SizeType id = data_[ind]->id();
-		PsimagLite::String name = data_[ind]->name();
-		for (SizeType i = 0; i < ntensors; ++i)
-			if (data_[i]->isConjugate() && data_[i]->name()==name && data_[i]->id() == id)
-				return i;
-
-		return ntensors;
 	}
 
 	void append(const TensorSrep& other)

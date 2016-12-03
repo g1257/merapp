@@ -27,6 +27,7 @@ class MeraEnviron {
 
 	typedef ParametersForSolver ParametersForSolverType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 public:
 
@@ -60,17 +61,24 @@ private:
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
 		SizeType sites = tensorSrep_.maxTag('f');
-		std::cout<<"TensorId="<<name<<","<<id<<"\n";
-		std::cout<<"Terms="<<sites<<"\n";
-		std::cout<<"IgnoreTerm="<<(2*sites+1)<<"\n";
+		VectorStringType vstr(sites,"");
+		SizeType terms = 0;
 		for (SizeType site = 0; site < sites; ++site) {
-			environForTensor(ind,site);
+			vstr[site] = environForTensor(ind,site);
+			if (vstr[site] != "") ++terms;
 		}
+
+		std::cout<<"TensorId="<<name<<","<<id<<"\n";
+		std::cout<<"Terms="<<terms<<"\n";
+		std::cout<<"IgnoreTerm="<<(2*sites+1)<<"\n";
+		for (SizeType site = 0; site < sites; ++site)
+			if (vstr[site] != "")
+				std::cout<<"Environ="<<vstr[site]<<"\n";
 
 		std::cout<<"\n";
 	}
 
-	void environForTensor(SizeType ind, SizeType site) const
+	PsimagLite::String environForTensor(SizeType ind, SizeType site) const
 	{
 		Mera::TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();
@@ -93,9 +101,14 @@ private:
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		tensorSrep4.eraseTensor(ind);
-		std::cout<<"Environ="<<tensorSrep4.sRep()<<"\n";
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
+		if (tensorSrep4.findConjugate(ind) >= tensorSrep4.size()) {
+			std::cerr<<"EMPTY_ENVIRON="<<tensorSrep4.sRep()<<"\n";
+			return "";
+		}
+
+		return tensorSrep4.sRep();
 	}
 
 	const ParametersForSolver& params_;
