@@ -27,6 +27,8 @@ namespace Mera {
 class TensorSrep {
 
 	typedef PsimagLite::Vector<TensorStanza*>::Type VectorTensorStanza;
+	typedef std::pair<SizeType,SizeType> PairSizeType;
+	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 
 public:
 
@@ -101,7 +103,7 @@ public:
 		data_[index]->eraseTensor(sErased);
 		std::cerr<<sErased;
 		SizeType ntensors = data_.size();
-		SizeType count = maxTag('f') + 1;
+		SizeType count = maxTag('f');
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
 			count = data_[i]->uncontract(sErased,count);
@@ -297,6 +299,8 @@ private:
 
 	void canonicalize()
 	{
+		simplify();
+
 		VectorSizeType usummed;
 		if (!verifySummed(&usummed))
 			throw PsimagLite::RuntimeError("canonicalize: Invalid Srep\n");
@@ -307,6 +311,141 @@ private:
 			data_[i]->setSummed(usummed);
 			srep_ += data_[i]->sRep();
 		}
+	}
+
+	void simplify()
+	{
+		simplifyOnce();
+	}
+
+	bool simplifyOnce()
+	{
+		bool simplificationHappended = false;
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->isConjugate()) continue;
+			SizeType j = findConjugate(i);
+			if (j >= data_.size()) continue; // no conjugate
+			if (!inputsMatch(i,j)) continue;
+			if (!simplify(i,j)) continue;
+			simplificationHappended = true;
+			break; // only one simplification
+		}
+
+		return simplificationHappended;
+	}
+
+	bool simplify(SizeType ind, SizeType jnd)
+	{
+		SizeType outs = data_[ind]->outs();
+		VectorPairSizeType replacements(outs);
+		if (!computeReplacements(replacements,ind,jnd))
+			return false;
+
+		data_[ind]->setAsErased();
+		data_[jnd]->setAsErased();
+
+		SizeType ntensors = data_.size();
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
+			replaceSummed(i,replacements);
+			srep_ += data_[i]->sRep();
+		}
+
+		return true;
+	}
+
+	bool computeReplacements(VectorPairSizeType& replacements,
+	                         SizeType ind,
+	                         SizeType jnd) const
+	{
+		SizeType outs = data_[ind]->outs();
+		if (outs != data_[jnd]->outs()) return false;
+
+		for (SizeType i = 0; i < outs; ++i) {
+			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_OUT) !=
+			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
+			if (data_[jnd]->legType(i,TensorStanzaType::INDEX_DIR_OUT) !=
+			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
+			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
+			SizeType s2 = data_[jnd]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
+			replacements[i] = PairSizeType((s1 < s2) ? s2 : s1,(s1 < s2) ? s1 : s2);
+		}
+
+		return true;
+	}
+
+	void replaceSummed(SizeType ind, const VectorPairSizeType& replacements)
+	{
+		SizeType r = replacements.size();
+		SizeType ins = data_[ind]->ins();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_IN) !=
+			        TensorStanzaType::INDEX_TYPE_SUMMED) continue;
+
+			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN);
+			bool replace = false;
+			for (SizeType j = 0; j < r; ++j) {
+				if (s1 != replacements[j].first) continue;
+				s1 = replacements[j].second;
+				replace = true;
+				break;
+			}
+
+			if (!replace) continue;
+
+			data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN) = s1;
+		}
+
+		SizeType outs = data_[ind]->outs();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_OUT) !=
+			        TensorStanzaType::INDEX_TYPE_SUMMED) continue;
+
+			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
+			bool replace = false;
+			for (SizeType j = 0; j < r; ++j) {
+				if (s1 != replacements[j].first) continue;
+				s1 = replacements[j].second;
+				replace = true;
+				break;
+			}
+
+			if (!replace) continue;
+
+			data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT) = s1;
+		}
+	}
+
+	bool inputsMatch(SizeType ind, SizeType jnd) const
+	{
+		SizeType ins = data_[ind]->ins();
+		if (ins != data_[jnd]->ins()) return false;
+		for (SizeType i = 0; i < ins; ++i) {
+			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_IN) !=
+			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
+			if (data_[jnd]->legType(i,TensorStanzaType::INDEX_DIR_IN) !=
+			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
+			if (data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN) !=
+			        data_[jnd]->legTag(i,TensorStanzaType::INDEX_DIR_IN))
+				return false;
+		}
+
+		return true;
+	}
+
+	SizeType findConjugate(SizeType ind) const
+	{
+		SizeType ntensors = data_.size();
+		SizeType id = data_[ind]->id();
+		PsimagLite::String name = data_[ind]->name();
+		for (SizeType i = 0; i < ntensors; ++i)
+			if (data_[i]->isConjugate() && data_[i]->name()==name && data_[i]->id() == id)
+				return i;
+
+		return ntensors;
 	}
 
 	void append(const TensorSrep& other)

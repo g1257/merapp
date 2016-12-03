@@ -130,9 +130,6 @@ public:
 	void conjugate()
 	{
 		conjugate_ = (!conjugate_);
-//		VectorPairCharSizeType tmp = outsSi_;
-//		outsSi_ = insSi_;
-//		insSi_ = tmp;
 		srep_ = srepFromObject();
 	}
 
@@ -186,12 +183,12 @@ public:
 		}
 
 		maxSummed_ += ms;
+		maxFree_ = maxIndex('f');
 		srep_ = srepFromObject();
 	}
 
 	void eraseTensor(VectorSizeType& s)
 	{
-		type_ = TENSOR_TYPE_ERASED;
 		SizeType total = insSi_.size();
 		for (SizeType i = 0; i < total; ++i) {
 			if (insSi_[i].first != 's') continue;
@@ -204,6 +201,12 @@ public:
 			s.push_back(outsSi_[i].second);
 		}
 
+		setAsErased();
+	}
+
+	void setAsErased()
+	{
+		type_ = TENSOR_TYPE_ERASED;
 		maxSummed_ = 0;
 		maxFree_ = 0;
 		insSi_.clear();
@@ -213,7 +216,7 @@ public:
 
 	SizeType uncontract(const VectorSizeType& erased, SizeType count)
 	{
-		if (type_ == TENSOR_TYPE_ERASED) return 0;
+		if (type_ == TENSOR_TYPE_ERASED) return count;
 
 		SizeType total = insSi_.size();
 		for (SizeType i = 0; i < total; ++i) {

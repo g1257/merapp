@@ -90,6 +90,8 @@ private:
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		tensorSrep4.contract(tensorSrep2);
 		std::cerr<<"ENERGY="<<tensorSrep4.sRep()<<"\n";
+		if (!tensorSrep4.isValid(true))
+			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		tensorSrep4.eraseTensor(ind);
 		std::cout<<"Environ="<<tensorSrep4.sRep()<<"\n";
 		if (!tensorSrep4.isValid(true))
