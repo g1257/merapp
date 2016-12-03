@@ -315,7 +315,7 @@ private:
 
 	void simplify()
 	{
-		simplifyOnce();
+		while (simplifyOnce());
 	}
 
 	bool simplifyOnce()
@@ -337,10 +337,11 @@ private:
 
 	bool simplify(SizeType ind, SizeType jnd)
 	{
+		bool simplificationHappended = false;
 		SizeType outs = data_[ind]->outs();
 		VectorPairSizeType replacements(outs);
 		if (!computeReplacements(replacements,ind,jnd))
-			return false;
+			return simplificationHappended;
 
 		data_[ind]->setAsErased();
 		data_[jnd]->setAsErased();
@@ -350,11 +351,12 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
-			replaceSummed(i,replacements);
+			if (replaceSummed(i,replacements))
+				simplificationHappended = true;
 			srep_ += data_[i]->sRep();
 		}
 
-		return true;
+		return simplificationHappended;
 	}
 
 	bool computeReplacements(VectorPairSizeType& replacements,
@@ -377,8 +379,9 @@ private:
 		return true;
 	}
 
-	void replaceSummed(SizeType ind, const VectorPairSizeType& replacements)
+	bool replaceSummed(SizeType ind, const VectorPairSizeType& replacements)
 	{
+		bool simplificationHappended = false;
 		SizeType r = replacements.size();
 		SizeType ins = data_[ind]->ins();
 		for (SizeType i = 0; i < ins; ++i) {
@@ -396,6 +399,7 @@ private:
 
 			if (!replace) continue;
 
+			simplificationHappended = true;
 			data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN) = s1;
 		}
 
@@ -415,8 +419,11 @@ private:
 
 			if (!replace) continue;
 
+			simplificationHappended = true;
 			data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT) = s1;
 		}
+
+		return simplificationHappended;
 	}
 
 	bool inputsMatch(SizeType ind, SizeType jnd) const
