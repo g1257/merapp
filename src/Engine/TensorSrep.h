@@ -103,7 +103,7 @@ public:
 		data_[index]->eraseTensor(sErased);
 		std::cerr<<sErased;
 		SizeType ntensors = data_.size();
-		SizeType count = maxTag('f');
+		SizeType count = maxTag('f') + 1;
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
 			count = data_[i]->uncontract(sErased,count);

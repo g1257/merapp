@@ -57,7 +57,6 @@ private:
 	// find Y (environment) for this tensor
 	void environForTensor(SizeType ind) const
 	{
-		if (tensorSrep_(ind).name() == "r") return;
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
 		SizeType sites = tensorSrep_.maxTag('f');
@@ -103,9 +102,20 @@ private:
 		tensorSrep4.eraseTensor(ind);
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		if (tensorSrep4.findConjugate(ind) >= tensorSrep4.size()) {
-			std::cerr<<"EMPTY_ENVIRON="<<tensorSrep4.sRep()<<"\n";
-			return "";
+		SizeType jnd = tensorSrep4.findConjugate(ind);
+		bool hasConjugate = (jnd < tensorSrep4.size());
+		bool isRootTensor = (tensorSrep_(ind).name() == "r");
+		if (!hasConjugate) {
+			if (isRootTensor) {
+				throw PsimagLite::RuntimeError("Environ for root tensor: INTERNAL ERROR\n");
+			} else {
+				std::cerr<<"EMPTY_ENVIRON="<<tensorSrep4.sRep()<<"\n";
+				return "";
+			}
+		} else if (isRootTensor) {
+			tensorSrep4.eraseTensor(jnd);
+			if (!tensorSrep4.isValid(true))
+				throw PsimagLite::RuntimeError("Invalid tensor\n");
 		}
 
 		return tensorSrep4.sRep();

@@ -190,6 +190,8 @@ private:
 		SizeType yoffset0 = dx;
 
 		for (SizeType i = 0; i < ntensors; ++i) {
+			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ERASED)
+				continue;
 			SizeType tensorX = 0;
 			SizeType tensorY = 0;
 			ProgramGlobals::unpackTimeAndSpace(tensorY,
@@ -203,6 +205,8 @@ private:
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
 				SizeType id = tensorSrep(i).id();
 				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
+				if (tensorSrep(j).type() == TensorStanza::TENSOR_TYPE_ERASED)
+					continue;
 				if (tensorSrep(i).legTag(0,TensorStanza::INDEX_DIR_OUT) ==
 				        tensorSrep(j).legTag(1,TensorStanza::INDEX_DIR_IN)) {
 					xwoffset = -1.5*dx;
