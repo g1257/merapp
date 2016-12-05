@@ -41,7 +41,8 @@ public:
 		                 TENSOR_TYPE_ROOT,
 		                 TENSOR_TYPE_W,
 		                 TENSOR_TYPE_U,
-		                 TENSOR_TYPE_H};
+		                 TENSOR_TYPE_H,
+	                     TENSOR_TYPE_I};
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
@@ -112,8 +113,9 @@ public:
 		if (name_ == "w") type_ = TENSOR_TYPE_W;
 		if (name_ == "h") type_ = TENSOR_TYPE_H;
 		if (name_ == "r") type_ = TENSOR_TYPE_ROOT;
+		if (name_ == "i") type_ = TENSOR_TYPE_I;
 
-		if (type_ != TENSOR_TYPE_ROOT && index == PsimagLite::String::npos) {
+		if (neededId(type_) && index == PsimagLite::String::npos) {
 			PsimagLite::String str("TensorStanza: no digit for token ");
 			throw PsimagLite::RuntimeError(str + nameAndId + "\n");
 		}
@@ -479,6 +481,14 @@ private:
 		}
 
 		return max;
+	}
+
+	bool neededId(TensorTypeEnum type) const
+	{
+		if (type == TENSOR_TYPE_ROOT ||
+		    type == TENSOR_TYPE_I) return false;
+
+		return true;
 	}
 
 	SizeType id_;

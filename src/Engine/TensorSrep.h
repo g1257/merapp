@@ -99,6 +99,7 @@ public:
 	void eraseTensor(SizeType index)
 	{
 		assert(index < data_.size());
+		addIrreducibleIdentity();
 		VectorSizeType sErased;
 		data_[index]->eraseTensor(sErased);
 		std::cerr<<sErased;
@@ -467,6 +468,81 @@ private:
 			data_[ntensors + i] = new TensorStanza(*other.data_[i]);
 			srep_ += data_[ntensors + i]->sRep();
 		}
+	}
+
+	void addIrreducibleIdentity()
+	{
+		SizeType loc1 = 0;
+		VectorSizeType summed1;
+		PsimagLite::String str("");
+		if ((str = findRandRifContracted(loc1,summed1)) == "")
+			return;
+
+		data_[loc1]->setSummed(summed1);
+		data_.push_back(new TensorStanzaType(str));
+
+		SizeType ntensors = data_.size();
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i)
+			srep_ += data_[i]->sRep();
+	}
+
+	PsimagLite::String findRandRifContracted(SizeType& loc1,
+	                                         VectorSizeType& usummed1) const
+	{
+		SizeType ntensors = data_.size();
+		SizeType flag0 = 0;
+		SizeType flag1 = 0;
+		SizeType loc0 = 0;
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->name() != "r") continue;
+			bool b = data_[i]->isConjugate();
+			if (b) {
+				flag0++;
+				loc0 = i;
+				continue;
+			}
+
+			flag1++;
+			loc1 = i;
+		}
+
+		assert(flag0 < 2 && flag1 < 2);
+		// r and r* both need to be present
+		if (flag0 != 1 || flag1 != 1) return "";
+
+		VectorSizeType summed0;
+		assert(loc0 < data_.size());
+		data_[loc0]->loadSummed(summed0);
+
+		VectorSizeType summed1;
+		assert(loc1 < data_.size());
+		data_[loc1]->loadSummed(summed1);
+
+		// check that r or r* haven't been deleted
+		if (summed1.size() == 0 || summed0.size() == 0) return "";
+
+		SizeType max = *std::max_element(summed1.begin(),summed1.end());
+		usummed1.resize(max + 1,0);
+		for (SizeType i = 0; i < usummed1.size(); ++i)
+			usummed1[i] = i;
+
+		// one index summed must be common to r and r*
+		flag0 = 0;
+		PsimagLite::String str = "i(s";
+		for (SizeType i = 0; i < summed0.size(); ++i) {
+			for (SizeType j = 0; j < summed1.size(); ++j) {
+				if (summed0[i] == summed1[j]) {
+					flag0 = 1;
+					assert(summed0[i] < usummed1.size());
+					usummed1[summed0[i]] = maxTag('s') + 1;
+					str += ttos(summed0[i]) + ",s" + ttos(usummed1[summed0[i]]);
+					break;
+				}
+			}
+		}
+
+		return (flag0 == 0) ? "" : str + ")";
 	}
 
 	void relabelFrees(SizeType start)
