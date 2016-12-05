@@ -70,6 +70,7 @@ private:
 		std::cout<<"TensorId="<<name<<","<<id<<"\n";
 		std::cout<<"Terms="<<terms<<"\n";
 		std::cout<<"IgnoreTerm="<<(2*sites+1)<<"\n";
+		std::cout<<"Layer=0\n"; // FIXME
 		for (SizeType site = 0; site < sites; ++site)
 			if (vstr[site] != "")
 				std::cout<<"Environ="<<vstr[site]<<"\n";

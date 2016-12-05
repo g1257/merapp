@@ -263,13 +263,13 @@ public:
 		return count;
 	}
 
-	void setSummed(const VectorSizeType& summed)
+	void setIndices(const VectorSizeType& summed, char c)
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return;
 
 		SizeType total = insSi_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != 's') continue;
+			if (insSi_[i].first != c) continue;
 			SizeType ind = insSi_[i].second;
 			assert(ind < summed.size());
 			insSi_[i].second = summed[ind];
@@ -277,12 +277,13 @@ public:
 
 		total = outsSi_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != 's') continue;
+			if (outsSi_[i].first != c) continue;
 			SizeType ind = outsSi_[i].second;
 			assert(ind < summed.size());
 			outsSi_[i].second = summed[ind];
 		}
 
+		maxFree_ = maxIndex('f');
 		maxSummed_ = maxIndex('s');
 		srep_ = srepFromObject();
 	}

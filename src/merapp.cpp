@@ -30,16 +30,16 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "MeraToTikz.h"
 #include "Version.h"
 
-void main1(SizeType num,
-           PsimagLite::String srep,
+void main1(PsimagLite::String srep,
            SizeType tauMax)
 {
-	std::cout<<"TEST NUMBER "<<num<<"\n";
 	Mera::ParametersForSolver params(tauMax);
 	Mera::MeraEnviron environ(srep,params);
+	// BIG FIXME:
+	std::cout<<"DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|8)w1(2,2)h0(2,2|2,2)r(8,2)i0(2|2)\n";
+
 	environ.computeEnvirons();
-	std::cout<<environ;
-	std::cout<<"-----------------------------------\n\n\n";
+	std::cerr<<environ;
 
 //	PsimagLite::String file("meraTikzTestNumber");
 //	file += ttos(num);
@@ -69,9 +69,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	SizeType counter = 0;
-	std::cout<<argv[0]<<" version "<<MERA_VERSION<<"\n";
+	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	SizeType tauMax = atoi(argv[1]);
 	std::cout<<"TauMax="<<tauMax<<"\n";
-	main1(counter++,str,tauMax);
+	main1(str,tauMax);
 }

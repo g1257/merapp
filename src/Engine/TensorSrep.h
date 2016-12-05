@@ -317,14 +317,36 @@ private:
 	{
 		simplify();
 
+		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
+		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
+
+		VectorSizeType frees(maxTag('f') + 1,0);
+		SizeType ntensors = data_.size();
+		SizeType counter = 0;
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType legs = data_[i]->ins();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j,in) != TensorStanzaType::INDEX_TYPE_FREE)
+					continue;
+				frees[data_[i]->legTag(j,in)] = counter++;
+			}
+
+			legs = data_[i]->outs();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j,out) != TensorStanzaType::INDEX_TYPE_FREE)
+					continue;
+				frees[data_[i]->legTag(j,out)] = counter++;
+			}
+		}
+
 		VectorSizeType usummed;
 		if (!verifySummed(&usummed))
 			throw PsimagLite::RuntimeError("canonicalize: Invalid Srep\n");
 
-		SizeType ntensors = data_.size();
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->setSummed(usummed);
+			data_[i]->setIndices(usummed,'s');
+			data_[i]->setIndices(frees,'f');
 			srep_ += data_[i]->sRep();
 		}
 	}
@@ -478,7 +500,7 @@ private:
 		if ((str = findRandRifContracted(loc1,summed1)) == "")
 			return;
 
-		data_[loc1]->setSummed(summed1);
+		data_[loc1]->setIndices(summed1,'s');
 		data_.push_back(new TensorStanzaType(str));
 
 		SizeType ntensors = data_.size();
@@ -536,7 +558,7 @@ private:
 					flag0 = 1;
 					assert(summed0[i] < usummed1.size());
 					usummed1[summed0[i]] = maxTag('s') + 1;
-					str += ttos(summed0[i]) + ",s" + ttos(usummed1[summed0[i]]);
+					str += ttos(summed0[i]) + "|s" + ttos(usummed1[summed0[i]]);
 					break;
 				}
 			}
