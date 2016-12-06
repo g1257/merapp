@@ -42,11 +42,11 @@ public:
 		                 TENSOR_TYPE_W,
 		                 TENSOR_TYPE_U,
 		                 TENSOR_TYPE_H,
-	                     TENSOR_TYPE_I};
+		                 TENSOR_TYPE_I};
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
-	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY};
+	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY, INDEX_TYPE_DIM};
 
 	TensorStanza(PsimagLite::String srep)
 	    : conjugate_(false),
@@ -330,7 +330,26 @@ public:
 
 		if (c == 's') return INDEX_TYPE_SUMMED;
 		if (c == 'f') return INDEX_TYPE_FREE;
+		if (c == 'D') return INDEX_TYPE_DIM;
 		return INDEX_TYPE_DUMMY;
+	}
+
+	char& legTypeChar(SizeType ind, IndexDirectionEnum dir)
+	{
+		if (dir == INDEX_DIR_IN) {
+			assert(ind < insSi_.size());
+			return insSi_[ind].first;
+		}
+
+		assert(ind < outsSi_.size());
+		return outsSi_[ind].first;
+	}
+
+	void refresh()
+	{
+		srep_ = srepFromObject();
+		maxFree_ = maxTag('f');
+		maxSummed_ = maxTag('s');
 	}
 
 	const SizeType& legTag(SizeType ind, IndexDirectionEnum dir) const
@@ -366,6 +385,14 @@ public:
 		if (type_ == TENSOR_TYPE_ROOT) return "r";
 		if (type_ == TENSOR_TYPE_H) return "h";
 		return "unknown";
+	}
+
+	static PsimagLite::String indexTypeToString(IndexTypeEnum t)
+	{
+		if (t == INDEX_TYPE_SUMMED) return "s";
+		if (t == INDEX_TYPE_FREE) return "f";
+		if (t == INDEX_TYPE_DIM) return "D";
+		return "d";
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
@@ -487,7 +514,7 @@ private:
 	bool neededId(TensorTypeEnum type) const
 	{
 		if (type == TENSOR_TYPE_ROOT ||
-		    type == TENSOR_TYPE_I) return false;
+		        type == TENSOR_TYPE_I) return false;
 
 		return true;
 	}

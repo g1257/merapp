@@ -29,10 +29,15 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include <fstream>
 #include "MeraToTikz.h"
 #include "Version.h"
+#include "DimensionSrep.h"
 
 void main1(PsimagLite::String srep,
-           SizeType tauMax)
+           SizeType tauMax,
+           SizeType d)
 {
+	Mera::DimensionSrep dimSrep(srep,d);
+	std::cout<<"DimensionSrep="<<dimSrep()<<"\n";
+
 	Mera::ParametersForSolver params(tauMax);
 	Mera::MeraEnviron environ(srep,params);
 	// BIG FIXME:
@@ -40,14 +45,6 @@ void main1(PsimagLite::String srep,
 
 	environ.computeEnvirons();
 	std::cerr<<environ;
-
-//	PsimagLite::String file("meraTikzTestNumber");
-//	file += ttos(num);
-//	file += ".tex";
-//	std::ofstream fout(file.c_str());
-//	Mera::MeraToTikz<double> obj(srep,params.tauMax);
-//	fout<<obj;
-//	fout.close();
 }
 
 int main(int argc, char **argv)
@@ -58,6 +55,7 @@ int main(int argc, char **argv)
 	}
 
 	PsimagLite::String str("");
+	SizeType d = 2;
 
 	if (argc == 2)
 		str = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
@@ -72,5 +70,5 @@ int main(int argc, char **argv)
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	SizeType tauMax = atoi(argv[1]);
 	std::cout<<"TauMax="<<tauMax<<"\n";
-	main1(str,tauMax);
+	main1(str,tauMax,d);
 }

@@ -176,6 +176,8 @@ private:
 				assert(j < args.size());
 				args[j] = 0;
 				break;
+			default:
+				PsimagLite::RuntimeError("evalThisTensor: Wrong index type\n");
 			}
 		}
 
@@ -200,6 +202,8 @@ private:
 				assert(j+ins < args.size());
 				args[j+ins] = 0;
 				break;
+			default:
+				PsimagLite::RuntimeError("evalThisTensor: Wrong index type\n");
 			}
 		}
 

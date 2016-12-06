@@ -116,6 +116,24 @@ public:
 
 	const PsimagLite::String& sRep() const { return srep_; }
 
+	char& legTypeChar(SizeType i,
+	                  SizeType ind,
+	                  TensorStanzaType::IndexDirectionEnum dir)
+	{
+		assert(i < data_.size());
+		return data_[i]->legTypeChar(ind,dir);
+	}
+
+	void refresh()
+	{
+		srep_ = "";
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->refresh();
+			srep_ += data_[i]->sRep();
+		}
+	}
+
 	void conjugate()
 	{
 		srep_ = "";
