@@ -30,6 +30,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "MeraToTikz.h"
 #include "Version.h"
 #include "DimensionSrep.h"
+#include "MeraBuilder.h"
 
 void usageMain(const PsimagLite::String& str)
 {
@@ -59,9 +60,10 @@ int main(int argc, char **argv)
 {
 	int opt = 0;
 	bool versionOnly = false;
+	bool buildOnly = false;
 	SizeType sites = 0;
-	SizeType arity = 0;
-	SizeType dimension = 0;
+	SizeType arity = 2;
+	SizeType dimension = 1;
 	SizeType h = 0;
 	SizeType m = 0;
 	PsimagLite::String srep("");
@@ -70,7 +72,7 @@ int main(int argc, char **argv)
 	strUsage += "| -S srep | -V\n";
 	strUsage += "-h hilbertSize is always mandatory\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:h:m:S:V")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:h:m:S:bV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
@@ -89,6 +91,9 @@ int main(int argc, char **argv)
 			break;
 		case 'S':
 			srep = optarg;
+			break;
+		case 'b':
+			buildOnly = true;
 			break;
 		case 'V':
 			versionOnly = true;
@@ -118,9 +123,16 @@ int main(int argc, char **argv)
 		srep = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
 
 	if (buildMode) {
-		strUsage += "NOT SUPPORTED YET SORRY\n";
 		// here build srep
-		usageMain(strUsage);
+		Mera::MeraBuilder meraBuilder(sites,arity,dimension);
+		srep = meraBuilder();
+	}
+
+	if (buildOnly) {
+		std::cout<<srep<<"\n";
+		std::cerr<<argv[0]<<": Stoping here because of -b (build only). ";
+		std::cerr<<"Not computing environments\n";
+		return 1;
 	}
 
 	main1(srep,h,m);
