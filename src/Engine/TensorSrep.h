@@ -124,6 +124,14 @@ public:
 		return data_[i]->legTypeChar(ind,dir);
 	}
 
+	SizeType& legTag(SizeType i,
+	                 SizeType ind,
+	                 TensorStanzaType::IndexDirectionEnum dir)
+	{
+		assert(i < data_.size());
+		return data_[i]->legTag(ind,dir);
+	}
+
 	void refresh()
 	{
 		srep_ = "";
