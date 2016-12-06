@@ -88,7 +88,7 @@ private:
 				buffer_ += "\\draw[" + style + "] (A" + ttos(i) + ") rectangle (B";
 				buffer_ += ttos(i)+ ");\n";
 				// ins for u
-				assert(ins > 0);
+				assert(ins > 1);
 				RealType a = dx/(ins - 1);
 				for (SizeType j = 0; j < ins; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
@@ -106,7 +106,9 @@ private:
 				}
 
 				// outs for u
-				a = dx/(outs - 1);
+				assert(outs > 0);
+				RealType divisor = (outs == 1) ? 1 : outs - 1;
+				a = dx/divisor;
 				RealType doy = (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) ? dy : 0.5*dy;
 				for (SizeType j = 0; j < outs; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
@@ -135,7 +137,9 @@ private:
 				buffer_ += "(C" + ttos(i) + ") -- cycle;\n";
 
 				// ins for w
-				RealType a = dx/(ins - 1);
+				assert(ins > 0);
+				RealType divisor = (ins == 1) ? 1 : ins - 1;
+				RealType a = dx/divisor;
 				for (SizeType j = 0; j < ins; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
 					RealType xtmp = a*j + x[i];
