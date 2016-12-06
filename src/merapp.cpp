@@ -31,18 +31,24 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Version.h"
 #include "DimensionSrep.h"
 
-void main1(PsimagLite::String srep,
-           SizeType tauMax,
-           SizeType d)
+void usageMain(const PsimagLite::String& str)
 {
-	Mera::DimensionSrep dimSrep(srep,d);
+	throw PsimagLite::RuntimeError(str);
+}
+
+void main1(PsimagLite::String srep,
+           SizeType h,
+           SizeType m)
+{
+	Mera::DimensionSrep dimSrep(srep,h,m);
 	PsimagLite::String dsrep = dimSrep();
-	dsrep += "h0(" + ttos(d) + "," + ttos(d) + "|" + ttos(d) + "," + ttos(d) + ")";
-	dsrep += "i0(" + ttos(d) + "|" + ttos(d) + ")";
+	PsimagLite::String hString = ttos(h);
+	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
+	dsrep += "i0(" + hString + "|" + hString + ")";
 	std::cout<<"DimensionSrep="<<dsrep<<"\n";
 	//std::cout<<"DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|8)w1(2,2)h0(2,2|2,2)r(8,2)i0(2|2)\n";
 
-	Mera::ParametersForSolver params(tauMax);
+	Mera::ParametersForSolver params;
 	Mera::MeraEnviron environ(srep,params);
 
 	environ.computeEnvirons();
@@ -51,26 +57,71 @@ void main1(PsimagLite::String srep,
 
 int main(int argc, char **argv)
 {
-	if (argc == 1) {
-		std::cerr<<"USAGE: "<<argv[0]<<" tauMax\n";
-		return 1;
-	}
+	int opt = 0;
+	bool versionOnly = false;
+	SizeType sites = 0;
+	SizeType arity = 0;
+	SizeType dimension = 0;
+	SizeType h = 0;
+	SizeType m = 0;
+	PsimagLite::String srep("");
+	PsimagLite::String strUsage(argv[0]);
+	strUsage += " -n sites -a arity -d dimension -h hilbertSize [-m m] ";
+	strUsage += "| -S srep | -V\n";
+	strUsage += "-h hilbertSize is always mandatory\n";
 
-	PsimagLite::String str("");
-	SizeType d = 2;
-
-	if (argc == 2)
-		str = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
-
-	if (argc > 2) {
-		char c = '\0';
-		while (std::cin>>c) {
-			str += c;
+	while ((opt = getopt(argc, argv,"n:a:d:h:m:S:V")) != -1) {
+		switch (opt) {
+		case 'n':
+			sites = atoi(optarg);
+			break;
+		case 'a':
+			arity = atoi(optarg);
+			break;
+		case 'd':
+			dimension = atoi(optarg);
+			break;
+		case 'h':
+			h = atoi(optarg);
+			break;
+		case 'm':
+			m = atoi(optarg);
+			break;
+		case 'S':
+			srep = optarg;
+			break;
+		case 'V':
+			versionOnly = true;
+			break;
+		default:
+			usageMain(strUsage);
+			return 1;
 		}
 	}
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
-	SizeType tauMax = atoi(argv[1]);
-	std::cout<<"TauMax="<<tauMax<<"\n";
-	main1(str,tauMax,d);
+
+	if (versionOnly)
+		return 0;
+
+	// sanity checks here
+	if (h == 0)
+		usageMain(strUsage);
+
+	bool buildMode = (sites*arity*dimension > 0);
+	if (buildMode && srep != "") {
+		strUsage += "Either n*a*d > 0 or srep != "" but not both\n";
+		usageMain(strUsage);
+	}
+
+	if (!buildMode && srep == "")
+		srep = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
+
+	if (buildMode) {
+		strUsage += "NOT SUPPORTED YET SORRY\n";
+		// here build srep
+		usageMain(strUsage);
+	}
+
+	main1(srep,h,m);
 }

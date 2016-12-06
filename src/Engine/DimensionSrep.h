@@ -13,8 +13,8 @@ class DimensionSrep {
 
 public:
 
-	DimensionSrep(PsimagLite::String srep, SizeType d)
-	    :srep_(srep),dsrep_(srep)
+	DimensionSrep(PsimagLite::String srep, SizeType d, SizeType m)
+	    :srep_(srep),m_(m),dsrep_(srep)
 	{
 		alterFrees(d);
 		alterSummed();
@@ -88,7 +88,7 @@ private:
 				dsrep_.legTypeChar(i,j,out) = 'D';
 				SizeType s = dsrep_.legTag(i,j,out);
 				if (outs == 1) {
-					dsrep_.legTag(i,j,out) = productOf(dim);
+					dsrep_.legTag(i,j,out) = truncateDimension(productOf(dim));
 				} else if (outs == dim.size()) {
 					dsrep_.legTag(i,j,out) = dim[j];
 				} else {
@@ -143,7 +143,14 @@ private:
 		}
 	}
 
+	SizeType truncateDimension(SizeType x) const
+	{
+		if (m_ == 0) return x;
+		return std::min(m_,x);
+	}
+
 	TensorSrepType srep_;
+	SizeType m_;
 	TensorSrepType dsrep_;
 }; //
 

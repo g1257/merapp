@@ -47,8 +47,7 @@ class MeraSolver {
 public:
 
 	MeraSolver(PsimagLite::String filename)
-	    : tauMax_(0),
-	      iterMera_(2),
+	    : iterMera_(2),
 	      iterTensor_(5),
 	      indexOfRootTensor_(0),
 	      twoSiteHam_(4,4),
@@ -59,7 +58,6 @@ public:
 		InputNgType::Readable io(ioWriteable);
 
 		paramsForLanczos_ = new ParametersForSolverType(io,"Mera");
-		io.readline(tauMax_,"TauMax=");
 
 		try {
 			io.readline(iterMera_,"IterMera=");
@@ -283,7 +281,6 @@ private:
 
 	MeraSolver& operator=(const MeraSolver&);
 
-	SizeType tauMax_;
 	SizeType iterMera_;
 	SizeType iterTensor_;
 	SizeType indexOfRootTensor_;
