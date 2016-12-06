@@ -71,14 +71,15 @@ public:
 
 		PsimagLite::String dstr("");
 		io.readline(dstr,"DimensionSrep=");
-		findTensors(dstr);
+		TensorSrep tdstr(dstr);
+		findTensors(tdstr);
 
 		initTensorNameIds();
 
 		bool makeHamTheIdentity = false;
 		setTwoSiteHam(makeHamTheIdentity);
 
-		initTensors(dstr);
+		initTensors(tdstr);
 
 		bool rootTensorFound = false;
 		while (true) {
@@ -213,12 +214,11 @@ private:
 			nameIdsTensor_[tensorNameIds_[i]] = i;
 	}
 
-	void initTensors(PsimagLite::String dstr)
+	void initTensors(const TensorSrep& td)
 	{
 		tensors_.resize(tensorNameIds_.size());
 		SizeType ntensors = tensors_.size();
 
-		TensorSrep td(dstr);
 		if (td.size() != ntensors) {
 			PsimagLite::String str("TensorOptimizer dimension string " + ttos(td.size()));
 			str += ", was expecting " + ttos(ntensors) + "\n";
@@ -268,9 +268,8 @@ private:
 		}
 	}
 
-	void findTensors(PsimagLite::String srep)
+	void findTensors(const TensorSrep& t)
 	{
-		TensorSrep t(srep);
 		SizeType ntensors = t.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			PsimagLite::String name = t(i).name();

@@ -36,12 +36,14 @@ void main1(PsimagLite::String srep,
            SizeType d)
 {
 	Mera::DimensionSrep dimSrep(srep,d);
-	std::cout<<"DimensionSrep="<<dimSrep()<<"\n";
+	PsimagLite::String dsrep = dimSrep();
+	dsrep += "h0(" + ttos(d) + "," + ttos(d) + "|" + ttos(d) + "," + ttos(d) + ")";
+	dsrep += "i0(" + ttos(d) + "|" + ttos(d) + ")";
+	std::cout<<"DimensionSrep="<<dsrep<<"\n";
+	//std::cout<<"DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|8)w1(2,2)h0(2,2|2,2)r(8,2)i0(2|2)\n";
 
 	Mera::ParametersForSolver params(tauMax);
 	Mera::MeraEnviron environ(srep,params);
-	// BIG FIXME:
-	std::cout<<"DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|8)w1(2,2)h0(2,2|2,2)r(8,2)i0(2|2)\n";
 
 	environ.computeEnvirons();
 	std::cerr<<environ;
