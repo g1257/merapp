@@ -26,19 +26,22 @@ struct ProgramGlobals {
 
 	typedef PsimagLite::RandomForTests<double> RngType;
 
-	static SizeType packTimeSpace(SizeType time, SizeType space, SizeType tauMax)
+	static SizeType logBase2Strict(SizeType x)
 	{
-		return time + space*tauMax;
+		if (x == 0) return 0;
+		SizeType counter = 0;
+		SizeType ones = 0;
+		while (x > 0) {
+			if (x & 1) ones++;
+			if (ones > 1) return 0;
+			x >>= 1;
+			counter++;
+		}
+
+		assert(counter > 0);
+		return counter - 1;
 	}
 
-	static void unpackTimeAndSpace(SizeType& time,
-	                               SizeType& space,
-	                               SizeType id,
-	                               SizeType tauMax)
-	{
-		time = id % tauMax;
-		space = id/tauMax;
-	}
 
 	static PsimagLite::String addLf(PsimagLite::String str, SizeType each)
 	{

@@ -23,16 +23,21 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 int main(int argc, char** argv)
 {
-	if (argc == 1) {
-		std::cerr<<"USAGE: "<<argv[0]<<" tauMax\n";
+	if (argc < 3) {
+		std::cerr<<"USAGE: "<<argv[0]<<" sites filename\n";
 		return 1;
 	}
 
-	char c = '\0';
-	PsimagLite::String srep;
-	while (std::cin>>c) {
-		srep += c;
+	PsimagLite::String srep("");
+	std::ifstream fin(argv[2]);
+	while (!fin.eof()) {
+		PsimagLite::String temp("");
+		fin>>temp;
+		if (temp[0] == '#') continue;
+		srep += temp;
 	}
+
+	fin.close();
 
 	Mera::MeraToTikz<double> obj(srep,atoi(argv[1]));
 	std::cout<<"%Created by "<<argv[0]<<" version "<<MERA_VERSION<<"\n";

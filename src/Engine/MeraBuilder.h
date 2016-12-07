@@ -1,5 +1,6 @@
 #ifndef MERABUILDER_H
 #define MERABUILDER_H
+#include "ProgramGlobals.h"
 
 namespace Mera {
 
@@ -17,7 +18,7 @@ public:
 			throw PsimagLite::RuntimeError("MeraBuilder: arity must be 2 for now\n");
 
 		SizeType ln = 0;
-		if ((ln = logBase2Strict(sites)) == 0)
+		if ((ln = ProgramGlobals::logBase2Strict(sites)) == 0)
 			throw PsimagLite::RuntimeError("MeraBuilder: sites must be a power of 2\n");
 
 		SizeType tensors = sites/2;
@@ -111,22 +112,6 @@ private:
 			O0 = "s" + ttos(summed++);
 			srep_ += "|" + O0 + ")";
 		}
-	}
-
-	SizeType logBase2Strict(SizeType x) const
-	{
-		if (x == 0) return 0;
-		SizeType counter = 0;
-		SizeType ones = 0;
-		while (x > 0) {
-			if (x & 1) ones++;
-			if (ones > 1) return 0;
-			x >>= 1;
-			counter++;
-		}
-
-		assert(counter > 0);
-		return counter - 1;
 	}
 
 	PsimagLite::String srep_;

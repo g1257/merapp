@@ -33,12 +33,14 @@ class MeraToTikz {
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 
 public:
 
-	MeraToTikz(PsimagLite::String srep, SizeType tauMax)
-	    : srep_(srep),tauMax_(tauMax)
+	MeraToTikz(PsimagLite::String srep, SizeType sites)
+	    : srep_(srep),tauMax_(ProgramGlobals::logBase2Strict(sites)-1)
 	{
+		buildPacking(sites);
 		fillBuffer();
 	}
 
@@ -196,22 +198,23 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-			SizeType tensorX = 0;
-			SizeType tensorY = 0;
-			ProgramGlobals::unpackTimeAndSpace(tensorY,
-			                                   tensorX,
-			                                   tensorSrep(i).id(),
-			                                   tauMax_);
+			assert(tensorSrep(i).id() < unpackTimeAndSpace_.size());
+			PairSizeType tensorXY = unpackTimeAndSpace_[tensorSrep(i).id()];
+			SizeType tensorX = tensorXY.first;
+			SizeType tensorY = tensorXY.second;
+
 			SizeType type = tensorSrep(i).type();
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			RealType xsep = 3.0*dx*(1+tensorY);
+			RealType xwsign = (tensorY & 1) ? -1 : 1;
 			RealType xoffset = 3.0*pow(2,tensorY);
 			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
 				SizeType id = tensorSrep(i).id();
 				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
 				if (tensorSrep(j).type() == TensorStanza::TENSOR_TYPE_ERASED)
 					continue;
-				if (tensorSrep(i).legTag(0,TensorStanza::INDEX_DIR_OUT) ==
+				if (tensorSrep(j).ins() > 1 &&
+				        tensorSrep(i).legTag(0,TensorStanza::INDEX_DIR_OUT) ==
 				        tensorSrep(j).legTag(1,TensorStanza::INDEX_DIR_IN)) {
 					xwoffset = -1.5*dx;
 				} else {
@@ -223,7 +226,7 @@ private:
 				x[i] = xsep*dx*tensorX + xoffset;
 				y[i] = 3.5*tensorY*ysign + yoffset0*ysign;
 			} else if (type == TensorStanza::TENSOR_TYPE_W) {
-				x[i] = xsep*dx*tensorX + xwoffset + xoffset;
+				x[i] = xsep*dx*tensorX + xwoffset + xoffset + 3.0*dx*tensorY*xwsign;
 				y[i] = ysign*(3.5*tensorY + 1.5) + yoffset0*ysign;
 			} else if (type == TensorStanza::TENSOR_TYPE_ROOT) {
 				x[i] = 1.5*tauMax_*xsep;
@@ -244,10 +247,9 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			TensorStanza::TensorTypeEnum t = tensorSrep(i).type();
 			if (t != type) continue;
-			SizeType layerX = 0;
-			SizeType layerY = 0;
-			ProgramGlobals::unpackTimeAndSpace(layerY,layerX,tensorSrep(i).id(),tauMax_);
-			if (layerY != layer) continue;
+			assert(tensorSrep(i).id() < unpackTimeAndSpace_.size());
+			PairSizeType layerXY = unpackTimeAndSpace_[tensorSrep(i).id()];
+			if (layerXY.second != layer) continue;
 			counter++;
 		}
 
@@ -329,6 +331,18 @@ private:
 		return PairSizeType(ntensors,0);
 	}
 
+	void buildPacking(SizeType sites)
+	{
+		SizeType y = 0;
+		SizeType stage = sites/2;
+		while (stage > 1) {
+			for (SizeType i = 0; i < stage; ++i)
+				unpackTimeAndSpace_.push_back(PairSizeType(i,y));
+			stage /= 2;
+			y++;
+		}
+	}
+
 	static void printHeader(std::ostream& os)
 	{
 		PsimagLite::String str = "\\documentclass{standalone}\n";
@@ -364,6 +378,7 @@ private:
 	static PsimagLite::String buffer_;
 	PsimagLite::String srep_;
 	SizeType tauMax_;
+	VectorPairSizeType unpackTimeAndSpace_;
 }; // class MeraToTikz
 
 template<typename T>
