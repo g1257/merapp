@@ -4,9 +4,9 @@
 
 include Config.make
 CPPFLAGS += -I../../PsimagLite -I../../PsimagLite/src -IEngine
-all: merapp srepToTikz tensorEval meranpp
+all: merapp srepToTikz tensorEval meranpp tensorBreakup
 
-merapp: merapp.o 
+merapp: merapp.o
 	$(CXX) merapp.o -o merapp $(LDFLAGS)
 
 merapp.o: merapp.cpp  Makefile   Config.make
@@ -29,6 +29,12 @@ tensorEval: tensorEval.o
 
 tensorEval.o: tensorEval.cpp Makefile   Config.make
 	$(CXX) $(CPPFLAGS) -c  tensorEval.cpp
+
+tensorBreakup: tensorBreakup.o
+	$(CXX) $(CPPFLAGS) -o tensorBreakup tensorBreakup.o $(LDFLAGS)
+
+tensorBreakup.o: tensorBreakup.cpp Makefile   Config.make
+	$(CXX) $(CPPFLAGS) -c  tensorBreakup.cpp
 
 ../../PsimagLite/lib/libpsimaglite.a:
 	$(MAKE) -f Makefile -C ../../PsimagLite/lib/

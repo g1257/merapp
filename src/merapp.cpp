@@ -47,7 +47,6 @@ void main1(PsimagLite::String srep,
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	dsrep += "i0(" + hString + "|" + hString + ")";
 	std::cout<<"DimensionSrep="<<dsrep<<"\n";
-	//std::cout<<"DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|8)w1(2,2)h0(2,2|2,2)r(8,2)i0(2|2)\n";
 
 	Mera::ParametersForSolver params;
 	Mera::MeraEnviron environ(srep,params);
