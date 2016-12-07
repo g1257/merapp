@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
+	std::cerr<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
 	if (versionOnly)
 		return 0;
@@ -119,8 +119,10 @@ int main(int argc, char **argv)
 		usageMain(strUsage);
 	}
 
-	if (!buildMode && srep == "")
+	if (!buildMode && srep == "") {
 		srep = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
+		sites = 4;
+	}
 
 	if (buildMode) {
 		// here build srep
@@ -129,11 +131,13 @@ int main(int argc, char **argv)
 	}
 
 	if (buildOnly) {
-		std::cout<<srep<<"\n";
+		std::cout<<"Sites="<<sites<<"\n";
+		std::cout<<"Srep="<<srep<<"\n";
 		std::cerr<<argv[0]<<": Stoping here because of -b (build only). ";
 		std::cerr<<"Not computing environments\n";
 		return 1;
 	}
 
+	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	main1(srep,h,m);
 }

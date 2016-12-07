@@ -20,26 +20,23 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include <cstdlib>
 #include "Version.h"
+#include "IoSimple.h"
 
 int main(int argc, char** argv)
 {
-	if (argc < 3) {
-		std::cerr<<"USAGE: "<<argv[0]<<" sites filename\n";
+	if (argc < 2) {
+		std::cerr<<"USAGE: "<<argv[0]<<" filename\n";
 		return 1;
 	}
 
 	PsimagLite::String srep("");
-	std::ifstream fin(argv[2]);
-	while (!fin.eof()) {
-		PsimagLite::String temp("");
-		fin>>temp;
-		if (temp[0] == '#') continue;
-		srep += temp;
-	}
+	PsimagLite::IoSimple::In io(argv[1]);
+	SizeType sites = 0;
+	io.readline(sites,"Sites=");
+	io.rewind();
+	io.readline(srep,"Srep=");
 
-	fin.close();
-
-	Mera::MeraToTikz<double> obj(srep,atoi(argv[1]));
+	Mera::MeraToTikz<double> obj(srep,sites);
 	std::cout<<"%Created by "<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 	std::cout<<obj;
 }
