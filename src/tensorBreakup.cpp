@@ -78,9 +78,65 @@ PsimagLite::String stringT0Part(const VectorSizeType& setS,
 	return str + ")";
 }
 
+PsimagLite::String buildT0Part(const Mera::TensorStanza& stanza,
+                               SizeType legs,
+                               Mera::TensorStanza::IndexDirectionEnum inOrOut)
+{
+	PsimagLite::String str("");
+	SizeType counter = 0;
+	for (SizeType i = 0; i < legs; ++i) {
+		Mera::TensorStanza::IndexTypeEnum legType = stanza.legType(i,inOrOut);
+		SizeType legTag = stanza.legTag(i,inOrOut);
+		if (counter++ > 0) str += ",";
+		str += Mera::TensorStanza::indexTypeToString(legType) + ttos(legTag);
+	}
+
+	return str;
+}
+
+PsimagLite::String buildT0(PsimagLite::String str)
+{
+	Mera::TensorStanza::IndexDirectionEnum in = Mera::TensorStanza::INDEX_DIR_IN;
+	Mera::TensorStanza::IndexDirectionEnum out = Mera::TensorStanza::INDEX_DIR_OUT;
+	Mera::TensorSrep srep(str);
+	SizeType ntensors = srep.size();
+	PsimagLite::String t0In("t0(");
+	SizeType counter = 0;
+	for (SizeType i = 0; i < ntensors; ++i) {
+		const Mera::TensorStanza& stanza = srep(i);
+		SizeType ins = stanza.ins();
+		SizeType outs = stanza.outs();
+		PsimagLite::String tmp = (stanza.isConjugate()) ?
+		            buildT0Part(stanza,outs,out) : buildT0Part(stanza,ins,in);
+		if (tmp == "") continue;
+		if (counter++ > 0) t0In += ",";
+		t0In += tmp;
+	}
+
+	counter = 0;
+	PsimagLite::String t0Out("");
+	for (SizeType i = 0; i < ntensors; ++i) {
+		const Mera::TensorStanza& stanza = srep(i);
+		SizeType ins = stanza.ins();
+		SizeType outs = stanza.outs();
+		PsimagLite::String tmp = (stanza.isConjugate()) ?
+		            buildT0Part(stanza,ins,in) : buildT0Part(stanza,outs,out);
+		if (tmp == "") continue;
+		if (counter++ > 0) t0Out += ",";
+		t0Out += tmp;
+	}
+
+	if (t0Out != "") t0In += "|";
+	return t0In + t0Out + ")";
+}
+
 void breakUpTensor(PsimagLite::String str, SizeType ind, SizeType jnd)
 {
+	if (ind == jnd) return;
+
 	Mera::TensorSrep srep(str);
+	if (srep.size() == 2) return;
+
 	Mera::TensorStanza stanza0 = srep(ind);
 	Mera::TensorStanza stanza1 = srep(jnd);
 	std::cerr<<"We're going to break tensor ";
@@ -106,7 +162,31 @@ void breakUpTensor(PsimagLite::String str, SizeType ind, SizeType jnd)
 	// build t0
 	PsimagLite::String str0 = stringT0Part(setS,stanza0);
 	PsimagLite::String str1 = stringT0Part(setS,stanza1);
-	std::cout<<"t0= "<<str0<<str1<<"\n";
+	str0 += str1;
+	PsimagLite::String t0 = buildT0(str0);
+	std::cout<<t0<<"="<<str0<<"\n";
+
+	// build t1
+	// mark tensor ind as erased
+	srep.setAsErased(ind);
+	// tensor jnd becomes t0
+	Mera::TensorStanza t0stanza(t0);
+	srep.replaceStanza(jnd,t0stanza);
+	std::cout<<"t1="<<srep.sRep()<<"\n";
+
+	//	VectorSizeType mapping;
+	//	srep.eraseTensor(ind,&mapping);
+	//	srep.eraseTensor(jnd,&mapping);
+	//	std::cerr<<"mapping: "<<mapping;
+	//	std::cout<<"t1="<<srep.sRep()<<"\n";
+
+
+	//	Mera::TensorSrep t0srep = srep;
+	//	for (SizeType i = 0; i < srep.size(); ++i) {
+	//		if (i == ind || i == jnd) continue;
+	//		t0srep.eraseTensor(i);
+	//	}
+	//std::cout<<"t0="<<t0srep.sRep()<<"\n";
 }
 
 int main()

@@ -42,6 +42,7 @@ public:
 		                 TENSOR_TYPE_W,
 		                 TENSOR_TYPE_U,
 		                 TENSOR_TYPE_H,
+		                 TENSOR_TYPE_T,
 		                 TENSOR_TYPE_I};
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
@@ -113,6 +114,7 @@ public:
 		if (name_ == "w") type_ = TENSOR_TYPE_W;
 		if (name_ == "h") type_ = TENSOR_TYPE_H;
 		if (name_ == "r") type_ = TENSOR_TYPE_ROOT;
+		if (name_ == "t") type_ = TENSOR_TYPE_T;
 		if (name_ == "i") type_ = TENSOR_TYPE_I;
 
 		if (neededId(type_) && index == PsimagLite::String::npos) {
@@ -216,7 +218,9 @@ public:
 		srep_ = "";
 	}
 
-	SizeType uncontract(const VectorSizeType& erased, SizeType count)
+	SizeType uncontract(const VectorSizeType& erased,
+	                    SizeType count,
+	                    VectorSizeType* mapping = 0)
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return count;
 
@@ -227,6 +231,8 @@ public:
 			        erased.end()) continue;
 			insSi_[i].first = 'f';
 			insSi_[i].second = count++;
+			if (mapping)
+				mapping->operator[](insSi_[i].second) = insSi_[i].second;
 		}
 
 		total = outsSi_.size();
@@ -236,6 +242,8 @@ public:
 			        erased.end()) continue;
 			outsSi_[i].first = 'f';
 			outsSi_[i].second = count++;
+			if (mapping)
+				mapping->operator[](outsSi_[i].second) = outsSi_[i].second;
 		}
 
 		maxSummed_ = maxIndex('s');
@@ -384,6 +392,7 @@ public:
 		if (type_ == TENSOR_TYPE_W) return "w";
 		if (type_ == TENSOR_TYPE_ROOT) return "r";
 		if (type_ == TENSOR_TYPE_H) return "h";
+		if (type_ == TENSOR_TYPE_T) return "t";
 		return "unknown";
 	}
 

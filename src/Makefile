@@ -39,11 +39,11 @@ tensorBreakup.o: tensorBreakup.cpp Makefile   Config.make
 ../../PsimagLite/lib/libpsimaglite.a:
 	$(MAKE) -f Makefile -C ../../PsimagLite/lib/
 
-Makefile.dep: merapp.cpp   
+Makefile.dep: merapp.cpp
 	$(CXX) $(CPPFLAGS) -MM merapp.cpp  srepToTikz.cpp tensorEval.cpp \
-   meranpp.cpp > Makefile.dep
+   meranpp.cpp tensorBreakup.cpp > Makefile.dep
 
 clean: Makefile.dep
-	rm -f core* merapp meranpp srepToTikz tensorEval *.o *.dep  
+	rm -f core* merapp meranpp srepToTikz tensorEval *.o *.dep
 
-include Makefile.dep 
+include Makefile.dep

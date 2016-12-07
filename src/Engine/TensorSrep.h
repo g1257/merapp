@@ -96,22 +96,36 @@ public:
 	}
 
 	// FIXME: Erase tensor by name/id not index
-	void eraseTensor(SizeType index)
+	void eraseTensor(SizeType index, VectorSizeType* mapping = 0)
 	{
 		assert(index < data_.size());
 		addIrreducibleIdentity();
 		VectorSizeType sErased;
 		data_[index]->eraseTensor(sErased);
-		std::cerr<<sErased;
 		SizeType ntensors = data_.size();
 		SizeType count = maxTag('f') + 1;
+		if (mapping) mapping->resize(maxTag('s') + 1,1000);
+
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
-			count = data_[i]->uncontract(sErased,count);
+			count = data_[i]->uncontract(sErased,count,mapping);
 			srep_ += data_[i]->sRep();
 		}
 
 		canonicalize();
+	}
+
+	void setAsErased(SizeType index)
+	{
+		assert(index < data_.size());
+		data_[index]->setAsErased();
+	}
+
+	void replaceStanza(SizeType index, const TensorStanzaType& stanza)
+	{
+		assert(index < data_.size());
+		*(data_[index]) = stanza;
+		refresh();
 	}
 
 	const PsimagLite::String& sRep() const { return srep_; }
@@ -137,6 +151,8 @@ public:
 		srep_ = "";
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
 			data_[i]->refresh();
 			srep_ += data_[i]->sRep();
 		}
