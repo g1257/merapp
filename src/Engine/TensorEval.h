@@ -207,15 +207,7 @@ private:
 			}
 		}
 
-		//if (!ts.isConjugate())
-			return data_[mid]->operator()(args);
-
-//		VectorSizeType args2 = args;
-//		for (SizeType i = ins; i < args.size(); ++i)
-//			args2[i-ins] = args[i];
-//		for (SizeType i = 0; i < ins; ++i)
-//			args2[i+outs] = args[i];
-//		return std::conj(data_[mid]->operator()(args2));
+		return data_[mid]->operator()(args);
 	}
 
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id)
