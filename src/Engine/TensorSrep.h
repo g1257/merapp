@@ -209,6 +209,13 @@ public:
 		return *data_[ind];
 	}
 
+	// FIXME: EXPOSES INTERNALS!!
+	TensorStanza& operator()(SizeType ind)
+	{
+		assert(ind < data_.size());
+		return *data_[ind];
+	}
+
 	bool isValid(bool verbose) const
 	{
 		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;

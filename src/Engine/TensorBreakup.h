@@ -192,7 +192,14 @@ private:
 		PsimagLite::String str1 = stringT0Part(setS,stanza1);
 		str0 += str1;
 		PsimagLite::String t0 = buildTid(str0,tid_);
-		std::cout<<t0<<"="<<str0<<"\n";
+		TensorStanza t0stanzaActual(t0);
+		VectorSizeType mapping;
+		freeTheSummed(t0stanzaActual,mapping);
+		TensorSrep rightHandSide(str0);
+		for (SizeType i =0; i < rightHandSide.size(); ++i)
+			freeTheSummed(rightHandSide(i),mapping);
+		rightHandSide.refresh();
+		std::cout<<t0stanzaActual.sRep()<<"="<<rightHandSide.sRep()<<"\n";
 
 		// build t1
 		// mark tensor ind as erased
@@ -203,6 +210,38 @@ private:
 		std::cout<<"Remaining="<<srep_.sRep()<<"\n";
 		tid_++;
 		return true;
+	}
+
+	void freeTheSummed(TensorStanza& stanza,
+	                   VectorSizeType& mapping) const
+	{
+		bool leftHandSide = (mapping.size() == 0);
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+		SizeType counter = stanza.maxTag('f') + 1;
+		if (leftHandSide)
+			mapping.resize(stanza.maxTag('s')+1,1000);
+		SizeType ins = stanza.ins();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+				continue;
+			SizeType index = stanza.legTag(i,in);
+			stanza.legTypeChar(i,in) = 'f';
+			if (leftHandSide) mapping[index] = counter++;
+			stanza.legTag(i,in) = mapping[index];
+		}
+
+		SizeType outs = stanza.outs();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
+				continue;
+			SizeType index = stanza.legTag(i,out);
+			stanza.legTypeChar(i,out) = 'f';
+			if (leftHandSide) mapping[index] = counter++;
+			stanza.legTag(i,out) = mapping[index];
+		}
+
+		stanza.refresh();
 	}
 
 	void findCommonSetS(VectorSizeType& setS,
