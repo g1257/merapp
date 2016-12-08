@@ -27,11 +27,11 @@ namespace Mera {
 class TensorSrep {
 
 	typedef PsimagLite::Vector<TensorStanza*>::Type VectorTensorStanza;
-	typedef std::pair<SizeType,SizeType> PairSizeType;
-	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 
 public:
 
+	typedef std::pair<SizeType,SizeType> PairSizeType;
+	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef TensorStanza TensorStanzaType;
 
