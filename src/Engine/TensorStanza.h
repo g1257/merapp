@@ -412,8 +412,6 @@ public:
 		os<<"name= "<<ts.name_<<"\n";
 		os<<"type= "<<ts.type_<<"\n";
 		os<<"needs ins and outs FIXME\n";
-		//os<<"ins="<<ts.insSi_<<"\n";
-		//os<<"outs="<<ts.outsSi_;<<"\n";
 		return os;
 	}
 

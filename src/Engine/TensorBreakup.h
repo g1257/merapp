@@ -28,7 +28,7 @@ class TensorBreakup {
 
 public:
 
-	TensorBreakup(PsimagLite::String str) : srep_(str),tid_(0)
+	TensorBreakup(PsimagLite::String str) : srep_(str),tid_(computeInitialTid())
 	{}
 
 	void operator()()
@@ -44,6 +44,19 @@ public:
 	}
 
 private:
+
+	SizeType computeInitialTid() const
+	{
+		SizeType maxIdOfTtensors = 0;
+		SizeType ntensors = srep_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (srep_(i).name() != "t") continue;
+			SizeType tmp = srep_(i).id();
+			if (tmp > maxIdOfTtensors) maxIdOfTtensors = tmp;
+		}
+
+		return maxIdOfTtensors;
+	}
 
 	void getAllStags(VectorSizeType& v0,
 	                 const TensorStanza& stanza0) const
@@ -69,6 +82,7 @@ private:
 		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
 		PsimagLite::String str = stanza.name() + ttos(stanza.id());
+		if (stanza.isConjugate()) str += "*";
 		SizeType counter = 0;
 		for (SizeType i = 0; i < stanza.ins(); ++i) {
 			TensorStanza::IndexTypeEnum legType = stanza.legType(i,in);
