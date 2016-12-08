@@ -422,8 +422,8 @@ private:
 	PsimagLite::String srepFromObject() const
 	{
 		PsimagLite::String srep = name_;
-		if (conjugate_) srep += "*";
 		srep += ttos(id_);
+		if (conjugate_) srep += "*";
 		srep += "(";
 		for (SizeType i = 0; i < insSi_.size(); ++i) {
 			srep += insSi_[i].first + ttos(insSi_[i].second);

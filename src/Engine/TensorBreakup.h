@@ -186,7 +186,7 @@ private:
 		// tensor jnd becomes t0
 		TensorStanza t0stanza(t0);
 		srep_.replaceStanza(jnd,t0stanza);
-		std::cout<<"t1="<<srep_.sRep()<<"\n";
+		std::cout<<"Remaining="<<srep_.sRep()<<"\n";
 		tid_++;
 		return true;
 	}
