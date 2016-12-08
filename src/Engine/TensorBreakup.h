@@ -28,14 +28,17 @@ class TensorBreakup {
 
 public:
 
-	TensorBreakup(PsimagLite::String str) : srep_(str)
+	TensorBreakup(PsimagLite::String str) : srep_(str),tid_(0)
 	{}
 
 	void operator()()
 	{
 		while (true) {
-			TensorSrep::PairSizeType pair = findPairForBreakUp();
-			if (!breakUpTensor(pair.first,pair.second))
+			VectorSizeType setS;
+			TensorSrep::PairSizeType pair;
+			bool found = findPairForBreakUp(pair,setS);
+			if (!found) break;
+			if (!breakUpTensor(pair,setS))
 				break;
 		}
 	}
@@ -116,13 +119,14 @@ private:
 		return str;
 	}
 
-	PsimagLite::String buildT0(PsimagLite::String str) const
+	PsimagLite::String buildTid(PsimagLite::String str,
+	                           SizeType id) const
 	{
 		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
 		TensorSrep srep(str);
 		SizeType ntensors = srep.size();
-		PsimagLite::String t0In("t0(");
+		PsimagLite::String t0In("t" + ttos(id) + "(");
 		SizeType counter = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			const TensorStanza& stanza = srep(i);
@@ -152,9 +156,11 @@ private:
 		return t0In + t0Out + ")";
 	}
 
-	bool breakUpTensor(SizeType ind,
-	                   SizeType jnd)
+	bool breakUpTensor(const TensorSrep::PairSizeType& pair,
+	                   const VectorSizeType& setS)
 	{
+		SizeType ind = pair.first;
+		SizeType jnd = pair.second;
 		if (ind >= jnd) return false;
 		if (srep_.size() == 2) return false;
 
@@ -167,24 +173,11 @@ private:
 		std::cerr<<stanza1.name()<<stanza1.id()<<c;
 		std::cerr<<" from "<<srep_.sRep()<<"\n";
 
-		// find commont setS
-		VectorSizeType v0;
-		getAllStags(v0,stanza0);
-		VectorSizeType v1;
-		getAllStags(v1,stanza1);
-
-		VectorSizeType setS;
-		for (SizeType i = 0; i < v0.size(); ++i)
-			for (SizeType j = 0; j < v1.size(); ++j)
-				if (v0[i] == v1[j]) setS.push_back(v0[i]);
-
-		if (setS.size() == 0) return false;
-
 		// build t0
 		PsimagLite::String str0 = stringT0Part(setS,stanza0);
 		PsimagLite::String str1 = stringT0Part(setS,stanza1);
 		str0 += str1;
-		PsimagLite::String t0 = buildT0(str0);
+		PsimagLite::String t0 = buildTid(str0,tid_);
 		std::cout<<t0<<"="<<str0<<"\n";
 
 		// build t1
@@ -194,33 +187,67 @@ private:
 		TensorStanza t0stanza(t0);
 		srep_.replaceStanza(jnd,t0stanza);
 		std::cout<<"t1="<<srep_.sRep()<<"\n";
+		tid_++;
 		return true;
 	}
 
-	TensorSrep::PairSizeType findPairForBreakUp() const
+	void findCommonSetS(VectorSizeType& setS,
+	                    const TensorStanza& stanza0,
+	                    const TensorStanza& stanza1) const
 	{
-		TensorSrep::PairSizeType pair(0,0);
+		// find commont setS
+		VectorSizeType v0;
+		getAllStags(v0,stanza0);
+		VectorSizeType v1;
+		getAllStags(v1,stanza1);
+
+		setS.clear();
+		for (SizeType i = 0; i < v0.size(); ++i)
+			for (SizeType j = 0; j < v1.size(); ++j)
+				if (v0[i] == v1[j]) setS.push_back(v0[i]);
+	}
+
+	bool findPairForBreakUp(TensorSrep::PairSizeType& pair,
+	                        VectorSizeType& setS) const
+	{
+		if (srep_.size() < 2) return false;
+		for (SizeType start = 0; start < srep_.size()-1; ++start) {
+			setS.clear();
+			findPairForBreakUp(pair,setS,start);
+			if (pair.first < pair.second && setS.size() > 0)
+				return true;
+		}
+
+		return false;
+	}
+
+	void findPairForBreakUp(TensorSrep::PairSizeType& pair,
+	                        VectorSizeType& setS,
+	                        SizeType start) const
+	{
+		pair.first = pair.second = 0;
 		SizeType ntensors = srep_.size();
 		SizeType counter = 0;
-		for (SizeType i = 0; i < ntensors; ++i) {
+		for (SizeType i = start; i < ntensors; ++i) {
 			const TensorStanza& stanza = srep_(i);
 			if (stanza.type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
 			if (stanza.name() == "t") continue;
-			if (counter == 0) pair.first = i;
-			if (counter == 1) {
-				pair.second = i;
-				break;
+			if (counter == 0) {
+				pair.first = i;
+				counter++;
+			} else if (counter == 1) {
+					findCommonSetS(setS,srep_(pair.first),stanza);
+					if (setS.size() > 0) {
+						pair.second = i;
+						break;
+					}
 			}
-
-			counter++;
 		}
-
-		if (counter != 1) pair.first = pair.second = 0;
-		return pair;
 	}
 
 	TensorSrep srep_;
+	SizeType tid_;
 };
 
 }
