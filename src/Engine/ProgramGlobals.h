@@ -19,6 +19,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define PROGRAMGLOBALS_H
 #include "Vector.h"
 #include "RandomForTests.h"
+#include "AllocatorCpu.h"
 
 namespace Mera {
 
