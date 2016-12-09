@@ -99,7 +99,8 @@ public:
 	void eraseTensor(SizeType index, VectorSizeType* mapping = 0)
 	{
 		assert(index < data_.size());
-		addIrreducibleIdentity();
+		if (data_[index]->name() == "r")
+			addIrreducibleIdentity();
 		VectorSizeType sErased;
 		data_[index]->eraseTensor(sErased);
 		SizeType ntensors = data_.size();
