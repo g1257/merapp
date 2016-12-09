@@ -76,45 +76,67 @@ private:
 		}
 	}
 
-	PsimagLite::String stringT0Part(const VectorSizeType& setS,
-	                                const TensorStanza& stanza) const
+	void stringT0Part(PsimagLite::String& str,
+	                  PsimagLite::String& actualStr,
+	                  const VectorSizeType& setS,
+	                  const TensorStanza& stanza) const
 	{
 		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-		PsimagLite::String str = stanza.name() + ttos(stanza.id());
+		str = stanza.name() + ttos(stanza.id());
 		if (stanza.isConjugate()) str += "*";
-		SizeType counter = 0;
+		actualStr = str;
+		bool seen = false;
+		bool seenActual = false;
+		SizeType addedDummyIndex = 0;
 		for (SizeType i = 0; i < stanza.ins(); ++i) {
 			TensorStanza::IndexTypeEnum legType = stanza.legType(i,in);
 			SizeType legTag = stanza.legTag(i,in);
 			bool isSummed = (legType == TensorStanza::INDEX_TYPE_SUMMED);
 			bool notInSet = (isSummed && std::find(setS.begin(),setS.end(),legTag) == setS.end());
 			if (!isSummed || notInSet) {
-				if (counter++ == 0)
-					str += "(";
-				else
-					str += ",";
-				str += TensorStanza::indexTypeToString(legType) + ttos(legTag);
+				str += (!seen) ? "(" : ",";
+				actualStr += (!seenActual) ? "(" : ",";
+
+				PsimagLite::String tmp = TensorStanza::indexTypeToString(legType) + ttos(legTag);
+				str += tmp;
+				actualStr += tmp;
+
+				seen = seenActual = true;
+			} else {
+				if (!seenActual) actualStr += "(";
+				else actualStr += ",";
+				actualStr += "d" + ttos(addedDummyIndex++);
+				seenActual = true;
 			}
 		}
 
-		if (counter == 0) str += "(";
-		counter = 0;
+		if (!seen) str += "(";
+		if (!seen && !seenActual) actualStr += "(";
+		seen = seenActual = false;
 		for (SizeType i = 0; i < stanza.outs(); ++i) {
 			TensorStanza::IndexTypeEnum legType = stanza.legType(i,out);
 			SizeType legTag = stanza.legTag(i,out);
 			bool isSummed = (legType == TensorStanza::INDEX_TYPE_SUMMED);
 			bool notInSet = (isSummed && std::find(setS.begin(),setS.end(),legTag) == setS.end());
 			if (!isSummed || notInSet) {
-				if (counter++ == 0)
-					str += "|";
-				else
-					str += ",";
-				str += TensorStanza::indexTypeToString(legType) + ttos(legTag);
+				str += (!seen) ? "|" : ",";
+				actualStr += (!seenActual) ? "|" : ",";
+				PsimagLite::String tmp = TensorStanza::indexTypeToString(legType) + ttos(legTag);
+				str += tmp;
+				actualStr += tmp;
+
+				seen = seenActual = true;
+			} else {
+				if (!seenActual) actualStr += "|";
+				else actualStr += ",";
+				actualStr += "d" + ttos(addedDummyIndex++);
+				seenActual = true;
 			}
 		}
 
-		return str + ")";
+		str += ")";
+		actualStr += ")";
 	}
 
 	PsimagLite::String buildT0Part(const TensorStanza& stanza,
@@ -134,7 +156,7 @@ private:
 	}
 
 	PsimagLite::String buildTid(PsimagLite::String str,
-	                           SizeType id) const
+	                            SizeType id) const
 	{
 		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
@@ -188,16 +210,23 @@ private:
 		std::cerr<<" from "<<srep_.sRep()<<"\n";
 
 		// build t0
-		PsimagLite::String str0 = stringT0Part(setS,stanza0);
-		PsimagLite::String str1 = stringT0Part(setS,stanza1);
+		PsimagLite::String str0("");
+		PsimagLite::String actualStr0("");
+		stringT0Part(str0,actualStr0,setS,stanza0);
+		PsimagLite::String str1("");
+		PsimagLite::String actualStr1("");
+		stringT0Part(str1,actualStr1,setS,stanza1);
 		str0 += str1;
+		actualStr0 += actualStr1;
+
 		PsimagLite::String t0 = buildTid(str0,tid_);
 		TensorStanza t0stanzaActual(t0);
 		VectorSizeType mapping;
 		freeTheSummed(t0stanzaActual,mapping);
-		TensorSrep rightHandSide(str0);
+		TensorSrep rightHandSide(actualStr0);
 		for (SizeType i =0; i < rightHandSide.size(); ++i)
 			freeTheSummed(rightHandSide(i),mapping);
+
 		rightHandSide.refresh();
 		std::cout<<t0stanzaActual.sRep()<<"="<<rightHandSide.sRep()<<"\n";
 
@@ -223,6 +252,12 @@ private:
 			mapping.resize(stanza.maxTag('s')+1,1000);
 		SizeType ins = stanza.ins();
 		for (SizeType i = 0; i < ins; ++i) {
+			if (!leftHandSide &&
+			        stanza.legType(i,in) == TensorStanza::INDEX_TYPE_DUMMY) {
+				stanza.legTypeChar(i,in) = 's';
+				continue;
+			}
+
 			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
 				continue;
 			SizeType index = stanza.legTag(i,in);
@@ -233,6 +268,12 @@ private:
 
 		SizeType outs = stanza.outs();
 		for (SizeType i = 0; i < outs; ++i) {
+			if (!leftHandSide &&
+			        stanza.legType(i,out) == TensorStanza::INDEX_TYPE_DUMMY) {
+				stanza.legTypeChar(i,out) = 's';
+				continue;
+			}
+
 			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
 				continue;
 			SizeType index = stanza.legTag(i,out);
@@ -290,11 +331,11 @@ private:
 				pair.first = i;
 				counter++;
 			} else if (counter == 1) {
-					findCommonSetS(setS,srep_(pair.first),stanza);
-					if (setS.size() > 0) {
-						pair.second = i;
-						break;
-					}
+				findCommonSetS(setS,srep_(pair.first),stanza);
+				if (setS.size() > 0) {
+					pair.second = i;
+					break;
+				}
 			}
 		}
 	}
