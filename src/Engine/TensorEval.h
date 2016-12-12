@@ -21,6 +21,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorSrep.h"
 #include "Tensor.h"
 #include <map>
+#include "Tokenizer.h"
 
 namespace Mera {
 
@@ -29,34 +30,138 @@ class TensorEval {
 
 	typedef TensorSrep TensorSrepType;
 
+	class SrepEquation {
+
+	public:
+
+		typedef Tensor<ComplexOrRealType> TensorType;
+		typedef typename TensorType::VectorSizeType VectorSizeType;
+		typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
+		typedef std::pair<SizeType, SizeType> PairSizeType;
+		typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
+		typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
+		typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
+		typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+		typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+		typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
+
+		SrepEquation(PsimagLite::String str,
+		             const VectorTensorType& vt,
+		             const VectorPairStringSizeType& tensorNameIds,
+		             MapPairStringSizeType& nameIdsTensor)
+		    : lhs_(0),rhs_(0),outputTensor_(0)
+		{
+			VectorStringType vstr;
+			PsimagLite::tokenizer(str,vstr,"=");
+			if (vstr.size() != 2)
+				PsimagLite::RuntimeError("SrepEquation:: syntax error " + str + "\n");
+			lhs_ = new TensorSrepType(vstr[0]);
+			rhs_ = new TensorSrepType(vstr[1]);
+
+			if (lhs_->size() != 1)
+				PsimagLite::RuntimeError("SrepEquation:: LHS should have exactly 1 tensor\n");
+
+			PairStringSizeType nameIdOfOutput(lhs_->operator ()(0).name(),
+			                                  lhs_->operator ()(0).id());
+			SizeType outputTensorIndex = nameIdsTensor[nameIdOfOutput];
+			assert(outputTensorIndex < vt.size());
+			outputTensor_ = vt[outputTensorIndex];
+		}
+
+		~SrepEquation()
+		{
+			delete lhs_;
+			delete rhs_;
+		}
+
+		void fillOutput(const VectorSizeType& free,
+		                ComplexOrRealType value)
+		{
+			outputTensor_->operator()(free) = value;
+		}
+
+		const TensorSrepType& lhs() const
+		{
+			assert(lhs_);
+			return *lhs_;
+		}
+
+		const TensorSrepType& rhs() const
+		{
+			assert(rhs_);
+			return *rhs_;
+		}
+
+		const TensorType& outputTensor() const
+		{
+			assert(outputTensor_);
+			return *outputTensor_;
+		}
+
+		void printResult(std::ostream& os) const
+		{
+
+		}
+
+	private:
+
+		SrepEquation(const SrepEquation&);
+
+		SrepEquation& operator=(const SrepEquation&);
+
+		TensorSrepType* lhs_;
+		TensorSrepType* rhs_;
+		TensorType* outputTensor_;
+	};
+
+	class TensorEvalHandle {
+
+
+	public:
+
+		enum Status {STATUS_IDLE, STATUS_IN_PROGRESS, STATUS_DONE};
+
+		TensorEvalHandle(Status status = STATUS_IDLE)
+		    : status_(status)
+		{}
+
+		bool done() const
+		{
+			return (status_ == STATUS_DONE);
+		}
+
+	private:
+
+		Status status_;
+	};
+
 public:
 
-	typedef Tensor<ComplexOrRealType> TensorType;
-	typedef typename TensorType::VectorSizeType VectorSizeType;
-	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
-	typedef std::pair<SizeType, SizeType> PairSizeType;
-	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
-	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
-	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
-	typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
-	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+	typedef SrepEquation SrepEquationType;
+	typedef TensorEvalHandle HandleType;
+	typedef typename SrepEquationType::VectorTensorType VectorTensorType;
+	typedef typename SrepEquationType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename SrepEquationType::MapPairStringSizeType MapPairStringSizeType;
+	typedef typename SrepEquationType::VectorSizeType VectorSizeType;
+	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
+	typedef typename SrepEquationType::TensorType TensorType;
 
 	TensorEval(PsimagLite::String srep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
 	           MapPairStringSizeType& nameIdsTensor)
-	    : tensorSrep_(new TensorSrepType(srep)),
+	    : srepEq_(new SrepEquationType(srep,vt,tensorNameIds,nameIdsTensor)),
 	      ownsSrep_(true),
 	      data_(vt),
 	      tensorNameIds_(tensorNameIds),
 	      nameIdsTensor_(nameIdsTensor)
 	{}
 
-	TensorEval(const TensorSrepType& tSrep,
+	TensorEval(const SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
 	           MapPairStringSizeType& nameIdsTensor)
-	    : tensorSrep_(&tSrep),
+	    : srepEq_(&tSrep),
 	      ownsSrep_(false),
 	      data_(vt),
 	      tensorNameIds_(tensorNameIds),
@@ -65,23 +170,39 @@ public:
 
 	~TensorEval()
 	{
-		if (ownsSrep_) delete tensorSrep_;
+		if (ownsSrep_) delete srepEq_;
 	}
 
-	ComplexOrRealType operator()(const VectorSizeType& free)
+	HandleType operator()()
 	{
-		SizeType total = tensorSrep_->maxTag('s') + 1;
-		VectorSizeType summed(total,0);
+		SizeType total = srepEq_->outputTensor().args();
 		VectorSizeType dimensions(total,0);
+		for (SizeType i = 0; i < total; ++i)
+			dimensions[i] = srepEq_->outputTensor().argSize(i);
 
-		prepare(dimensions);
+		VectorSizeType free(total,0);
 
-		ComplexOrRealType sum = 0.0;
 		do {
-			sum += evalInternal(summed,free);
-		} while (nextIndex(summed,dimensions));
+			srepEq_->fillOutput(free,slowEvaluator(free,srepEq_->rhs()));
+		} while (nextIndex(free,dimensions));
 
-		return sum;
+		HandleType handle(HandleType::STATUS_DONE);
+		return handle;
+	}
+
+	void printResult(std::ostream& os) const
+	{
+		SizeType total = srepEq_->outputTensor().args();
+		VectorSizeType dimensions(total,0);
+		for (SizeType i = 0; i < total; ++i)
+			dimensions[i] = srepEq_->outputTensor().argSize(i);
+
+		VectorSizeType free(total,0);
+
+		do {
+			SizeType index = srepEq_->outputTensor().index(free);
+			std::cout<<index<<" "<<srepEq_->outputTensor()(free)<<"\n";
+		} while (nextIndex(free,dimensions));
 	}
 
 	static bool nextIndex(VectorSizeType& summed,
@@ -99,9 +220,25 @@ public:
 
 private:
 
-	void prepare(VectorSizeType& dimensions)
+	ComplexOrRealType slowEvaluator(const VectorSizeType& free,
+	                                const TensorSrepType& srep)
 	{
-		const TensorSrepType& tensorSrep = *tensorSrep_;
+		SizeType total = srep.maxTag('s') + 1;
+		VectorSizeType summed(total,0);
+		VectorSizeType dimensions(total,0);
+
+		prepare(dimensions,srep);
+
+		ComplexOrRealType sum = 0.0;
+		do {
+			sum += evalInternal(summed,free,srep);
+		} while (nextIndex(summed,dimensions));
+
+		return sum;
+	}
+
+	void prepare(VectorSizeType& dimensions, const TensorSrepType& tensorSrep)
+	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType id = tensorSrep(i).id();
@@ -132,12 +269,13 @@ private:
 	}
 
 	ComplexOrRealType evalInternal(const VectorSizeType& summed,
-	                               const VectorSizeType& free)
+	                               const VectorSizeType& free,
+	                               const TensorSrepType& tensorSrep)
 	{
 		ComplexOrRealType prod = 1.0;
-		SizeType ntensors = tensorSrep_->size();
+		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			prod *= evalThisTensor(tensorSrep_->operator()(i),summed,free);
+			prod *= evalThisTensor(tensorSrep(i),summed,free);
 			if (prod == 0) break;
 		}
 
@@ -219,7 +357,7 @@ private:
 
 	TensorEval& operator=(const TensorEval& other);
 
-	const TensorSrepType* tensorSrep_;
+	SrepEquationType* srepEq_;
 	bool ownsSrep_;
 	const VectorTensorType& data_;
 	const VectorPairStringSizeType& tensorNameIds_;

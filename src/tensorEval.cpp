@@ -20,15 +20,19 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 int main()
 {
-	PsimagLite::String str = "u0(s0)u1(s0)";
+	PsimagLite::String str = "r(f0) = u0(f0|s0)u1(s0)";
 
 	SizeType dim0 = 5;
 	typedef Mera::TensorEval<double> TensorEvalType;
 	typedef TensorEvalType::TensorType TensorType;
-	TensorEvalType::VectorTensorType vt(2);
+	TensorEvalType::VectorTensorType vt(3);
 
+	TensorEvalType::VectorSizeType d(2,dim0);
+	d[0] = 3;
+	vt[0] = new TensorType(d,1);
+	vt[1] = new TensorType(dim0,1);
+	vt[2] = new TensorType(3,1);
 	for (SizeType i = 0; i < vt.size(); ++i) {
-		vt[i] = new TensorType(dim0,1);
 		vt[i]->setToIdentity(1.0);
 	}
 
@@ -39,8 +43,11 @@ int main()
 	nameIdTensor[idNames[0]] = 0;
 	nameIdTensor[idNames[1]] = 1;
 	TensorEvalType tensorEval(str,vt,idNames,nameIdTensor);
-	TensorEvalType::VectorSizeType freeIndices;
-	std::cout<<tensorEval(freeIndices)<<"\n";
+	TensorEvalType::HandleType handle = tensorEval();
+
+	while (!handle.done());
+
+	tensorEval.printResult(std::cout);
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		delete vt[i];

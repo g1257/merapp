@@ -131,12 +131,26 @@ public:
 		return dimensions_[ind];
 	}
 
+	SizeType index(const VectorSizeType& args) const
+	{
+		return pack(args);
+	}
+
 	const ComplexOrRealType& operator()(const VectorSizeType& args) const
 	{
 		SizeType index = pack(args);
 		assert(index < data_.size());
 		return data_[index];
 	}
+
+	// FIXME: GIVES AWAY INTERNALS!!
+	ComplexOrRealType& operator()(const VectorSizeType& args)
+	{
+		SizeType index = pack(args);
+		assert(index < data_.size());
+		return data_[index];
+	}
+
 
 private:
 
