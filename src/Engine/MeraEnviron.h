@@ -38,8 +38,9 @@ public:
 	void computeEnvirons()
 	{
 		std::cout<<"MERA="<<tensorSrep_.sRep()<<"\n";
+		SizeType counterForOutput = 100;
 		for (SizeType i = 0; i < tensorSrep_.size(); ++i)
-			environForTensor(i);
+			counterForOutput += environForTensor(i, counterForOutput);
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const MeraEnviron& ms)
@@ -55,15 +56,18 @@ private:
 	MeraEnviron& operator=(const MeraEnviron&);
 
 	// find Y (environment) for this tensor
-	void environForTensor(SizeType ind) const
+	SizeType environForTensor(SizeType ind, SizeType counterForOutput) const
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
 		SizeType sites = tensorSrep_.maxTag('f');
 		VectorStringType vstr(sites,"");
+		VectorStringType argForOutput(sites,"");
 		SizeType terms = 0;
 		for (SizeType site = 0; site < sites; ++site) {
-			vstr[site] = environForTensor(ind,site);
+			TensorSrep tmp = environForTensorOneSite(ind,site);
+			vstr[site] = tmp.sRep();
+			argForOutput[site] = calcArgForOutput(tmp);
 			if (vstr[site] != "") ++terms;
 		}
 
@@ -71,16 +75,19 @@ private:
 		std::cout<<"Terms="<<terms<<"\n";
 		std::cout<<"IgnoreTerm="<<(2*sites+1)<<"\n";
 		std::cout<<"Layer=0\n"; // FIXME
-		for (SizeType site = 0; site < sites; ++site)
-			if (vstr[site] != "")
-				std::cout<<"Environ="<<vstr[site]<<"\n";
+		for (SizeType site = 0; site < sites; ++site) {
+			if (vstr[site] == "") continue;
+			PsimagLite::String tmp = "u" + ttos(counterForOutput++) + argForOutput[site];
+			std::cout<<"Environ="<<tmp<<"="<<vstr[site]<<"\n";
+		}
 
 		std::cout<<"\n";
+		return terms;
 	}
 
-	PsimagLite::String environForTensor(SizeType ind, SizeType site) const
+	TensorSrep environForTensorOneSite(SizeType ind, SizeType site) const
 	{
-		Mera::TensorSrep tensorSrep2(tensorSrep_);
+		TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();
 		tensorSrep2.swapFree(0,site);
 		tensorSrep2.swapFree(1,site+1);
@@ -89,10 +96,10 @@ private:
 		str3 += ttos(site+3) + "|f";
 		str3 += ttos(site) + ",f";
 		str3 += ttos(site+1) + ")\n";
-		Mera::TensorSrep tensorSrep3(str3);
-		Mera::TensorSrep::VectorSizeType indicesToContract(2,site);
+		TensorSrep tensorSrep3(str3);
+		TensorSrep::VectorSizeType indicesToContract(2,site);
 		indicesToContract[1] = site + 1;
-		Mera::TensorSrep tensorSrep4(tensorSrep_);
+		TensorSrep tensorSrep4(tensorSrep_);
 		tensorSrep4.contract(tensorSrep3,indicesToContract);
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
@@ -111,7 +118,7 @@ private:
 				throw PsimagLite::RuntimeError("Environ for root tensor: INTERNAL ERROR\n");
 			} else {
 				std::cerr<<"EMPTY_ENVIRON="<<tensorSrep4.sRep()<<"\n";
-				return "";
+				return TensorSrep("");
 			}
 		} else if (isRootTensor) {
 			tensorSrep4.eraseTensor(jnd);
@@ -119,7 +126,56 @@ private:
 				throw PsimagLite::RuntimeError("Invalid tensor\n");
 		}
 
-		return tensorSrep4.sRep();
+		return tensorSrep4;
+	}
+
+	PsimagLite::String calcArgForOutput(const TensorSrep& srep) const
+	{
+		VectorStringType ins;
+		VectorStringType outs;
+		SizeType ntensors = srep.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			calcArgForOutput(ins,outs,srep(i));
+
+		PsimagLite::String ret = "(";
+		for (SizeType i = 0; i < ins.size(); ++i) {
+			ret += ins[i];
+			if (i + 1 < ins.size()) ret += ",";
+		}
+
+		if (outs.size() > 0) ret += "|";
+		for (SizeType i = 0; i < outs.size(); ++i) {
+			ret += outs[i];
+			if (i + 1 < outs.size()) ret += ",";
+		}
+
+		return ret + ")";
+	}
+
+	void calcArgForOutput(VectorStringType& ins,
+	                      VectorStringType& outs,
+	                      const TensorStanza& stanza) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		for (SizeType i = 0; i < stanza.ins(); ++i) {
+			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
+			PsimagLite::String tmp = "f" + ttos(stanza.legTag(i,in));
+			if (stanza.isConjugate())
+				outs.push_back(tmp);
+			else
+				ins.push_back(tmp);
+		}
+
+		for (SizeType i = 0; i < stanza.outs(); ++i) {
+			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
+			PsimagLite::String tmp = "f" + ttos(stanza.legTag(i,out));
+			if (stanza.isConjugate())
+				ins.push_back(tmp);
+			else
+				outs.push_back(tmp);
+		}
 	}
 
 	const ParametersForSolver& params_;
