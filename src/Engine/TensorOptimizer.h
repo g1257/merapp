@@ -77,10 +77,17 @@ public:
 		io.readline(terms,"Terms=");
 		tensorSrep_.resize(terms,0);
 
+		PsimagLite::String findStr = "Environ=";
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
-			io.readline(srep,"Environ=");
-			tensorSrep_[i] = new SrepEquationType(srep,tensors,tensorNameAndIds,nameIdsTensor);
+			io.readline(srep,findStr);
+			size_t index = srep.find("equal");
+			if (index != PsimagLite::String::npos)
+				srep.replace(index,5,"=");
+			tensorSrep_[i] = new SrepEquationType(srep,
+			                                      tensors,
+			                                      tensorNameAndIds,
+			                                      nameIdsTensor);
 		}
 
 		bool flag = false;

@@ -54,7 +54,7 @@ class TensorEval {
 			VectorStringType vstr;
 			PsimagLite::tokenizer(str,vstr,"=");
 			if (vstr.size() != 2)
-				PsimagLite::RuntimeError("SrepEquation:: syntax error " + str + "\n");
+				throw PsimagLite::RuntimeError("SrepEquation:: syntax error " + str + "\n");
 			lhs_ = new TensorSrepType(vstr[0]);
 			rhs_ = new TensorSrepType(vstr[1]);
 
@@ -64,6 +64,12 @@ class TensorEval {
 			PairStringSizeType nameIdOfOutput(lhs_->operator ()(0).name(),
 			                                  lhs_->operator ()(0).id());
 			SizeType outputTensorIndex = nameIdsTensor[nameIdOfOutput];
+			if (tensorNameIds[outputTensorIndex] != nameIdOfOutput) {
+				PsimagLite::String msg("SrepEquation: Could not find ");
+				msg += "output tensor " + nameIdOfOutput.first + "\n";
+				throw PsimagLite::RuntimeError(msg);
+			}
+
 			assert(outputTensorIndex < vt.size());
 			outputTensor_ = vt[outputTensorIndex];
 		}
