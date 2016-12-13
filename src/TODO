@@ -1,0 +1,18 @@
+Symbolic driver:
+DONE	Normalize s* indices
+DONE	Environ for r
+DONE	If r connects with r* --> add u99
+DONE	Normalize f* indices
+DONE	DimensionSrep
+DONE	equal keyword
+DONE	sRepEqs spec
+DONE	symbolic: generate sRepEqs, use u100 and above
+DONE	symbolic: generate DimensionSrep for u100 and above
+	symbolic should generate H only on certain links
+	update testsuite
+	test all again
+	Clear output tensor storage (?)
+	Figure out Layer=
+	Symmetries
+	Fermions
+
