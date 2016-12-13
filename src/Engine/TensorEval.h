@@ -98,11 +98,6 @@ class TensorEval {
 			return *outputTensor_;
 		}
 
-		void printResult(std::ostream& os) const
-		{
-
-		}
-
 	private:
 
 		SrepEquation(const SrepEquation&);

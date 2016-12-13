@@ -73,7 +73,7 @@ public:
 				data_[x + x*dins] = value;
 	}
 
-	void setRandom()
+	void setToRandom()
 	{
 		SizeType n = data_.size();
 		ComplexOrRealType sum = 0.0;
@@ -88,6 +88,14 @@ public:
 		tmp = 2.0/sqrt(tmp);
 		for (SizeType i = 0; i < n; ++i)
 			data_[i] *= tmp;
+	}
+
+	void setToConstant(ComplexOrRealType value)
+	{
+		// use std:: function here instead of loop, FIXME
+		SizeType n = data_.size();
+		for (SizeType i = 0; i < n; ++i)
+			data_[i] = value;
 	}
 
 	void setToMatrix(const MatrixType& m)
@@ -150,7 +158,6 @@ public:
 		assert(index < data_.size());
 		return data_[index];
 	}
-
 
 private:
 
