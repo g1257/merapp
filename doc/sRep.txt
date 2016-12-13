@@ -8,7 +8,7 @@ An srep is a string. It's composed of sub-strings (tensor stanzas)
 
 srep = tensor stanza  tensor stanza  tensor stanza  ...
 
-An srep may contain whitespace anywhere. All whitespace is ignored. 
+An srep may contain whitespace anywhere. All whitespace is ignored.
 
 -- Tensor Stanza
 
@@ -21,17 +21,17 @@ A tensor stanza may contain whitespace anywhere. All whitespace is ignored.
 name is the name of the tensor, such as u or w. Allowed characters are [a-zA-Z_].
 The name may contain at most one * at the end.
 
-The id is a non negative integer. For the MERA it can be later unpacked into time and space, 
+The id is a non negative integer. For the MERA it can be later unpacked into time and space,
 but this is not needed or possible in a general tensor network.
 
-indicesin is an empty string OR a comma separated list of symbolic indices, the symbolic indices 
-of the in legs. 
+indicesin is an empty string OR a comma separated list of symbolic indices, the symbolic indices
+of the in legs.
 
 If indicesin is empty the number ins is set to zero.
 Else the number of commas plus one defines the number ins. The number of commas may be zero.
 
-indicesout is an empty string OR a comma separated list of symbolic indices, the symbolic indices 
-of the out legs. 
+indicesout is an empty string OR a comma separated list of symbolic indices, the symbolic indices
+of the out legs.
 
 If indicesout is empty the number outs is set to zero.
 Else the number of commas plus one defines the number outs. The number of commas may be zero.
@@ -55,4 +55,21 @@ The non-negative integer MUST be present for all symbolic letters except 'd'.
 
 -- Whitespace
 One or more of the following: space, tab, eol.
+
+------------------------------------------------------
+
+
+SrepEquation or SrepEq for short
+
+left = right
+
+where
+
+left = stanza having only free indices
+
+and
+
+right = srep with exactly the same free indices as left
+
+------------------------------------------------------
 
