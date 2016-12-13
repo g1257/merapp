@@ -152,7 +152,7 @@ public:
 	      nameIdsTensor_(nameIdsTensor)
 	{}
 
-	TensorEval(const SrepEquationType& tSrep,
+	TensorEval(SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
 	           MapPairStringSizeType& nameIdsTensor)

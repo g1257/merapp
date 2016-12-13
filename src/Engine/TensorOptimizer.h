@@ -32,7 +32,6 @@ template<typename ComplexOrRealType, typename IoInType>
 class TensorOptimizer {
 
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
-	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 
@@ -45,6 +44,8 @@ public:
 	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalType::TensorType TensorType;
 	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
+	typedef typename TensorEvalType::SrepEquationType SrepEquationType;
+	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 	typedef typename TensorEvalType::MapPairStringSizeType MapPairStringSizeType;
@@ -52,8 +53,8 @@ public:
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,
-	                                  SparseMatrixType,
-	                                  VectorType> LanczosSolverType;
+	SparseMatrixType,
+	VectorType> LanczosSolverType;
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize,
@@ -79,7 +80,7 @@ public:
 		for (SizeType i = 0; i < terms; ++i) {
 			PsimagLite::String srep;
 			io.readline(srep,"Environ=");
-			tensorSrep_[i] = new TensorSrep(srep);
+			tensorSrep_[i] = new SrepEquationType(srep,tensors,tensorNameAndIds,nameIdsTensor);
 		}
 
 		bool flag = false;
@@ -125,9 +126,9 @@ public:
 
 			if (condSrep.maxTag('f') == 0) continue;
 
-			MatrixType condMatrix;
-			appendToMatrix(condMatrix,condSrep);
-			assert(isTheIdentity(condMatrix));
+			//			MatrixType condMatrix;
+			//			appendToMatrix(condMatrix,condSrep);
+			//			assert(isTheIdentity(condMatrix));
 		}
 	}
 
@@ -269,14 +270,23 @@ private:
 				t(i,j) = gsVector[i + j*rows];
 	}
 
-	void appendToMatrix(MatrixType& m, const TensorSrep& t) const
+	void appendToMatrix(MatrixType& m, SrepEquationType& eq) const
 	{
-		SizeType total = t.maxTag('f') + 1;
+		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_);
+		typename TensorEvalType::HandleType handle = tensorEval();
+
+		while (!handle.done());
+
+		// copy result into m
+		SizeType total = eq.outputTensor().args();//t.maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
 		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
 		VectorSizeType dimensions(total,0);
+		for (SizeType i = 0; i < total; ++i)
+			dimensions[i] = eq.outputTensor().dimension(i);
+
 		VectorBoolType conjugate(total,false);
-		prepareFreeIndices(dimensions,directions,conjugate,t);
+		prepareFreeIndices(directions,conjugate,dimensions,eq.rhs());
 		modifyDirections(directions,conjugate);
 		PairSizeType rc = getRowsAndCols(dimensions,directions);
 		if (m.n_row() == 0) {
@@ -287,11 +297,10 @@ private:
 			throw PsimagLite::RuntimeError(str);
 		}
 
-		TensorEvalType eval(t,tensors_,tensorNameIds_,nameIdsTensor_);
 		SizeType count = 0;
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
-			ComplexOrRealType tmp = eval(freeIndices);
+			ComplexOrRealType tmp = eq.outputTensor()(freeIndices);
 			//std::cerr<<"MATRIX i=" <<rc.first<<" j="<<rc.second<<"\n";
 			m(rc.first,rc.second) += tmp;
 			count++;
@@ -299,9 +308,9 @@ private:
 		//std::cerr<<count<<"\n";
 	}
 
-	void prepareFreeIndices(VectorSizeType& dimensions,
-	                        VectorDirType& directions,
+	void prepareFreeIndices(VectorDirType& directions,
 	                        VectorBoolType& conjugate,
+	                        const VectorSizeType& dimensions,
 	                        const TensorSrep& t) const
 	{
 		assert(dimensions.size() == directions.size());
@@ -326,7 +335,7 @@ private:
 				SizeType index = t(i).legTag(j,
 				                             TensorStanza::INDEX_DIR_IN);
 				assert(index < dimensions.size());
-				dimensions[index] = tensors_[ind]->dimension(j);
+				assert(dimensions[index] == tensors_[ind]->dimension(j));
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_IN;
 				conjugate[index] = conjugate1;
@@ -339,7 +348,7 @@ private:
 				SizeType index = t(i).legTag(j,
 				                             TensorStanza::INDEX_DIR_OUT);
 				assert(index < dimensions.size());
-				dimensions[index] = tensors_[ind]->dimension(j+ins);
+				assert(dimensions[index] == tensors_[ind]->dimension(j+ins));
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_OUT;
 				conjugate[index] = conjugate1;
@@ -448,7 +457,7 @@ private:
 	TensorOptimizer& operator=(const TensorOptimizer&);
 
 	PairStringSizeType tensorToOptimize_;
-	VectorTensorSrepType tensorSrep_;
+	VectorSrepEquationType tensorSrep_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;
