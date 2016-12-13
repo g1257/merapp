@@ -104,6 +104,13 @@ class TensorEval {
 			return *outputTensor_;
 		}
 
+		// FIXME: Gives away internals!
+		TensorType& outputTensor()
+		{
+			assert(outputTensor_);
+			return *outputTensor_;
+		}
+
 	private:
 
 		SrepEquation(const SrepEquation&);

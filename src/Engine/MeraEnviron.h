@@ -31,22 +31,23 @@ class MeraEnviron {
 
 public:
 
-	MeraEnviron(PsimagLite::String srep, const ParametersForSolver& params)
-	    : params_(params), tensorSrep_(srep)
-	{}
-
-	void computeEnvirons()
+	MeraEnviron(const TensorSrep& srep, const ParametersForSolver& params)
+	    : params_(params), tensorSrep_(srep), envs_(""), dsrep_("")
 	{
-		std::cout<<"MERA="<<tensorSrep_.sRep()<<"\n";
 		SizeType counterForOutput = 100;
-		for (SizeType i = 0; i < tensorSrep_.size(); ++i)
+		for (SizeType i = 0; i < tensorSrep_.size(); ++i) {
 			counterForOutput += environForTensor(i, counterForOutput);
+		}
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const MeraEnviron& ms)
+	const PsimagLite::String& environs() const
 	{
-		os<<ms.tensorSrep_<<"\n";
-		return os;
+		return envs_;
+	}
+
+	const PsimagLite::String& dimensionSrep() const
+	{
+		return dsrep_;
 	}
 
 private:
@@ -56,32 +57,35 @@ private:
 	MeraEnviron& operator=(const MeraEnviron&);
 
 	// find Y (environment) for this tensor
-	SizeType environForTensor(SizeType ind, SizeType counterForOutput) const
+	SizeType environForTensor(SizeType ind, SizeType counterForOutput)
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
 		SizeType sites = tensorSrep_.maxTag('f');
 		VectorStringType vstr(sites,"");
 		VectorStringType argForOutput(sites,"");
+		VectorStringType vdsrep(sites,"");
 		SizeType terms = 0;
 		for (SizeType site = 0; site < sites; ++site) {
 			TensorSrep tmp = environForTensorOneSite(ind,site);
 			vstr[site] = tmp.sRep();
-			argForOutput[site] = calcArgForOutput(tmp);
+			argForOutput[site] = calcArgForOutput(vdsrep[site],tmp);
 			if (vstr[site] != "") ++terms;
 		}
 
-		std::cout<<"TensorId="<<name<<","<<id<<"\n";
-		std::cout<<"Terms="<<terms<<"\n";
-		std::cout<<"IgnoreTerm="<<(2*sites+1)<<"\n";
-		std::cout<<"Layer=0\n"; // FIXME
+		PsimagLite::String thisEnv("TensorId=" + name + "," + ttos(id) + "\n");
+		thisEnv += "Terms=" + ttos(terms) + "\n";
+		thisEnv += "IgnoreTerm=" + ttos(2*sites+1) + "\n";
+		thisEnv += "Layer=0\n"; // FIXME
 		for (SizeType site = 0; site < sites; ++site) {
 			if (vstr[site] == "") continue;
-			PsimagLite::String tmp = "u" + ttos(counterForOutput++) + argForOutput[site];
-			std::cout<<"Environ="<<tmp<<"="<<vstr[site]<<"\n";
+			PsimagLite::String tmp = "u" + ttos(counterForOutput++);
+			thisEnv += "Environ=" + tmp + argForOutput[site] + "=" + vstr[site] + "\n";
+			dsrep_ += tmp + vdsrep[site];
 		}
 
-		std::cout<<"\n";
+		thisEnv += "\n";
+		envs_ += thisEnv;
 		return terms;
 	}
 
@@ -129,7 +133,8 @@ private:
 		return tensorSrep4;
 	}
 
-	PsimagLite::String calcArgForOutput(const TensorSrep& srep) const
+	PsimagLite::String calcArgForOutput(PsimagLite::String& dsrep,
+	                                    const TensorSrep& srep) const
 	{
 		VectorStringType ins;
 		VectorStringType outs;
@@ -138,17 +143,29 @@ private:
 			calcArgForOutput(ins,outs,srep(i));
 
 		PsimagLite::String ret = "(";
+		dsrep = "(";
 		for (SizeType i = 0; i < ins.size(); ++i) {
 			ret += ins[i];
-			if (i + 1 < ins.size()) ret += ",";
+			dsrep += "1";
+			if (i + 1 >= ins.size()) continue;
+			ret += ",";
+			dsrep += ",";
 		}
 
-		if (outs.size() > 0) ret += "|";
+		if (outs.size() > 0) {
+			ret += "|";
+			dsrep += "|";
+		}
+
 		for (SizeType i = 0; i < outs.size(); ++i) {
 			ret += outs[i];
-			if (i + 1 < outs.size()) ret += ",";
+			dsrep += "1";
+			if (i + 1 >= outs.size()) continue;
+			ret += ",";
+			dsrep += ",";
 		}
 
+		dsrep += ")";
 		return ret + ")";
 	}
 
@@ -179,7 +196,9 @@ private:
 	}
 
 	const ParametersForSolver& params_;
-	TensorSrep tensorSrep_;
+	const TensorSrep& tensorSrep_;
+	PsimagLite::String envs_;
+	PsimagLite::String dsrep_;
 }; //class
 
 } //namespace

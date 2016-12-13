@@ -279,19 +279,10 @@ private:
 
 	void appendToMatrix(MatrixType& m, SrepEquationType& eq) const
 	{
-		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_);
-		typename TensorEvalType::HandleType handle = tensorEval();
-
-		while (!handle.done());
-
-		// copy result into m
-		SizeType total = eq.outputTensor().args();//t.maxTag('f') + 1;
+		SizeType total = eq.rhs().maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
 		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
 		VectorSizeType dimensions(total,0);
-		for (SizeType i = 0; i < total; ++i)
-			dimensions[i] = eq.outputTensor().dimension(i);
-
 		VectorBoolType conjugate(total,false);
 		prepareFreeIndices(directions,conjugate,dimensions,eq.rhs());
 		modifyDirections(directions,conjugate);
@@ -304,6 +295,15 @@ private:
 			throw PsimagLite::RuntimeError(str);
 		}
 
+		// prepare output tensor for evaluator
+		eq.outputTensor().setSizes(dimensions);
+
+		// evaluate environment
+		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_);
+		typename TensorEvalType::HandleType handle = tensorEval();
+		while (!handle.done());
+
+		// copy result into m
 		SizeType count = 0;
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
@@ -317,7 +317,7 @@ private:
 
 	void prepareFreeIndices(VectorDirType& directions,
 	                        VectorBoolType& conjugate,
-	                        const VectorSizeType& dimensions,
+	                        VectorSizeType& dimensions,
 	                        const TensorSrep& t) const
 	{
 		assert(dimensions.size() == directions.size());
@@ -342,7 +342,7 @@ private:
 				SizeType index = t(i).legTag(j,
 				                             TensorStanza::INDEX_DIR_IN);
 				assert(index < dimensions.size());
-				assert(dimensions[index] == tensors_[ind]->dimension(j));
+				dimensions[index] = tensors_[ind]->dimension(j);
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_IN;
 				conjugate[index] = conjugate1;
@@ -355,7 +355,7 @@ private:
 				SizeType index = t(i).legTag(j,
 				                             TensorStanza::INDEX_DIR_OUT);
 				assert(index < dimensions.size());
-				assert(dimensions[index] == tensors_[ind]->dimension(j+ins));
+				dimensions[index] = tensors_[ind]->dimension(j+ins);
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_OUT;
 				conjugate[index] = conjugate1;

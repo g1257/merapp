@@ -46,13 +46,15 @@ void main1(PsimagLite::String srep,
 	PsimagLite::String hString = ttos(h);
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	dsrep += "i0(" + hString + "|" + hString + ")";
-	std::cout<<"DimensionSrep="<<dsrep<<"\n";
 
 	Mera::ParametersForSolver params;
-	Mera::MeraEnviron environ(srep,params);
+	Mera::TensorSrep tSrep(srep);
+	Mera::MeraEnviron environ(tSrep,params);
 
-	environ.computeEnvirons();
-	std::cerr<<environ;
+	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep()<<"\n";
+	std::cout<<"MERA="<<tSrep.sRep()<<"\n";
+
+	std::cout<<environ.environs();
 }
 
 int main(int argc, char **argv)

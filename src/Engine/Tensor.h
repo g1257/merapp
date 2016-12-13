@@ -44,10 +44,8 @@ public:
 		SizeType n = dimensions_.size();
 		if (n == 0) return;
 		assert(0 < n);
-		SizeType prod = dimensions_[0];
-		for (SizeType i = 1; i < dimensions_.size(); ++i)
-			prod *= dimensions_[i];
-		data_.resize(prod,0);
+
+		data_.resize(volume(),0);
 	}
 
 	void setToIdentity(ComplexOrRealType value)
@@ -121,6 +119,28 @@ public:
 		for (SizeType x = 0; x < dins; ++x)
 			for (SizeType y = 0; y < douts; ++y)
 				data_[x + y*dins] = m(x,y);
+	}
+
+	void setSizes(const VectorSizeType& dimensions)
+	{
+		if (ins_ > dimensions_.size())
+			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions.size < ins\n");
+
+		dimensions_ = dimensions;
+
+		SizeType v = volume();
+		if (v == 0)
+			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions.size == 0\n");
+		data_.resize(v,0.0);
+	}
+
+	SizeType volume() const
+	{
+		if (dimensions_.size() == 0) return 0;
+		SizeType prod = dimensions_[0];
+		for (SizeType i = 1; i < dimensions_.size(); ++i)
+			prod *= dimensions_[i];
+		return prod;
 	}
 
 	const SizeType& dimension(SizeType j) const
