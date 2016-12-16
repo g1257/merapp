@@ -57,7 +57,8 @@ private:
 	MeraEnviron& operator=(const MeraEnviron&);
 
 	// find Y (environment) for this tensor
-	SizeType environForTensor(SizeType ind, SizeType counterForOutput)
+	SizeType environForTensor(SizeType ind,
+	                          SizeType counterForOutput)
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
@@ -66,7 +67,9 @@ private:
 		VectorStringType argForOutput(sites,"");
 		VectorStringType vdsrep(sites,"");
 		SizeType terms = 0;
+		assert(params_.hamiltonianTerm.size() == sites);
 		for (SizeType site = 0; site < sites; ++site) {
+			if (!params_.hamiltonianTerm[site]) continue;
 			TensorSrep tmp = environForTensorOneSite(ind,site);
 			vstr[site] = tmp.sRep();
 			argForOutput[site] = calcArgForOutput(vdsrep[site],tmp);

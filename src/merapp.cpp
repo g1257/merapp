@@ -38,16 +38,14 @@ void usageMain(const PsimagLite::String& str)
 }
 
 void main1(PsimagLite::String srep,
-           SizeType h,
-           SizeType m)
+           const Mera::ParametersForSolver& params)
 {
-	Mera::DimensionSrep dimSrep(srep,h,m);
+	Mera::DimensionSrep dimSrep(srep,params.h,params.m);
 	PsimagLite::String dsrep = dimSrep();
-	PsimagLite::String hString = ttos(h);
+	PsimagLite::String hString = ttos(params.h);
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	dsrep += "i0(" + hString + "|" + hString + ")";
 
-	Mera::ParametersForSolver params;
 	Mera::TensorSrep tSrep(srep);
 	Mera::MeraEnviron environ(tSrep,params);
 
@@ -55,6 +53,18 @@ void main1(PsimagLite::String srep,
 	std::cout<<"MERA="<<tSrep.sRep()<<"\n";
 
 	std::cout<<environ.environs();
+}
+
+void fillHamTerms(Mera::TensorSrep::VectorSizeType& v,
+                  PsimagLite::String terms)
+{
+	PsimagLite::Vector<PsimagLite::String>::Type tokens;
+	PsimagLite::tokenizer(terms,tokens,",");
+	for (SizeType i = 0; i < tokens.size(); ++i) {
+		SizeType ind = atoi(tokens[i].c_str());
+		assert(ind < v.size());
+		v[ind] = 1;
+	}
 }
 
 int main(int argc, char **argv)
@@ -65,6 +75,7 @@ int main(int argc, char **argv)
 	SizeType sites = 0;
 	SizeType arity = 2;
 	SizeType dimension = 1;
+	Mera::TensorSrep::VectorSizeType hamTerms;
 	SizeType h = 0;
 	SizeType m = 0;
 	PsimagLite::String srep("");
@@ -73,10 +84,12 @@ int main(int argc, char **argv)
 	strUsage += "| -S srep | -V\n";
 	strUsage += "-h hilbertSize is always mandatory\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:h:m:S:bV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:h:m:S:s:bV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
+			assert(sites > 1);
+			hamTerms.resize(sites-1,1);
 			break;
 		case 'a':
 			arity = atoi(optarg);
@@ -89,6 +102,15 @@ int main(int argc, char **argv)
 			break;
 		case 'm':
 			m = atoi(optarg);
+			break;
+		case 's':
+			if (hamTerms.size() == 0) {
+				std::cerr<<argv[0]<<": option -s must be after -n\n";
+				return 1;
+			}
+
+			std::fill(hamTerms.begin(),hamTerms.end(),0);
+			fillHamTerms(hamTerms,optarg);
 			break;
 		case 'S':
 			srep = optarg;
@@ -123,6 +145,7 @@ int main(int argc, char **argv)
 	if (!buildMode && srep == "") {
 		srep = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
 		sites = 4;
+		hamTerms.resize(3,1);
 	}
 
 	if (buildMode) {
@@ -140,5 +163,7 @@ int main(int argc, char **argv)
 	}
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
-	main1(srep,h,m);
+
+	Mera::ParametersForSolver params(hamTerms,h,m);
+	main1(srep,params);
 }
