@@ -92,11 +92,14 @@ public:
 	HandleType operator()()
 	{
 		SizeType total = srepEq_->outputTensor().args();
-		VectorSizeType dimensions(total,0);
+		static VectorSizeType dimensions;
+		if (total > dimensions.size()) dimensions.resize(total,0);
+
 		for (SizeType i = 0; i < total; ++i)
 			dimensions[i] = srepEq_->outputTensor().argSize(i);
 
-		VectorSizeType free(total,0);
+		static VectorSizeType free;
+		if (total > free.size()) free.resize(total,0);
 
 		do {
 			srepEq_->fillOutput(free,slowEvaluator(free,srepEq_->rhs()));
@@ -109,11 +112,15 @@ public:
 	void printResult(std::ostream& os) const
 	{
 		SizeType total = srepEq_->outputTensor().args();
-		VectorSizeType dimensions(total,0);
+		static VectorSizeType dimensions;
+
+		if (total > dimensions.size()) dimensions.resize(total,0);
+
 		for (SizeType i = 0; i < total; ++i)
 			dimensions[i] = srepEq_->outputTensor().argSize(i);
 
-		VectorSizeType free(total,0);
+		static VectorSizeType free;
+		if (total > free.size()) free.resize(total,0);
 
 		do {
 			SizeType index = srepEq_->outputTensor().index(free);
