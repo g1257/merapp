@@ -100,7 +100,7 @@ public:
 
 		do {
 			srepEq_->fillOutput(free,slowEvaluator(free,srepEq_->rhs()));
-		} while (nextIndex(free,dimensions));
+		} while (nextIndex(free,dimensions,total));
 
 		HandleType handle(HandleType::STATUS_DONE);
 		return handle;
@@ -118,16 +118,18 @@ public:
 		do {
 			SizeType index = srepEq_->outputTensor().index(free);
 			std::cout<<index<<" "<<srepEq_->outputTensor()(free)<<"\n";
-		} while (nextIndex(free,dimensions));
+		} while (nextIndex(free,dimensions,total));
 	}
 
 	static bool nextIndex(VectorSizeType& summed,
-	                      const VectorSizeType& dimensions)
+	                      const VectorSizeType& dimensions,
+	                      SizeType total)
 	{
-		for (SizeType i = 0; i < summed.size(); ++i) {
+		assert(total <= summed.size());
+		for (SizeType i = 0; i < total; ++i) {
 			summed[i]++;
 			if (summed[i] < dimensions[i]) break;
-			if (i +1 == summed.size()) return false;
+			if (i +1 == total) return false;
 			summed[i] = 0;
 		}
 
@@ -148,7 +150,7 @@ private:
 		ComplexOrRealType sum = 0.0;
 		do {
 			sum += evalInternal(summed,free,srep);
-		} while (nextIndex(summed,dimensions));
+		} while (nextIndex(summed,dimensions,total));
 
 		return sum;
 	}

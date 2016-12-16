@@ -311,7 +311,7 @@ private:
 			//std::cerr<<"MATRIX i=" <<rc.first<<" j="<<rc.second<<"\n";
 			m(rc.first,rc.second) += tmp;
 			count++;
-		} while (TensorEvalType::nextIndex(freeIndices,dimensions));
+		} while (TensorEvalType::nextIndex(freeIndices,dimensions,total));
 		//std::cerr<<count<<"\n";
 	}
 
