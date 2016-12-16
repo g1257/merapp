@@ -149,8 +149,11 @@ private:
 	                                const TensorSrepType& srep)
 	{
 		SizeType total = srep.maxTag('s') + 1;
-		VectorSizeType summed(total,0);
-		VectorSizeType dimensions(total,0);
+		static VectorSizeType summed;
+		if (summed.size() < total) summed.resize(total,0);
+
+		static VectorSizeType dimensions;
+		if (dimensions.size() < total) dimensions.resize(total,0);
 
 		prepare(dimensions,srep);
 
