@@ -100,6 +100,7 @@ public:
 
 		static VectorSizeType free;
 		if (total > free.size()) free.resize(total,0);
+		else std::fill(free.begin(), free.end(), 0);
 
 		do {
 			srepEq_->fillOutput(free,slowEvaluator(free,srepEq_->rhs()));
@@ -113,14 +114,15 @@ public:
 	{
 		SizeType total = srepEq_->outputTensor().args();
 		static VectorSizeType dimensions;
-
 		if (total > dimensions.size()) dimensions.resize(total,0);
+		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
 		for (SizeType i = 0; i < total; ++i)
 			dimensions[i] = srepEq_->outputTensor().argSize(i);
 
 		static VectorSizeType free;
 		if (total > free.size()) free.resize(total,0);
+		else std::fill(free.begin(), free.end(), 0);
 
 		do {
 			SizeType index = srepEq_->outputTensor().index(free);
@@ -151,9 +153,11 @@ private:
 		SizeType total = srep.maxTag('s') + 1;
 		static VectorSizeType summed;
 		if (summed.size() < total) summed.resize(total,0);
+		else std::fill(summed.begin(), summed.end(), 0);
 
 		static VectorSizeType dimensions;
 		if (dimensions.size() < total) dimensions.resize(total,0);
+		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
 		prepare(dimensions,srep);
 

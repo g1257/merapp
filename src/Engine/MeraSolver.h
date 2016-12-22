@@ -47,8 +47,8 @@ class MeraSolver {
 public:
 
 	MeraSolver(PsimagLite::String filename)
-	    : iterMera_(2),
-	      iterTensor_(5),
+	    : iterMera_(1),
+	      iterTensor_(1),
 	      indexOfRootTensor_(0),
 	      twoSiteHam_(4,4),
 	      paramsForLanczos_(0)
