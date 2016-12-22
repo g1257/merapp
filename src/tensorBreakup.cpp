@@ -23,6 +23,7 @@ int main(int argc, char**argv)
 	PsimagLite::String str = "u0(s0,s1|f0)h0(s0,s1|s2,s3)u0*(s2,s3|f1)";
 	if (argc > 1) str = argv[1];
 
-	Mera::TensorBreakup tensorBreakup(str);
+	Mera::TensorSrep srep(str);
+	Mera::TensorBreakup tensorBreakup(srep);
 	tensorBreakup();
 }

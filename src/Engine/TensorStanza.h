@@ -49,7 +49,7 @@ public:
 
 	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY, INDEX_TYPE_DIM};
 
-	TensorStanza(PsimagLite::String srep)
+	explicit TensorStanza(PsimagLite::String srep)
 	    : conjugate_(false),
 	      srep_(srep),
 	      name_(""),

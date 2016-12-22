@@ -35,7 +35,7 @@ public:
 	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef TensorStanza TensorStanzaType;
 
-	TensorSrep(PsimagLite::String srep)
+	explicit TensorSrep(PsimagLite::String srep)
 	    : srep_(srep)
 	{
 		cleanWhiteSpace(srep_);

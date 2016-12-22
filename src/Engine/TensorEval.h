@@ -70,7 +70,9 @@ public:
 	      data_(vt),
 	      tensorNameIds_(tensorNameIds),
 	      nameIdsTensor_(nameIdsTensor)
-	{}
+	{
+
+	}
 
 	HandleType operator()()
 	{

@@ -28,7 +28,9 @@ class TensorBreakup {
 
 public:
 
-	TensorBreakup(PsimagLite::String str) : srep_(str),tid_(computeInitialTid())
+	TensorBreakup(const TensorSrep& srep)
+	    : srep_(srep), // deep copy of srep
+	      tid_(computeInitialTid())
 	{}
 
 	void operator()()
