@@ -24,25 +24,34 @@ namespace Mera {
 
 class TensorBreakup {
 
-	typedef TensorStanza::VectorSizeType VectorSizeType;
-
 public:
+
+	typedef TensorStanza::VectorSizeType VectorSizeType;
+	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	TensorBreakup(const TensorSrep& srep)
 	    : srep_(srep), // deep copy of srep
 	      tid_(computeInitialTid())
 	{}
 
-	void operator()()
+	void operator()(VectorStringType& vstr)
 	{
+		PsimagLite::String lhs;
+		PsimagLite::String rhs;
+
 		while (true) {
 			VectorSizeType setS;
 			TensorSrep::PairSizeType pair;
 			bool found = findPairForBreakUp(pair,setS);
 			if (!found) break;
-			if (!breakUpTensor(pair,setS))
+			if (!breakUpTensor(lhs,rhs,pair,setS))
 				break;
+			vstr.push_back(lhs);
+			vstr.push_back(rhs);
 		}
+
+		vstr.push_back("result");
+		vstr.push_back(srep_.sRep());
 	}
 
 private:
@@ -194,7 +203,9 @@ private:
 		return t0In + t0Out + ")";
 	}
 
-	bool breakUpTensor(const TensorSrep::PairSizeType& pair,
+	bool breakUpTensor(PsimagLite::String& lhs,
+	                   PsimagLite::String& rhs,
+	                   const TensorSrep::PairSizeType& pair,
 	                   const VectorSizeType& setS)
 	{
 		SizeType ind = pair.first;
@@ -230,15 +241,15 @@ private:
 			freeTheSummed(rightHandSide(i),mapping);
 
 		rightHandSide.refresh();
-		std::cout<<t0stanzaActual.sRep()<<"="<<rightHandSide.sRep()<<"\n";
-
+		lhs = t0stanzaActual.sRep();
+		rhs = rightHandSide.sRep();
 		// build t1
 		// mark tensor ind as erased
 		srep_.setAsErased(ind);
 		// tensor jnd becomes t0
 		TensorStanza t0stanza(t0);
 		srep_.replaceStanza(jnd,t0stanza);
-		std::cout<<"Remaining="<<srep_.sRep()<<"\n";
+		std::cerr<<"Remaining="<<srep_.sRep()<<"\n";
 		tid_++;
 		return true;
 	}

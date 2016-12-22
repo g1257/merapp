@@ -25,5 +25,6 @@ int main(int argc, char**argv)
 
 	Mera::TensorSrep srep(str);
 	Mera::TensorBreakup tensorBreakup(srep);
-	tensorBreakup();
+	Mera::TensorBreakup::VectorStringType vstr;
+	tensorBreakup(vstr);
 }

@@ -23,6 +23,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include "Tokenizer.h"
 #include "SrepEquation.h"
+#include "TensorBreakup.h"
 
 namespace Mera {
 
@@ -54,6 +55,7 @@ class TensorEval {
 public:
 
 	typedef SrepEquation<ComplexOrRealType> SrepEquationType;
+	typedef TensorBreakup::VectorStringType VectorStringType;
 	typedef TensorEvalHandle HandleType;
 	typedef typename SrepEquationType::VectorTensorType VectorTensorType;
 	typedef typename SrepEquationType::VectorPairStringSizeType VectorPairStringSizeType;
@@ -67,11 +69,40 @@ public:
 	           const VectorPairStringSizeType& tensorNameIds,
 	           MapPairStringSizeType& nameIdsTensor)
 	    : srepEq_(tSrep),
-	      data_(vt),
-	      tensorNameIds_(tensorNameIds),
-	      nameIdsTensor_(nameIdsTensor)
+	      data_(vt), // deep copy
+	      tensorNameIds_(tensorNameIds), // deep copy
+	      nameIdsTensor_(nameIdsTensor) // deep copy
 	{
+		TensorBreakup tensorBreakup(srepEq_.rhs());
+		// get t0, t1, etc definitions and result
+		VectorStringType vstr;
+		tensorBreakup(vstr);
+		// loop over temporaries definitions
+		assert(!(vstr.size() & 1));
+		for (SizeType i = 0; i < vstr.size(); i += 2) {
+			// add them to tensorNameIds nameIdsTensor
+			PsimagLite::String temporaryName = vstr[i];
+			if (temporaryName == "result") {
+				std::cout<<"Definition of "<<srepEq_.rhs()<<" is ";
+				std::cout<<vstr[i + 1]<<"\n";
+			}
 
+			if (temporaryName[0] != 't') continue;
+			PsimagLite::String str = temporaryName.substr(1,temporaryName.length());
+			SizeType temporaryId = atoi(str.c_str());
+			temporaryName = "t";
+			tensorNameIds_.push_back(PairStringSizeType(temporaryName,temporaryId));
+			nameIdsTensor_[PairStringSizeType(temporaryName,temporaryId)] = tensorNameIds.size();
+
+			// add storage for this temporary
+
+			// compute this temporary
+
+			std::cout<<"Definition of "<<temporaryName<<" "<<temporaryId<<" is ";
+			std::cout<<vstr[i + 1]<<"\n";
+		}
+
+		std::cout.flush();
 	}
 
 	HandleType operator()()
@@ -275,9 +306,9 @@ private:
 	TensorEval& operator=(const TensorEval& other);
 
 	SrepEquationType& srepEq_;
-	const VectorTensorType& data_;
-	const VectorPairStringSizeType& tensorNameIds_;
-	MapPairStringSizeType& nameIdsTensor_;
+	VectorTensorType data_;
+	VectorPairStringSizeType tensorNameIds_;
+	MapPairStringSizeType nameIdsTensor_;
 };
 }
 #endif // MERA_TENSOREVAL_H
