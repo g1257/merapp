@@ -67,12 +67,14 @@ public:
 	TensorEval(SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
-	           MapPairStringSizeType& nameIdsTensor)
+	           MapPairStringSizeType& nameIdsTensor,
+	           bool modify)
 	    : srepEq_(tSrep),
 	      data_(vt), // deep copy
 	      tensorNameIds_(tensorNameIds), // deep copy
 	      nameIdsTensor_(nameIdsTensor) // deep copy
 	{
+		if (!modify) return;
 		TensorBreakup tensorBreakup(srepEq_.rhs());
 		// get t0, t1, etc definitions and result
 		VectorStringType vstr;
@@ -85,6 +87,7 @@ public:
 			if (temporaryName == "result") {
 				std::cout<<"Definition of "<<srepEq_.rhs()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
+				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
 			}
 
 			if (temporaryName[0] != 't') continue;
@@ -95,14 +98,29 @@ public:
 			nameIdsTensor_[PairStringSizeType(temporaryName,temporaryId)] = tensorNameIds.size();
 
 			// add storage for this temporary
+			VectorSizeType args;
+			SizeType ins = findArgsAndIns(args,vstr[i],vstr[i+1]);
+			TensorType* t = new TensorType(args, ins);
+			garbage_.push_back(t);
+			data_.push_back(t);
 
 			// compute this temporary
-
 			std::cout<<"Definition of "<<temporaryName<<" "<<temporaryId<<" is ";
 			std::cout<<vstr[i + 1]<<"\n";
+			SrepEquationType tempEq(vstr[i] + "=" + vstr[i+1],data_,tensorNameIds_,nameIdsTensor_);
+			TensorEval tEval(tempEq,data_,tensorNameIds_,nameIdsTensor_,false);
+			tEval(); //handle the handle here
 		}
 
 		std::cout.flush();
+	}
+
+	~TensorEval()
+	{
+		for (SizeType i = 0; i < garbage_.size(); ++i) {
+			delete garbage_[i];
+			garbage_[i] = 0;
+		}
 	}
 
 	HandleType operator()()
@@ -301,6 +319,61 @@ private:
 		return nameIdsTensor_[PairStringSizeType(name,id)];
 	}
 
+	SizeType findArgsAndIns(VectorSizeType& args,
+	                        PsimagLite::String strLeft,
+	                        PsimagLite::String strRight) const
+	{
+		TensorStanza lhs(strLeft);
+		TensorSrep rhs(strRight);
+
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType ins = lhs.ins();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (lhs.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
+			args.push_back(findDimensionOfFreeLeg(rhs,lhs.legTag(i,in)));
+		}
+
+		SizeType outs = lhs.outs();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (lhs.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
+			args.push_back(findDimensionOfFreeLeg(rhs,lhs.legTag(i,out)));
+		}
+
+		return ins;
+	}
+
+	SizeType findDimensionOfFreeLeg(const TensorSrep& srep, SizeType leg) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType ntensors = srep.size();
+		for (SizeType j = 0; j < ntensors; ++j) {
+			TensorStanza stanza = srep(j);
+			PsimagLite::String name = stanza.name();
+			SizeType id = stanza.id();
+			SizeType ins = stanza.ins();
+			for (SizeType i = 0; i < ins; ++i) {
+				if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
+				if (stanza.legTag(i,in) != leg) continue;
+				SizeType tensorIndex = nameIdsTensor_[PairStringSizeType(name,id)];
+				return data_[tensorIndex]->argSize(leg);
+			}
+
+			SizeType outs = stanza.outs();
+			for (SizeType i = 0; i < outs; ++i) {
+				if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
+				if (stanza.legTag(i,out) != leg) continue;
+				SizeType tensorIndex = nameIdsTensor_[PairStringSizeType(name,id)];
+				return data_[tensorIndex]->argSize(leg);
+			}
+		}
+
+		throw PsimagLite::RuntimeError("findDimensionOfFreeLeg\n");
+	}
+
 	TensorEval(const TensorEval& other);
 
 	TensorEval& operator=(const TensorEval& other);
@@ -308,7 +381,8 @@ private:
 	SrepEquationType& srepEq_;
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
-	MapPairStringSizeType nameIdsTensor_;
+	mutable MapPairStringSizeType nameIdsTensor_;
+	VectorTensorType garbage_;
 };
 }
 #endif // MERA_TENSOREVAL_H

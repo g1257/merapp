@@ -77,6 +77,13 @@ public:
 		return *rhs_;
 	}
 
+	// FIXME: Gives away internals!
+	TensorSrepType& rhs()
+	{
+		assert(rhs_);
+		return *rhs_;
+	}
+
 	const TensorType& outputTensor() const
 	{
 		assert(outputTensor_);

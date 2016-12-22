@@ -299,7 +299,7 @@ private:
 		eq.outputTensor().setSizes(dimensions);
 
 		// evaluate environment
-		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_);
+		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_,true);
 		typename TensorEvalType::HandleType handle = tensorEval();
 		while (!handle.done());
 
