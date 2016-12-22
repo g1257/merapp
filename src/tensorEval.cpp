@@ -17,6 +17,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "TensorEval.h"
 #include "Vector.h"
+#include "SrepEquation.h"
 
 int main()
 {
@@ -45,7 +46,9 @@ int main()
 	TensorEvalType::MapPairStringSizeType nameIdTensor;
 	for (SizeType i = 0; i < vt.size(); ++i)
 		nameIdTensor[idNames[i]] = i;
-	TensorEvalType tensorEval(str,vt,idNames,nameIdTensor);
+
+	Mera::SrepEquation<double> srepEq(str,vt,idNames,nameIdTensor);
+	TensorEvalType tensorEval(srepEq,vt,idNames,nameIdTensor);
 	TensorEvalType::HandleType handle = tensorEval();
 
 	while (!handle.done());

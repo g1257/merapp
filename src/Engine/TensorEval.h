@@ -62,48 +62,31 @@ public:
 	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
 	typedef typename SrepEquationType::TensorType TensorType;
 
-	TensorEval(PsimagLite::String srep,
-	           const VectorTensorType& vt,
-	           const VectorPairStringSizeType& tensorNameIds,
-	           MapPairStringSizeType& nameIdsTensor)
-	    : srepEq_(new SrepEquationType(srep,vt,tensorNameIds,nameIdsTensor)),
-	      ownsSrep_(true),
-	      data_(vt),
-	      tensorNameIds_(tensorNameIds),
-	      nameIdsTensor_(nameIdsTensor)
-	{}
-
 	TensorEval(SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
 	           MapPairStringSizeType& nameIdsTensor)
-	    : srepEq_(&tSrep),
-	      ownsSrep_(false),
+	    : srepEq_(tSrep),
 	      data_(vt),
 	      tensorNameIds_(tensorNameIds),
 	      nameIdsTensor_(nameIdsTensor)
 	{}
 
-	~TensorEval()
-	{
-		if (ownsSrep_) delete srepEq_;
-	}
-
 	HandleType operator()()
 	{
-		SizeType total = srepEq_->outputTensor().args();
+		SizeType total = srepEq_.outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
 
 		for (SizeType i = 0; i < total; ++i)
-			dimensions[i] = srepEq_->outputTensor().argSize(i);
+			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
 		static VectorSizeType free;
 		if (total > free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
 		do {
-			srepEq_->fillOutput(free,slowEvaluator(free,srepEq_->rhs()));
+			srepEq_.fillOutput(free,slowEvaluator(free,srepEq_.rhs()));
 		} while (nextIndex(free,dimensions,total));
 
 		HandleType handle(HandleType::STATUS_DONE);
@@ -112,21 +95,21 @@ public:
 
 	void printResult(std::ostream& os) const
 	{
-		SizeType total = srepEq_->outputTensor().args();
+		SizeType total = srepEq_.outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
 		for (SizeType i = 0; i < total; ++i)
-			dimensions[i] = srepEq_->outputTensor().argSize(i);
+			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
 		static VectorSizeType free;
 		if (total > free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
 		do {
-			SizeType index = srepEq_->outputTensor().index(free);
-			std::cout<<index<<" "<<srepEq_->outputTensor()(free)<<"\n";
+			SizeType index = srepEq_.outputTensor().index(free);
+			std::cout<<index<<" "<<srepEq_.outputTensor()(free)<<"\n";
 		} while (nextIndex(free,dimensions,total));
 	}
 
@@ -289,8 +272,7 @@ private:
 
 	TensorEval& operator=(const TensorEval& other);
 
-	SrepEquationType* srepEq_;
-	bool ownsSrep_;
+	SrepEquationType& srepEq_;
 	const VectorTensorType& data_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
