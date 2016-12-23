@@ -173,7 +173,9 @@ public:
 	{
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i)
-			replaceSummedOrFrees(i,replacements,TensorStanzaType::INDEX_TYPE_FREE);
+			data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_FREE);
+
+		refresh();
 	}
 
 	void swapFree(SizeType ind, SizeType jnd)
@@ -285,15 +287,15 @@ public:
 		return ntensors;
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
-	{
-		os<<"tensorSrep.size="<<ts.size()<<"\n";
-		for (SizeType i = 0; i < ts.size(); ++i) {
-			os<<*(ts.data_[i])<<"\n";
-		}
+//	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
+//	{
+//		os<<"tensorSrep.size="<<ts.size()<<"\n";
+//		for (SizeType i = 0; i < ts.size(); ++i) {
+//			os<<*(ts.data_[i])<<"\n";
+//		}
 
-		return os;
-	}
+//		return os;
+//	}
 
 private:
 
@@ -444,9 +446,7 @@ private:
 		SizeType ntensors = data_.size();
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
-				continue;
-			if (replaceSummedOrFrees(i,replacements,TensorStanzaType::INDEX_TYPE_SUMMED))
+			if (data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_SUMMED))
 				simplificationHappended = true;
 			srep_ += data_[i]->sRep();
 		}
@@ -472,55 +472,6 @@ private:
 		}
 
 		return true;
-	}
-
-	bool replaceSummedOrFrees(SizeType ind,
-	                          const VectorPairSizeType& replacements,
-	                          TensorStanzaType::IndexTypeEnum type)
-	{
-		bool simplificationHappended = false;
-		SizeType r = replacements.size();
-		SizeType ins = data_[ind]->ins();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_IN) != type)
-				continue;
-
-			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN);
-			bool replace = false;
-			for (SizeType j = 0; j < r; ++j) {
-				if (s1 != replacements[j].first) continue;
-				s1 = replacements[j].second;
-				replace = true;
-				break;
-			}
-
-			if (!replace) continue;
-
-			simplificationHappended = true;
-			data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN) = s1;
-		}
-
-		SizeType outs = data_[ind]->outs();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_OUT) != type)
-				continue;
-
-			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
-			bool replace = false;
-			for (SizeType j = 0; j < r; ++j) {
-				if (s1 != replacements[j].first) continue;
-				s1 = replacements[j].second;
-				replace = true;
-				break;
-			}
-
-			if (!replace) continue;
-
-			simplificationHappended = true;
-			data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT) = s1;
-		}
-
-		return simplificationHappended;
 	}
 
 	bool inputsMatch(SizeType ind, SizeType jnd) const

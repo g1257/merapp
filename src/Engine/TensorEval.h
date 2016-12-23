@@ -87,7 +87,7 @@ public:
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
 			if (temporaryName == tSrep.lhs().sRep()) {
-				std::cout<<"Definition of "<<srepEq_.rhs()<<" is ";
+				std::cout<<"Definition of "<<srepEq_.rhs().sRep()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
 				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
 			}
@@ -125,6 +125,7 @@ public:
 			                 tensorNameIds_,
 			                 nameIdsTensor_,
 			                 false);
+			std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
 			tEval(false); //handle the handle here
 		}
 
@@ -151,7 +152,7 @@ public:
 		SizeType total = srepEq_.outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
-
+		// fillFreeDimensions(dimensions);
 		for (SizeType i = 0; i < total; ++i)
 			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
@@ -172,7 +173,6 @@ public:
 		SizeType total = srepEq_.outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
-		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
 		for (SizeType i = 0; i < total; ++i)
 			dimensions[i] = srepEq_.outputTensor().argSize(i);
@@ -395,6 +395,30 @@ private:
 		}
 
 		throw PsimagLite::RuntimeError("findDimensionOfFreeLeg\n");
+	}
+
+	void fillFreeDimensions(VectorSizeType& dimensions) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType ins = srepEq_.lhs().ins();
+		for (SizeType j = 0; j < ins; ++j) {
+			if (srepEq_.lhs().legTag(j,in) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			SizeType ind = srepEq_.lhs().legTag(j,in);
+			assert(ind < dimensions.size());
+			dimensions[ind] = srepEq_.outputTensor().argSize(j);
+		}
+
+		SizeType outs = srepEq_.lhs().outs();
+		for (SizeType j = 0; j < outs; ++j) {
+			if (srepEq_.lhs().legTag(j,out) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			SizeType ind = srepEq_.lhs().legTag(j,out);
+			assert(ind < dimensions.size());
+			dimensions[ind] = srepEq_.outputTensor().argSize(j);
+		}
 	}
 
 	TensorEval(const TensorEval& other);

@@ -30,6 +30,8 @@ class TensorStanza {
 
 	typedef std::pair<char,SizeType> PairCharSizeType;
 	typedef PsimagLite::Vector<PairCharSizeType>::Type VectorPairCharSizeType;
+	typedef std::pair<SizeType, SizeType> PairSizeType;
+	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 
 public:
 
@@ -154,6 +156,58 @@ public:
 
 		maxSummed_ += ms;
 		srep_ = srepFromObject();
+	}
+
+	bool replaceSummedOrFrees(const VectorPairSizeType& replacements,
+	                          IndexTypeEnum type1)
+	{
+		if (type_ == TENSOR_TYPE_ERASED) return false;
+		PsimagLite::String type2 = indexTypeToString(type1);
+		char type = type2[0];
+
+		bool simplificationHappended = false;
+		SizeType r = replacements.size();
+		SizeType ins = insSi_.size();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (insSi_[i].first != type)
+				continue;
+
+			SizeType s1 = insSi_[i].second;
+			bool replace = false;
+			for (SizeType j = 0; j < r; ++j) {
+				if (s1 != replacements[j].first) continue;
+				s1 = replacements[j].second;
+				replace = true;
+				break;
+			}
+
+			if (!replace) continue;
+
+			simplificationHappended = true;
+			insSi_[i].second = s1;
+		}
+
+		SizeType outs = outsSi_.size();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (outsSi_[i].first != type)
+				continue;
+
+			SizeType s1 = outsSi_[i].second;
+			bool replace = false;
+			for (SizeType j = 0; j < r; ++j) {
+				if (s1 != replacements[j].first) continue;
+				s1 = replacements[j].second;
+				replace = true;
+				break;
+			}
+
+			if (!replace) continue;
+
+			simplificationHappended = true;
+			outsSi_[i].second = s1;
+		}
+
+		return simplificationHappended;
 	}
 
 	void contract(const VectorSizeType* indicesToContract, SizeType ms)
@@ -404,16 +458,16 @@ public:
 		return "d";
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
-	{
-		os<<"id= "<<ts.id_<<"\n";
-		os<<"conjugate= "<<ts.conjugate_<<"\n";
-		os<<"stanza= "<<ts.srep_<<"\n";
-		os<<"name= "<<ts.name_<<"\n";
-		os<<"type= "<<ts.type_<<"\n";
-		os<<"needs ins and outs FIXME\n";
-		return os;
-	}
+//	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
+//	{
+//		os<<"id= "<<ts.id_<<"\n";
+//		os<<"conjugate= "<<ts.conjugate_<<"\n";
+//		os<<"stanza= "<<ts.srep_<<"\n";
+//		os<<"name= "<<ts.name_<<"\n";
+//		os<<"type= "<<ts.type_<<"\n";
+//		os<<"needs ins and outs FIXME\n";
+//		return os;
+//	}
 
 private:
 

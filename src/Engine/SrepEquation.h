@@ -58,15 +58,28 @@ public:
 
 	void canonicalize() const
 	{
+		static SizeType counter = 0;
 		VectorPairSizeType frees;
 		computeFrees(frees);
+		// check replacements
+		std::cerr<<"COUNTER="<<counter++<<" ";
+		std::cerr<<"FREES "<<frees<<"\n";
+		if (frees.size() == 0) return;
+		assert(frees[0].second == 0);
 		rhs_->simplifyFrees(frees);
+		lhs_->replaceSummedOrFrees(frees,TensorStanza::INDEX_TYPE_FREE);
+		lhs_->refresh();
 	}
 
 	void fillOutput(const VectorSizeType& free,
 	                ComplexOrRealType value)
 	{
 		outputTensor_->operator()(free) = value;
+	}
+
+	PsimagLite::String sRep() const
+	{
+		return lhs_->sRep() + "=" + rhs_->sRep();
 	}
 
 	const TensorStanza& lhs() const

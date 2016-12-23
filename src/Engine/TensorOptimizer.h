@@ -35,6 +35,8 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 
+	static const SizeType EVAL_BREAKUP = true;
+
 public:
 
 	typedef Mera::TensorEval<ComplexOrRealType> TensorEvalType;
@@ -299,8 +301,12 @@ private:
 		eq.outputTensor().setSizes(dimensions);
 
 		// evaluate environment
-		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_,true);
-		typename TensorEvalType::HandleType handle = tensorEval(true);
+		TensorEvalType tensorEval(eq,
+		                          tensors_,
+		                          tensorNameIds_,
+		                          nameIdsTensor_,
+		                          EVAL_BREAKUP);
+		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
 		while (!handle.done());
 
 		// copy result into m
