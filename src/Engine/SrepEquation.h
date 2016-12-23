@@ -34,14 +34,11 @@ public:
 		PsimagLite::tokenizer(str,vstr,"=");
 		if (vstr.size() != 2)
 			throw PsimagLite::RuntimeError("SrepEquation:: syntax error " + str + "\n");
-		lhs_ = new TensorSrepType(vstr[0]);
+		lhs_ = new TensorStanza(vstr[0]);
 		rhs_ = new TensorSrepType(vstr[1]);
 
-		if (lhs_->size() != 1)
-			PsimagLite::RuntimeError("SrepEquation:: LHS should have exactly 1 tensor\n");
 
-		PairStringSizeType nameIdOfOutput(lhs_->operator ()(0).name(),
-		                                  lhs_->operator ()(0).id());
+		PairStringSizeType nameIdOfOutput(lhs_->name(), lhs_->id());
 		SizeType outputTensorIndex = nameIdsTensor[nameIdOfOutput];
 		if (tensorNameIds[outputTensorIndex] != nameIdOfOutput) {
 			PsimagLite::String msg("SrepEquation: Could not find ");
@@ -59,13 +56,20 @@ public:
 		delete rhs_;
 	}
 
+	void canonicalize() const
+	{
+		VectorPairSizeType frees;
+		computeFrees(frees);
+		rhs_->simplifyFrees(frees);
+	}
+
 	void fillOutput(const VectorSizeType& free,
 	                ComplexOrRealType value)
 	{
 		outputTensor_->operator()(free) = value;
 	}
 
-	const TensorSrepType& lhs() const
+	const TensorStanza& lhs() const
 	{
 		assert(lhs_);
 		return *lhs_;
@@ -99,11 +103,32 @@ public:
 
 private:
 
+	void computeFrees(VectorPairSizeType& replacements) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType legs = lhs_->ins();
+		SizeType counter = 0;
+		for (SizeType j = 0; j < legs; ++j) {
+			if (lhs_->legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			replacements.push_back(PairSizeType(lhs_->legTag(j,in),counter++));
+		}
+
+		legs = lhs_->outs();
+		for (SizeType j = 0; j < legs; ++j) {
+			if (lhs_->legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			replacements.push_back(PairSizeType(lhs_->legTag(j,out),counter++));
+		}
+	}
+
 	SrepEquation(const SrepEquation&);
 
 	SrepEquation& operator=(const SrepEquation&);
 
-	TensorSrepType* lhs_;
+	TensorStanza* lhs_;
 	TensorSrepType* rhs_;
 	TensorType* outputTensor_;
 }; // class SrepEquation

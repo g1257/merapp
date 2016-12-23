@@ -24,7 +24,8 @@ int main(int argc, char**argv)
 	if (argc > 1) str = argv[1];
 
 	Mera::TensorSrep srep(str);
-	Mera::TensorBreakup tensorBreakup(srep);
+	Mera::TensorStanza lhs("t(f0,f1)");
+	Mera::TensorBreakup tensorBreakup(lhs,srep);
 	Mera::TensorBreakup::VectorStringType vstr;
 	tensorBreakup(vstr);
 }

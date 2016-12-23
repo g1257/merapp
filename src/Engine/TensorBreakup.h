@@ -29,8 +29,10 @@ public:
 	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
-	TensorBreakup(const TensorSrep& srep)
-	    : srep_(srep), // deep copy of srep
+	TensorBreakup(const TensorStanza& lhs,
+	              const TensorSrep& srep)
+	    : lhs_(lhs),
+	      srep_(srep), // deep copy of srep
 	      tid_(computeInitialTid())
 	{}
 
@@ -50,7 +52,7 @@ public:
 			vstr.push_back(rhs);
 		}
 
-		vstr.push_back("result");
+		vstr.push_back(lhs_.sRep());
 		vstr.push_back(srep_.sRep());
 	}
 
@@ -353,6 +355,7 @@ private:
 		}
 	}
 
+	const TensorStanza& lhs_;
 	TensorSrep srep_;
 	SizeType tid_;
 };

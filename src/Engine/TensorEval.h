@@ -55,6 +55,7 @@ class TensorEval {
 public:
 
 	typedef SrepEquation<ComplexOrRealType> SrepEquationType;
+	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
 	typedef TensorEvalHandle HandleType;
 	typedef typename SrepEquationType::VectorTensorType VectorTensorType;
@@ -75,16 +76,17 @@ public:
 	      nameIdsTensor_(nameIdsTensor) // deep copy
 	{
 		if (!modify) return;
-		TensorBreakup tensorBreakup(srepEq_.rhs());
+		TensorBreakup tensorBreakup(srepEq_.lhs(), srepEq_.rhs());
 		// get t0, t1, etc definitions and result
 		VectorStringType vstr;
 		tensorBreakup(vstr);
+
 		// loop over temporaries definitions
 		assert(!(vstr.size() & 1));
 		for (SizeType i = 0; i < vstr.size(); i += 2) {
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
-			if (temporaryName == "result") {
+			if (temporaryName == tSrep.lhs().sRep()) {
 				std::cout<<"Definition of "<<srepEq_.rhs()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
 				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
@@ -95,7 +97,7 @@ public:
 			SizeType temporaryId = atoi(str.c_str());
 			temporaryName = "t";
 			tensorNameIds_.push_back(PairStringSizeType(temporaryName,temporaryId));
-			nameIdsTensor_[PairStringSizeType(temporaryName,temporaryId)] = tensorNameIds.size();
+			// warning: nameIdsTensor_ is out of sync with tensorNameIds_
 
 			// add storage for this temporary
 			VectorSizeType args;
@@ -103,16 +105,34 @@ public:
 			TensorType* t = new TensorType(args, ins);
 			garbage_.push_back(t);
 			data_.push_back(t);
+		}
 
-			// compute this temporary
-			std::cout<<"Definition of "<<temporaryName<<" "<<temporaryId<<" is ";
-			std::cout<<vstr[i + 1]<<"\n";
-			SrepEquationType tempEq(vstr[i] + "=" + vstr[i+1],data_,tensorNameIds_,nameIdsTensor_);
-			TensorEval tEval(tempEq,data_,tensorNameIds_,nameIdsTensor_,false);
-			tEval(); //handle the handle here
+		// sync nameIdsTensor_ with tensorNameIds_
+		for (SizeType i = 0; i < tensorNameIds_.size(); ++i)
+			nameIdsTensor_[tensorNameIds_[i]] = i;
+
+		VectorSrepEquationType veqs;
+
+		for (SizeType i = 0; i < vstr.size(); i += 2) {
+			veqs.push_back(new SrepEquationType(vstr[i] + "=" + vstr[i+1],
+			               data_,
+			               tensorNameIds_,
+			               nameIdsTensor_));
+			SizeType j = veqs.size() - 1;
+			veqs[j]->canonicalize();
+			TensorEval tEval(*(veqs[j]),
+			                 data_,
+			                 tensorNameIds_,
+			                 nameIdsTensor_,
+			                 false);
+			tEval(false); //handle the handle here
 		}
 
 		std::cout.flush();
+		for (SizeType i = 0; i < veqs.size(); ++i) {
+			delete veqs[i];
+			veqs[i] = 0;
+		}
 	}
 
 	~TensorEval()
@@ -123,8 +143,11 @@ public:
 		}
 	}
 
-	HandleType operator()()
+	HandleType operator()(bool cached)
 	{
+		HandleType handle(HandleType::STATUS_DONE);
+		if (cached) return handle;
+
 		SizeType total = srepEq_.outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
@@ -140,7 +163,7 @@ public:
 			srepEq_.fillOutput(free,slowEvaluator(free,srepEq_.rhs()));
 		} while (nextIndex(free,dimensions,total));
 
-		HandleType handle(HandleType::STATUS_DONE);
+
 		return handle;
 	}
 
@@ -359,7 +382,7 @@ private:
 				if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
 				if (stanza.legTag(i,in) != leg) continue;
 				SizeType tensorIndex = nameIdsTensor_[PairStringSizeType(name,id)];
-				return data_[tensorIndex]->argSize(leg);
+				return data_[tensorIndex]->argSize(i);
 			}
 
 			SizeType outs = stanza.outs();
@@ -367,7 +390,7 @@ private:
 				if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
 				if (stanza.legTag(i,out) != leg) continue;
 				SizeType tensorIndex = nameIdsTensor_[PairStringSizeType(name,id)];
-				return data_[tensorIndex]->argSize(leg);
+				return data_[tensorIndex]->argSize(i+ins);
 			}
 		}
 

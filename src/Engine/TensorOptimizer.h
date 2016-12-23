@@ -300,7 +300,7 @@ private:
 
 		// evaluate environment
 		TensorEvalType tensorEval(eq,tensors_,tensorNameIds_,nameIdsTensor_,true);
-		typename TensorEvalType::HandleType handle = tensorEval();
+		typename TensorEvalType::HandleType handle = tensorEval(true);
 		while (!handle.done());
 
 		// copy result into m

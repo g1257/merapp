@@ -49,7 +49,7 @@ int main()
 
 	Mera::SrepEquation<double> srepEq(str,vt,idNames,nameIdTensor);
 	TensorEvalType tensorEval(srepEq,vt,idNames,nameIdTensor,false);
-	TensorEvalType::HandleType handle = tensorEval();
+	TensorEvalType::HandleType handle = tensorEval(false);
 
 	while (!handle.done());
 

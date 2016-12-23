@@ -169,6 +169,13 @@ public:
 		}
 	}
 
+	void simplifyFrees(VectorPairSizeType& replacements)
+	{
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			replaceSummedOrFrees(i,replacements,TensorStanzaType::INDEX_TYPE_FREE);
+	}
+
 	void swapFree(SizeType ind, SizeType jnd)
 	{
 		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
@@ -439,7 +446,7 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
-			if (replaceSummed(i,replacements))
+			if (replaceSummedOrFrees(i,replacements,TensorStanzaType::INDEX_TYPE_SUMMED))
 				simplificationHappended = true;
 			srep_ += data_[i]->sRep();
 		}
@@ -467,14 +474,16 @@ private:
 		return true;
 	}
 
-	bool replaceSummed(SizeType ind, const VectorPairSizeType& replacements)
+	bool replaceSummedOrFrees(SizeType ind,
+	                          const VectorPairSizeType& replacements,
+	                          TensorStanzaType::IndexTypeEnum type)
 	{
 		bool simplificationHappended = false;
 		SizeType r = replacements.size();
 		SizeType ins = data_[ind]->ins();
 		for (SizeType i = 0; i < ins; ++i) {
-			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_IN) !=
-			        TensorStanzaType::INDEX_TYPE_SUMMED) continue;
+			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_IN) != type)
+				continue;
 
 			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN);
 			bool replace = false;
@@ -493,8 +502,8 @@ private:
 
 		SizeType outs = data_[ind]->outs();
 		for (SizeType i = 0; i < outs; ++i) {
-			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_OUT) !=
-			        TensorStanzaType::INDEX_TYPE_SUMMED) continue;
+			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_OUT) != type)
+				continue;
 
 			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
 			bool replace = false;
