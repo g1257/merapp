@@ -183,10 +183,13 @@ private:
 
 	SizeType pack(const VectorSizeType& args) const
 	{
-		SizeType index = args[0];
-		SizeType prod = dimensions_[0];
+		assert(args.size() > 0);
+		assert(args.size() == dimensions_.size());
+		SizeType index = 0;
+		SizeType prod = 1;
 
-		for (SizeType i = 1; i < args.size(); ++i) {
+		for (SizeType i = 0; i < args.size(); ++i) {
+			if (dimensions_[i] == 0) continue;
 			index += args[i]*prod;
 			prod *= dimensions_[i];
 		}

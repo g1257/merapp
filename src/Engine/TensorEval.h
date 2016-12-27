@@ -80,16 +80,19 @@ public:
 		// get t0, t1, etc definitions and result
 		VectorStringType vstr;
 		tensorBreakup(vstr);
-
+//		PsimagLite::String brokenResult = tensorBreakup.brokenResult();
 		// loop over temporaries definitions
 		assert(!(vstr.size() & 1));
+		SizeType outputLocation = 1 + vstr.size();
 		for (SizeType i = 0; i < vstr.size(); i += 2) {
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
 			if (temporaryName == tSrep.lhs().sRep()) {
+//				vstr[i + 1] = brokenResult;
 				std::cout<<"Definition of "<<srepEq_.rhs().sRep()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
 				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
+				outputLocation = i;
 			}
 
 			if (temporaryName[0] != 't') continue;
@@ -119,7 +122,8 @@ public:
 			               tensorNameIds_,
 			               nameIdsTensor_));
 			SizeType j = veqs.size() - 1;
-			veqs[j]->canonicalize();
+			if (i != outputLocation)
+				veqs[j]->canonicalize();
 			TensorEval tEval(*(veqs[j]),
 			                 data_,
 			                 tensorNameIds_,
@@ -149,19 +153,27 @@ public:
 		HandleType handle(HandleType::STATUS_DONE);
 		if (cached) return handle;
 
-		SizeType total = srepEq_.outputTensor().args();
+		SizeType args = srepEq_.outputTensor().args();
+		SizeType total = srepEq_.lhs().maxTag('f') + 1;
+		assert(total == args);
 		static VectorSizeType dimensions;
-		if (total > dimensions.size()) dimensions.resize(total,0);
-		//fillFreeDimensions(dimensions);
-		for (SizeType i = 0; i < total; ++i)
-			dimensions[i] = srepEq_.outputTensor().argSize(i);
+		if (total != dimensions.size()) dimensions.resize(total,0);
+		else std::fill(dimensions.begin(), dimensions.end(), 0);
+		fillFreeDimensions(dimensions);
+		//		for (SizeType i = 0; i < total; ++i)
+		//			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
 		static VectorSizeType free;
-		if (total > free.size()) free.resize(total,0);
+		if (total != free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
+		static VectorSizeType freeForOutput;
+		if (args != freeForOutput.size()) freeForOutput.resize(args,0);
+		else std::fill(freeForOutput.begin(), freeForOutput.end(), 0);
+
 		do {
-			srepEq_.fillOutput(free,slowEvaluator(free,srepEq_.rhs()));
+			computeFreeForOutput(freeForOutput,free);
+			srepEq_.fillOutput(freeForOutput,slowEvaluator(free,srepEq_.rhs()));
 		} while (nextIndex(free,dimensions,total));
 
 
@@ -192,12 +204,18 @@ public:
 	                      SizeType total)
 	{
 		assert(total <= summed.size());
+		for (SizeType i = 0; i < total; ++i)
+			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
+
 		for (SizeType i = 0; i < total; ++i) {
 			summed[i]++;
 			if (summed[i] < dimensions[i]) break;
-			if (i +1 == total) return false;
 			summed[i] = 0;
+			if (i + 1 == total) return false;
 		}
+
+		for (SizeType i = 0; i < total; ++i)
+			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
 
 		return true;
 	}
@@ -209,11 +227,11 @@ private:
 	{
 		SizeType total = srep.maxTag('s') + 1;
 		static VectorSizeType summed;
-		if (summed.size() < total) summed.resize(total,0);
+		if (summed.size() != total) summed.resize(total,0);
 		else std::fill(summed.begin(), summed.end(), 0);
 
 		static VectorSizeType dimensions;
-		if (dimensions.size() < total) dimensions.resize(total,0);
+		if (dimensions.size() != total) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
 		prepare(dimensions,srep);
@@ -348,20 +366,24 @@ private:
 	{
 		TensorStanza lhs(strLeft);
 		TensorSrep rhs(strRight);
-
+		args.resize(lhs.maxTag('f') + 1, 0);
 		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
 
 		SizeType ins = lhs.ins();
 		for (SizeType i = 0; i < ins; ++i) {
 			if (lhs.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
-			args.push_back(findDimensionOfFreeLeg(rhs,lhs.legTag(i,in)));
+			SizeType ind  = lhs.legTag(i,in);
+			assert(ind < args.size());
+			args[ind] = findDimensionOfFreeLeg(rhs,ind);
 		}
 
 		SizeType outs = lhs.outs();
 		for (SizeType i = 0; i < outs; ++i) {
 			if (lhs.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
-			args.push_back(findDimensionOfFreeLeg(rhs,lhs.legTag(i,out)));
+			SizeType ind  = lhs.legTag(i,out);
+			assert(ind < args.size());
+			args[ind] = findDimensionOfFreeLeg(rhs,ind);
 		}
 
 		return ins;
@@ -397,6 +419,32 @@ private:
 		throw PsimagLite::RuntimeError("findDimensionOfFreeLeg\n");
 	}
 
+	void computeFreeForOutput(VectorSizeType& freeForOutput, const VectorSizeType& free) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType ins = srepEq_.lhs().ins();
+		for (SizeType j = 0; j < ins; ++j) {
+			if (srepEq_.lhs().legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			SizeType ind = srepEq_.lhs().legTag(j,in);
+			assert(ind < free.size());
+			assert(j < freeForOutput.size());
+			freeForOutput[j] = free[ind];
+		}
+
+		SizeType outs = srepEq_.lhs().outs();
+		for (SizeType j = 0; j < outs; ++j) {
+			if (srepEq_.lhs().legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			SizeType ind = srepEq_.lhs().legTag(j,out);
+			assert(ind < free.size());
+			assert(j + ins < freeForOutput.size());
+			freeForOutput[j + ins] = free[ind];
+		}
+	}
+
 	void fillFreeDimensions(VectorSizeType& dimensions) const
 	{
 		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
@@ -417,7 +465,7 @@ private:
 				continue;
 			SizeType ind = srepEq_.lhs().legTag(j,out);
 			assert(ind < dimensions.size());
-			dimensions[ind] = srepEq_.outputTensor().argSize(j+ins);
+			dimensions[ind] = srepEq_.outputTensor().argSize(j + ins);
 		}
 	}
 

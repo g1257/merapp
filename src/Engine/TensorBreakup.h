@@ -33,7 +33,8 @@ public:
 	              const TensorSrep& srep)
 	    : lhs_(lhs),
 	      srep_(srep), // deep copy of srep
-	      tid_(computeInitialTid())
+	      tid_(computeInitialTid()),
+	      brokenResult_("")
 	{}
 
 	void operator()(VectorStringType& vstr)
@@ -54,6 +55,11 @@ public:
 
 		vstr.push_back(lhs_.sRep());
 		vstr.push_back(srep_.sRep());
+	}
+
+	const PsimagLite::String& brokenResult() const
+	{
+		return brokenResult_;
 	}
 
 private:
@@ -236,6 +242,7 @@ private:
 
 		PsimagLite::String t0 = buildTid(str0,tid_);
 		TensorStanza t0stanzaActual(t0);
+		brokenResult_ += t0stanzaActual.sRep();
 		VectorSizeType mapping;
 		freeTheSummed(t0stanzaActual,mapping);
 		TensorSrep rightHandSide(actualStr0);
@@ -358,6 +365,7 @@ private:
 	const TensorStanza& lhs_;
 	TensorSrep srep_;
 	SizeType tid_;
+	PsimagLite::String brokenResult_;
 };
 
 }
