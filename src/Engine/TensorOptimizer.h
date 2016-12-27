@@ -35,7 +35,7 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 
-	static const SizeType EVAL_BREAKUP = true;
+	static const SizeType EVAL_BREAKUP = false;
 
 public:
 
@@ -116,6 +116,8 @@ public:
 
 	void optimize(SizeType iters, SizeType upIter)
 	{
+		if (tensorSrep_.size() == 0) return;
+
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
 		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
@@ -296,6 +298,8 @@ private:
 			PsimagLite::String str("Hamiltonian terms environ \n");
 			throw PsimagLite::RuntimeError(str);
 		}
+
+		assert(m.n_row() > 0 && m.n_col() > 0);
 
 		// prepare output tensor for evaluator
 		eq.outputTensor().setSizes(dimensions);

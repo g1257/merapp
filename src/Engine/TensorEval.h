@@ -152,7 +152,7 @@ public:
 		SizeType total = srepEq_.outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
-		// fillFreeDimensions(dimensions);
+		//fillFreeDimensions(dimensions);
 		for (SizeType i = 0; i < total; ++i)
 			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
@@ -404,7 +404,7 @@ private:
 
 		SizeType ins = srepEq_.lhs().ins();
 		for (SizeType j = 0; j < ins; ++j) {
-			if (srepEq_.lhs().legTag(j,in) != TensorStanza::INDEX_TYPE_FREE)
+			if (srepEq_.lhs().legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
 				continue;
 			SizeType ind = srepEq_.lhs().legTag(j,in);
 			assert(ind < dimensions.size());
@@ -413,11 +413,11 @@ private:
 
 		SizeType outs = srepEq_.lhs().outs();
 		for (SizeType j = 0; j < outs; ++j) {
-			if (srepEq_.lhs().legTag(j,out) != TensorStanza::INDEX_TYPE_FREE)
+			if (srepEq_.lhs().legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
 				continue;
 			SizeType ind = srepEq_.lhs().legTag(j,out);
 			assert(ind < dimensions.size());
-			dimensions[ind] = srepEq_.outputTensor().argSize(j);
+			dimensions[ind] = srepEq_.outputTensor().argSize(j+ins);
 		}
 	}
 
