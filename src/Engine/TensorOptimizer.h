@@ -86,10 +86,7 @@ public:
 			size_t index = srep.find("equal");
 			if (index != PsimagLite::String::npos)
 				srep.replace(index,5,"=");
-			tensorSrep_[i] = new SrepEquationType(srep,
-			                                      tensors,
-			                                      tensorNameAndIds,
-			                                      nameIdsTensor);
+			tensorSrep_[i] = new SrepEquationType(srep);
 		}
 
 		bool flag = false;
@@ -281,7 +278,7 @@ private:
 				t(i,j) = gsVector[i + j*rows];
 	}
 
-	void appendToMatrix(MatrixType& m, SrepEquationType& eq) const
+	void appendToMatrix(MatrixType& m, SrepEquationType& eq)
 	{
 		SizeType total = eq.rhs().maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
@@ -302,7 +299,7 @@ private:
 		assert(m.n_row() > 0 && m.n_col() > 0);
 
 		// prepare output tensor for evaluator
-		eq.outputTensor().setSizes(dimensions);
+		outputTensor(eq).setSizes(dimensions);
 
 		// evaluate environment
 		TensorEvalType tensorEval(eq,
@@ -317,7 +314,7 @@ private:
 		SizeType count = 0;
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
-			ComplexOrRealType tmp = eq.outputTensor()(freeIndices);
+			ComplexOrRealType tmp = outputTensor(eq)(freeIndices);
 			//std::cerr<<"MATRIX i=" <<rc.first<<" j="<<rc.second<<"\n";
 			m(rc.first,rc.second) += tmp;
 			count++;
@@ -467,6 +464,13 @@ private:
 		}
 
 		return sum;
+	}
+
+	TensorType& outputTensor(const SrepEquationType& eq)
+	{
+		SizeType indexOfOutputTensor = eq.indexOfOutputTensor(tensorNameIds_, nameIdsTensor_);
+		assert(indexOfOutputTensor < tensors_.size());
+		return *(tensors_[indexOfOutputTensor]);
 	}
 
 	TensorOptimizer(const TensorOptimizer&);

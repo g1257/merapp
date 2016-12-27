@@ -58,12 +58,12 @@ public:
 	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
 	typedef TensorEvalHandle HandleType;
-	typedef typename SrepEquationType::VectorTensorType VectorTensorType;
-	typedef typename SrepEquationType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename SrepEquationType::MapPairStringSizeType MapPairStringSizeType;
-	typedef typename SrepEquationType::VectorSizeType VectorSizeType;
+	typedef Tensor<ComplexOrRealType> TensorType;
+	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
 	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
-	typedef typename SrepEquationType::TensorType TensorType;
+	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 	TensorEval(SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
@@ -74,13 +74,17 @@ public:
 	      data_(vt), // deep copy
 	      tensorNameIds_(tensorNameIds), // deep copy
 	      nameIdsTensor_(nameIdsTensor) // deep copy
+
 	{
+		indexOfOutputTensor_ = tSrep.indexOfOutputTensor(tensorNameIds, nameIdsTensor);
+
 		if (!modify) return;
+
 		TensorBreakup tensorBreakup(srepEq_.lhs(), srepEq_.rhs());
 		// get t0, t1, etc definitions and result
 		VectorStringType vstr;
 		tensorBreakup(vstr);
-//		PsimagLite::String brokenResult = tensorBreakup.brokenResult();
+		//		PsimagLite::String brokenResult = tensorBreakup.brokenResult();
 		// loop over temporaries definitions
 		assert(!(vstr.size() & 1));
 		SizeType outputLocation = 1 + vstr.size();
@@ -88,7 +92,7 @@ public:
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
 			if (temporaryName == tSrep.lhs().sRep()) {
-//				vstr[i + 1] = brokenResult;
+				//				vstr[i + 1] = brokenResult;
 				std::cout<<"Definition of "<<srepEq_.rhs().sRep()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
 				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
@@ -117,10 +121,7 @@ public:
 		VectorSrepEquationType veqs;
 
 		for (SizeType i = 0; i < vstr.size(); i += 2) {
-			veqs.push_back(new SrepEquationType(vstr[i] + "=" + vstr[i+1],
-			               data_,
-			               tensorNameIds_,
-			               nameIdsTensor_));
+			veqs.push_back(new SrepEquationType(vstr[i] + "=" + vstr[i+1]));
 			SizeType j = veqs.size() - 1;
 			if (i != outputLocation)
 				veqs[j]->canonicalize();
@@ -153,7 +154,7 @@ public:
 		HandleType handle(HandleType::STATUS_DONE);
 		if (cached) return handle;
 
-		SizeType args = srepEq_.outputTensor().args();
+		SizeType args = outputTensor().args();
 		SizeType total = srepEq_.lhs().maxTag('f') + 1;
 		assert(total == args);
 		static VectorSizeType dimensions;
@@ -173,7 +174,7 @@ public:
 
 		do {
 			computeFreeForOutput(freeForOutput,free);
-			srepEq_.fillOutput(freeForOutput,slowEvaluator(free,srepEq_.rhs()));
+			outputTensor()(freeForOutput) = slowEvaluator(free,srepEq_.rhs());
 		} while (nextIndex(free,dimensions,total));
 
 
@@ -182,20 +183,20 @@ public:
 
 	void printResult(std::ostream& os) const
 	{
-		SizeType total = srepEq_.outputTensor().args();
+		SizeType total = outputTensor().args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
 
 		for (SizeType i = 0; i < total; ++i)
-			dimensions[i] = srepEq_.outputTensor().argSize(i);
+			dimensions[i] = outputTensor().argSize(i);
 
 		static VectorSizeType free;
 		if (total > free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
 		do {
-			SizeType index = srepEq_.outputTensor().index(free);
-			std::cout<<index<<" "<<srepEq_.outputTensor()(free)<<"\n";
+			SizeType index = outputTensor().index(free);
+			std::cout<<index<<" "<<outputTensor()(free)<<"\n";
 		} while (nextIndex(free,dimensions,total));
 	}
 
@@ -456,7 +457,7 @@ private:
 				continue;
 			SizeType ind = srepEq_.lhs().legTag(j,in);
 			assert(ind < dimensions.size());
-			dimensions[ind] = srepEq_.outputTensor().argSize(j);
+			dimensions[ind] = outputTensor().argSize(j);
 		}
 
 		SizeType outs = srepEq_.lhs().outs();
@@ -465,8 +466,20 @@ private:
 				continue;
 			SizeType ind = srepEq_.lhs().legTag(j,out);
 			assert(ind < dimensions.size());
-			dimensions[ind] = srepEq_.outputTensor().argSize(j + ins);
+			dimensions[ind] = outputTensor().argSize(j + ins);
 		}
+	}
+
+	TensorType& outputTensor()
+	{
+		assert(indexOfOutputTensor_ < data_.size());
+		return *(data_[indexOfOutputTensor_]);
+	}
+
+	const TensorType& outputTensor() const
+	{
+		assert(indexOfOutputTensor_ < data_.size());
+		return *(data_[indexOfOutputTensor_]);
 	}
 
 	TensorEval(const TensorEval& other);
@@ -477,6 +490,7 @@ private:
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
 	mutable MapPairStringSizeType nameIdsTensor_;
+	SizeType indexOfOutputTensor_;
 	VectorTensorType garbage_;
 };
 }

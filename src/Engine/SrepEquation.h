@@ -1,6 +1,5 @@
 #ifndef SREPEQUATION_H
 #define SREPEQUATION_H
-#include "Tensor.h"
 #include "Vector.h"
 #include "TensorSrep.h"
 #include <map>
@@ -12,23 +11,17 @@ class SrepEquation {
 
 public:
 
-	typedef Tensor<ComplexOrRealType> TensorType;
-	typedef typename TensorType::VectorSizeType VectorSizeType;
-	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
 	typedef std::pair<SizeType, SizeType> PairSizeType;
 	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef std::pair<PsimagLite::String,SizeType> PairStringSizeType;
-	typedef PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 	typedef TensorSrep TensorSrepType;
 
-	SrepEquation(PsimagLite::String str,
-	             const VectorTensorType& vt,
-	             const VectorPairStringSizeType& tensorNameIds,
-	             MapPairStringSizeType& nameIdsTensor)
-	    : lhs_(0),rhs_(0),outputTensor_(0)
+	SrepEquation(PsimagLite::String str)
+	    : lhs_(0),rhs_(0)
 	{
 		VectorStringType vstr;
 		PsimagLite::tokenizer(str,vstr,"=");
@@ -38,16 +31,7 @@ public:
 		rhs_ = new TensorSrepType(vstr[1]);
 
 
-		PairStringSizeType nameIdOfOutput(lhs_->name(), lhs_->id());
-		SizeType outputTensorIndex = nameIdsTensor[nameIdOfOutput];
-		if (tensorNameIds[outputTensorIndex] != nameIdOfOutput) {
-			PsimagLite::String msg("SrepEquation: Could not find ");
-			msg += "output tensor " + nameIdOfOutput.first + "\n";
-			throw PsimagLite::RuntimeError(msg);
-		}
-
-		assert(outputTensorIndex < vt.size());
-		outputTensor_ = vt[outputTensorIndex];
+		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
 	}
 
 	~SrepEquation()
@@ -71,12 +55,6 @@ public:
 		lhs_->refresh();
 	}
 
-	void fillOutput(const VectorSizeType& free,
-	                ComplexOrRealType value)
-	{
-		outputTensor_->operator()(free) = value;
-	}
-
 	PsimagLite::String sRep() const
 	{
 		return lhs_->sRep() + "=" + rhs_->sRep();
@@ -94,24 +72,24 @@ public:
 		return *rhs_;
 	}
 
+	SizeType indexOfOutputTensor(const VectorPairStringSizeType& tensorNameIds,
+	                             MapPairStringSizeType& nameIdsTensor) const
+	{
+		SizeType ret = nameIdsTensor[nameIdOfOutput_];
+		if (tensorNameIds[ret] != nameIdOfOutput_) {
+			PsimagLite::String msg("SrepEquation: Could not find ");
+			msg += "output tensor " + nameIdOfOutput_.first + "\n";
+			throw PsimagLite::RuntimeError(msg);
+		}
+
+		return ret;
+	}
+
 	// FIXME: Gives away internals!
 	TensorSrepType& rhs()
 	{
 		assert(rhs_);
 		return *rhs_;
-	}
-
-	const TensorType& outputTensor() const
-	{
-		assert(outputTensor_);
-		return *outputTensor_;
-	}
-
-	// FIXME: Gives away internals!
-	TensorType& outputTensor()
-	{
-		assert(outputTensor_);
-		return *outputTensor_;
 	}
 
 private:
@@ -143,7 +121,7 @@ private:
 
 	TensorStanza* lhs_;
 	TensorSrepType* rhs_;
-	TensorType* outputTensor_;
+	PairStringSizeType nameIdOfOutput_;
 }; // class SrepEquation
 
 } // namespace Mera

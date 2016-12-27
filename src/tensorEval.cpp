@@ -47,7 +47,7 @@ int main()
 	for (SizeType i = 0; i < vt.size(); ++i)
 		nameIdTensor[idNames[i]] = i;
 
-	Mera::SrepEquation<double> srepEq(str,vt,idNames,nameIdTensor);
+	Mera::SrepEquation<double> srepEq(str);
 	TensorEvalType tensorEval(srepEq,vt,idNames,nameIdTensor,false);
 	TensorEvalType::HandleType handle = tensorEval(false);
 
