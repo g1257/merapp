@@ -35,7 +35,7 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 
-	static const SizeType EVAL_BREAKUP = true;
+	static const SizeType EVAL_BREAKUP = false;
 
 public:
 

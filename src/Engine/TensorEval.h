@@ -160,7 +160,7 @@ public:
 		static VectorSizeType dimensions;
 		if (total != dimensions.size()) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
-		fillFreeDimensions(dimensions);
+		prepare(dimensions,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
 		//		for (SizeType i = 0; i < total; ++i)
 		//			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
@@ -168,13 +168,8 @@ public:
 		if (total != free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
-		static VectorSizeType freeForOutput;
-		if (args != freeForOutput.size()) freeForOutput.resize(args,0);
-		else std::fill(freeForOutput.begin(), freeForOutput.end(), 0);
-
 		do {
-			computeFreeForOutput(freeForOutput,free);
-			outputTensor()(freeForOutput) = slowEvaluator(free,srepEq_.rhs());
+			outputTensor()(free) = slowEvaluator(free,srepEq_.rhs());
 		} while (nextIndex(free,dimensions,total));
 
 
@@ -235,7 +230,7 @@ private:
 		if (dimensions.size() != total) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
-		prepare(dimensions,srep);
+		prepare(dimensions, srep, TensorStanza::INDEX_TYPE_SUMMED);
 
 		ComplexOrRealType sum = 0.0;
 		do {
@@ -245,34 +240,43 @@ private:
 		return sum;
 	}
 
-	void prepare(VectorSizeType& dimensions, const TensorSrepType& tensorSrep)
+	void prepare(VectorSizeType& dimensions,
+	             const TensorSrepType& tensorSrep,
+	             TensorStanza::IndexTypeEnum type) const
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType id = tensorSrep(i).id();
-			SizeType mid = idNameToIndex(tensorSrep(i).name(),id);
-			assert(mid < data_.size());
-			SizeType ins = tensorSrep(i).ins();
-			for (SizeType j = 0; j < ins; ++j) {
-				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
-				        TensorStanza::INDEX_TYPE_SUMMED) continue;
-				SizeType sIndex = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_IN);
+			prepareStanza(dimensions, tensorSrep(i), type);
+		}
+	}
 
-				assert(j < data_[mid]->args());
-				assert(sIndex < dimensions.size());
-				dimensions[sIndex] = data_[mid]->argSize(j);
-			}
+	void prepareStanza(VectorSizeType& dimensions,
+	                   const TensorStanza& stanza,
+	                   TensorStanza::IndexTypeEnum type) const
+	{
+		SizeType id = stanza.id();
+		SizeType mid = idNameToIndex(stanza.name(),id);
+		assert(mid < data_.size());
+		SizeType ins = stanza.ins();
+		for (SizeType j = 0; j < ins; ++j) {
+			if (stanza.legType(j,TensorStanza::INDEX_DIR_IN) != type)
+				continue;
+			SizeType sIndex = stanza.legTag(j,TensorStanza::INDEX_DIR_IN);
 
-			SizeType outs = tensorSrep(i).outs();
-			for (SizeType j = 0; j < outs; ++j) {
-				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) !=
-				        TensorStanza::INDEX_TYPE_SUMMED) continue;
-				SizeType sIndex = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
+			assert(j < data_[mid]->args());
+			assert(sIndex < dimensions.size());
+			dimensions[sIndex] = data_[mid]->argSize(j);
+		}
 
-				assert(sIndex < dimensions.size());
-				assert(j + ins < data_[mid]->args());
-				dimensions[sIndex] = data_[mid]->argSize(j+ins);
-			}
+		SizeType outs = stanza.outs();
+		for (SizeType j = 0; j < outs; ++j) {
+			if (stanza.legType(j,TensorStanza::INDEX_DIR_OUT) != type)
+				continue;
+			SizeType sIndex = stanza.legTag(j,TensorStanza::INDEX_DIR_OUT);
+
+			assert(sIndex < dimensions.size());
+			assert(j + ins < data_[mid]->args());
+			dimensions[sIndex] = data_[mid]->argSize(j+ins);
 		}
 	}
 
@@ -356,7 +360,7 @@ private:
 		return data_[mid]->operator()(args);
 	}
 
-	SizeType idNameToIndex(PsimagLite::String name, SizeType id)
+	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
 	{
 		return nameIdsTensor_[PairStringSizeType(name,id)];
 	}
