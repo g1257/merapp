@@ -154,9 +154,8 @@ public:
 		HandleType handle(HandleType::STATUS_DONE);
 		if (cached) return handle;
 
-		SizeType args = outputTensor().args();
 		SizeType total = srepEq_.lhs().maxTag('f') + 1;
-		assert(total == args);
+
 		static VectorSizeType dimensions;
 		if (total != dimensions.size()) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
@@ -167,6 +166,8 @@ public:
 		static VectorSizeType free;
 		if (total != free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
+
+		outputTensor().setSizes(dimensions);
 
 		do {
 			outputTensor()(free) = slowEvaluator(free,srepEq_.rhs());

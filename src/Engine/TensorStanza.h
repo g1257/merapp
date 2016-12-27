@@ -207,6 +207,7 @@ public:
 			outsSi_[i].second = s1;
 		}
 
+		refresh();
 		return simplificationHappended;
 	}
 
@@ -410,8 +411,8 @@ public:
 	void refresh()
 	{
 		srep_ = srepFromObject();
-		maxFree_ = maxTag('f');
-		maxSummed_ = maxTag('s');
+		maxFree_ = maxIndex('f');
+		maxSummed_ = maxIndex('s');
 	}
 
 	const SizeType& legTag(SizeType ind, IndexDirectionEnum dir) const
