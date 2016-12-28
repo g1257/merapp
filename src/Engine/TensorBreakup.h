@@ -64,6 +64,18 @@ public:
 
 private:
 
+	bool findPairForBreakUp(TensorSrep::PairSizeType& pair,
+	                        VectorSizeType& setS) const
+	{
+		SizeType minCommonSummed = 2;
+		while (minCommonSummed > 0) {
+			if (findPairForBreakUp(pair,setS,minCommonSummed)) return true;
+			minCommonSummed--;
+		}
+
+		return false;
+	}
+
 	SizeType computeInitialTid() const
 	{
 		SizeType maxIdOfTtensors = 0;
@@ -324,12 +336,13 @@ private:
 	}
 
 	bool findPairForBreakUp(TensorSrep::PairSizeType& pair,
-	                        VectorSizeType& setS) const
+	                        VectorSizeType& setS,
+	                        SizeType minCommonSummed) const
 	{
 		if (srep_.size() < 2) return false;
 		for (SizeType start = 0; start < srep_.size()-1; ++start) {
 			setS.clear();
-			findPairForBreakUp(pair,setS,start);
+			findPairForBreakUp(pair,setS,start,minCommonSummed);
 			if (pair.first < pair.second && setS.size() > 0)
 				return true;
 		}
@@ -339,7 +352,8 @@ private:
 
 	void findPairForBreakUp(TensorSrep::PairSizeType& pair,
 	                        VectorSizeType& setS,
-	                        SizeType start) const
+	                        SizeType start,
+	                        SizeType minCommonSummed) const
 	{
 		pair.first = pair.second = 0;
 		SizeType ntensors = srep_.size();
@@ -354,7 +368,7 @@ private:
 				counter++;
 			} else if (counter == 1) {
 				findCommonSetS(setS,srep_(pair.first),stanza);
-				if (setS.size() > 0) {
+				if (setS.size() >= minCommonSummed) {
 					pair.second = i;
 					break;
 				}
