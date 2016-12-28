@@ -1,22 +1,33 @@
-TauMax=3
+#./merapp version 0.24
+DimensionSrep=u0(D2,D2|D4)u1(D2,D2|D2,D2)w0(D4,D2|D8)w1(D2|D2)r0(D8,D2)h0(2,2|2,2)i0(2|2)u100(1|1,1)u101(1|1,1)u102(1,1|1,1)
 IterMera=2
 IterTensor=10
-DimensionSrep=u0(2,2|4)w0(4,2|8)h0(2,2|2,2)r(8,2)u99(2|2)
-
+MERA=u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)
 TensorId=u,0
-Layer=0
-IgnoreTerm=200
 Terms=1
-Environ=w0(f0,s0|s1)r(s1,s2)r*(s3,s2)w0*(s4,s0|s3)u0*(s5,s6|s4)h0(f1,f2|s5,s6)
+IgnoreTerm=7
+Layer=0
+Environ=u100(f0|f1,f2)=w0(f0,s0|s1)r0(s1,s2)h0(s5,s6|f1,f2)u0*(s5,s6|s3)w0*(s3,s0|s4)r0*(s4,s2)
+
+TensorId=u,1
+Terms=0
+IgnoreTerm=7
+Layer=0
 
 TensorId=w,0
-Layer=0
-IgnoreTerm=200
 Terms=1
-Environ=r(f0,s0)r*(s1,s0)w0*(s2,f2|s1)u0*(s3,s4|s2)h0(s5,s6|s3,s4)u0(s5,s6|f1)
+IgnoreTerm=7
+Layer=0
+Environ=u101(f1|f0,f2)=u0(s1,s2|f0)r0(f1,s0)h0(s5,s6|s1,s2)u0*(s5,s6|s3)w0*(s3,f2|s4)r0*(s4,s0)
+
+TensorId=w,1
+Terms=0
+IgnoreTerm=7
+Layer=0
 
 TensorId=r,0
-Layer=0
-IgnoreTerm=200
 Terms=1
-Environ=w0(s0,s1|f0)u0(s2,s3|s0)h0(s2,s3|s4,s5)u0*(s4,s5|s6)w0*(s6,s1|f2)u99(f3|f1)
+IgnoreTerm=7
+Layer=0
+Environ=u102(f1,f2|f0,f3)=u0(s2,s3|s0)w0(s0,s1|f0)h0(s5,s6|s2,s3)u0*(s5,s6|s4)w0*(s4,s1|f1)i0(f2|f3)
+
