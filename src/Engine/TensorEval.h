@@ -114,7 +114,8 @@ public:
 			data_.push_back(t);
 		}
 
-		// sync nameIdsTensor_ with tensorNameIds_
+		// sync nameIdsTensor_ with tensorNameIds
+		nameIdsTensor_.clear();
 		for (SizeType i = 0; i < tensorNameIds_.size(); ++i)
 			nameIdsTensor_[tensorNameIds_[i]] = i;
 
@@ -363,7 +364,11 @@ private:
 
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
 	{
-		return nameIdsTensor_[PairStringSizeType(name,id)];
+		typename MapPairStringSizeType::iterator it =
+		        nameIdsTensor_.find(PairStringSizeType(name,id));
+		if (it == nameIdsTensor_.end())
+			throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
+		return it->second;
 	}
 
 	SizeType findArgsAndIns(VectorSizeType& args,
@@ -491,7 +496,7 @@ private:
 
 	TensorEval& operator=(const TensorEval& other);
 
-	SrepEquationType& srepEq_;
+	SrepEquationType srepEq_;
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
 	mutable MapPairStringSizeType nameIdsTensor_;

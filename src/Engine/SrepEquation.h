@@ -30,7 +30,14 @@ public:
 		lhs_ = new TensorStanza(vstr[0]);
 		rhs_ = new TensorSrepType(vstr[1]);
 
+		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
+	}
 
+	SrepEquation(const SrepEquation& other)
+	    : lhs_(0),rhs_(0)
+	{
+		lhs_ = new TensorStanza(*(other.lhs_));
+		rhs_ = new TensorSrepType(*(other.rhs_));
 		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
 	}
 
@@ -115,7 +122,7 @@ private:
 		}
 	}
 
-	SrepEquation(const SrepEquation&);
+	//	SrepEquation(const SrepEquation&);
 
 	SrepEquation& operator=(const SrepEquation&);
 
