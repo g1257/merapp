@@ -79,17 +79,9 @@ public:
 		return *rhs_;
 	}
 
-	SizeType indexOfOutputTensor(const VectorPairStringSizeType& tensorNameIds,
-	                             MapPairStringSizeType& nameIdsTensor) const
+	const PairStringSizeType& nameIdOfOutput() const
 	{
-		SizeType ret = nameIdsTensor[nameIdOfOutput_];
-		if (tensorNameIds[ret] != nameIdOfOutput_) {
-			PsimagLite::String msg("SrepEquation: Could not find ");
-			msg += "output tensor " + nameIdOfOutput_.first + "\n";
-			throw PsimagLite::RuntimeError(msg);
-		}
-
-		return ret;
+		return nameIdOfOutput_;
 	}
 
 	// FIXME: Gives away internals!

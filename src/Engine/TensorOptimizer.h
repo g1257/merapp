@@ -468,7 +468,9 @@ private:
 
 	TensorType& outputTensor(const SrepEquationType& eq)
 	{
-		SizeType indexOfOutputTensor = eq.indexOfOutputTensor(tensorNameIds_, nameIdsTensor_);
+		SizeType indexOfOutputTensor = TensorEvalType::indexOfOutputTensor(eq,
+		                                                                   tensorNameIds_,
+		                                                                   nameIdsTensor_);
 		assert(indexOfOutputTensor < tensors_.size());
 		return *(tensors_[indexOfOutputTensor]);
 	}

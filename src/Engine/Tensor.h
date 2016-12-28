@@ -123,7 +123,7 @@ public:
 
 	void setSizes(const VectorSizeType& dimensions)
 	{
-		if (ins_ > dimensions_.size())
+		if (ins_ > dimensions.size())
 			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions.size < ins\n");
 
 		dimensions_ = dimensions;

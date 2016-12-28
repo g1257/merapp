@@ -76,7 +76,7 @@ public:
 	      nameIdsTensor_(nameIdsTensor) // deep copy
 
 	{
-		indexOfOutputTensor_ = tSrep.indexOfOutputTensor(tensorNameIds, nameIdsTensor);
+		indexOfOutputTensor_ = indexOfOutputTensor(tSrep, tensorNameIds, nameIdsTensor);
 
 		if (!modify) return;
 
@@ -103,21 +103,17 @@ public:
 			PsimagLite::String str = temporaryName.substr(1,temporaryName.length());
 			SizeType temporaryId = atoi(str.c_str());
 			temporaryName = "t";
-			tensorNameIds_.push_back(PairStringSizeType(temporaryName,temporaryId));
-			// warning: nameIdsTensor_ is out of sync with tensorNameIds_
+			PairStringSizeType tmpPair = PairStringSizeType(temporaryName,temporaryId);
+			tensorNameIds_.push_back(tmpPair);
+			nameIdsTensor_[tmpPair] = tensorNameIds_.size() - 1;
 
-			// add storage for this temporary
-			VectorSizeType args;
-			SizeType ins = findArgsAndIns(args,vstr[i],vstr[i+1]);
-			TensorType* t = new TensorType(args, ins);
+			// add this temporary, call setDimensions for output tensor later
+			TensorStanza tmpStanza(vstr[i]);
+			VectorSizeType args(1,1); // bogus
+			TensorType* t = new TensorType(args, tmpStanza.ins());
 			garbage_.push_back(t);
 			data_.push_back(t);
 		}
-
-		// sync nameIdsTensor_ with tensorNameIds
-		nameIdsTensor_.clear();
-		for (SizeType i = 0; i < tensorNameIds_.size(); ++i)
-			nameIdsTensor_[tensorNameIds_[i]] = i;
 
 		VectorSrepEquationType veqs;
 
@@ -161,8 +157,6 @@ public:
 		if (total != dimensions.size()) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
 		prepare(dimensions,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
-		//		for (SizeType i = 0; i < total; ++i)
-		//			dimensions[i] = srepEq_.outputTensor().argSize(i);
 
 		static VectorSizeType free;
 		if (total != free.size()) free.resize(total,0);
@@ -173,7 +167,6 @@ public:
 		do {
 			outputTensor()(free) = slowEvaluator(free,srepEq_.rhs());
 		} while (nextIndex(free,dimensions,total));
-
 
 		return handle;
 	}
@@ -216,6 +209,20 @@ public:
 			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
 
 		return true;
+	}
+
+	static SizeType indexOfOutputTensor(const SrepEquationType& eq,
+	                                    const VectorPairStringSizeType& tensorNameIds,
+	                                    MapPairStringSizeType& nameIdsTensor)
+	{
+		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
+		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
+			PsimagLite::String msg("SrepEquation: Could not find ");
+			msg += "output tensor " + eq.nameIdOfOutput().first + "\n";
+			throw PsimagLite::RuntimeError(msg);
+		}
+
+		return ret;
 	}
 
 private:
@@ -369,115 +376,6 @@ private:
 		if (it == nameIdsTensor_.end())
 			throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
 		return it->second;
-	}
-
-	SizeType findArgsAndIns(VectorSizeType& args,
-	                        PsimagLite::String strLeft,
-	                        PsimagLite::String strRight) const
-	{
-		TensorStanza lhs(strLeft);
-		TensorSrep rhs(strRight);
-		args.resize(lhs.maxTag('f') + 1, 0);
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		SizeType ins = lhs.ins();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (lhs.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
-			SizeType ind  = lhs.legTag(i,in);
-			assert(ind < args.size());
-			args[ind] = findDimensionOfFreeLeg(rhs,ind);
-		}
-
-		SizeType outs = lhs.outs();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (lhs.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
-			SizeType ind  = lhs.legTag(i,out);
-			assert(ind < args.size());
-			args[ind] = findDimensionOfFreeLeg(rhs,ind);
-		}
-
-		return ins;
-	}
-
-	SizeType findDimensionOfFreeLeg(const TensorSrep& srep, SizeType leg) const
-	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		SizeType ntensors = srep.size();
-		for (SizeType j = 0; j < ntensors; ++j) {
-			TensorStanza stanza = srep(j);
-			PsimagLite::String name = stanza.name();
-			SizeType id = stanza.id();
-			SizeType ins = stanza.ins();
-			for (SizeType i = 0; i < ins; ++i) {
-				if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
-				if (stanza.legTag(i,in) != leg) continue;
-				SizeType tensorIndex = nameIdsTensor_[PairStringSizeType(name,id)];
-				return data_[tensorIndex]->argSize(i);
-			}
-
-			SizeType outs = stanza.outs();
-			for (SizeType i = 0; i < outs; ++i) {
-				if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
-				if (stanza.legTag(i,out) != leg) continue;
-				SizeType tensorIndex = nameIdsTensor_[PairStringSizeType(name,id)];
-				return data_[tensorIndex]->argSize(i+ins);
-			}
-		}
-
-		throw PsimagLite::RuntimeError("findDimensionOfFreeLeg\n");
-	}
-
-	void computeFreeForOutput(VectorSizeType& freeForOutput, const VectorSizeType& free) const
-	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		SizeType ins = srepEq_.lhs().ins();
-		for (SizeType j = 0; j < ins; ++j) {
-			if (srepEq_.lhs().legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
-				continue;
-			SizeType ind = srepEq_.lhs().legTag(j,in);
-			assert(ind < free.size());
-			assert(j < freeForOutput.size());
-			freeForOutput[j] = free[ind];
-		}
-
-		SizeType outs = srepEq_.lhs().outs();
-		for (SizeType j = 0; j < outs; ++j) {
-			if (srepEq_.lhs().legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
-				continue;
-			SizeType ind = srepEq_.lhs().legTag(j,out);
-			assert(ind < free.size());
-			assert(j + ins < freeForOutput.size());
-			freeForOutput[j + ins] = free[ind];
-		}
-	}
-
-	void fillFreeDimensions(VectorSizeType& dimensions) const
-	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		SizeType ins = srepEq_.lhs().ins();
-		for (SizeType j = 0; j < ins; ++j) {
-			if (srepEq_.lhs().legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
-				continue;
-			SizeType ind = srepEq_.lhs().legTag(j,in);
-			assert(ind < dimensions.size());
-			dimensions[ind] = outputTensor().argSize(j);
-		}
-
-		SizeType outs = srepEq_.lhs().outs();
-		for (SizeType j = 0; j < outs; ++j) {
-			if (srepEq_.lhs().legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
-				continue;
-			SizeType ind = srepEq_.lhs().legTag(j,out);
-			assert(ind < dimensions.size());
-			dimensions[ind] = outputTensor().argSize(j + ins);
-		}
 	}
 
 	TensorType& outputTensor()
