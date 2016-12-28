@@ -169,13 +169,10 @@ public:
 		}
 	}
 
-	void simplifyFrees(VectorPairSizeType& replacements)
+	void simplify(VectorPairSizeType& replacements)
 	{
-		SizeType ntensors = data_.size();
-		for (SizeType i = 0; i < ntensors; ++i)
-			data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_FREE);
-
-		refresh();
+		simplifyFrees(replacements);
+		simplifySummed();
 	}
 
 	void swapFree(SizeType ind, SizeType jnd)
@@ -287,15 +284,15 @@ public:
 		return ntensors;
 	}
 
-//	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
-//	{
-//		os<<"tensorSrep.size="<<ts.size()<<"\n";
-//		for (SizeType i = 0; i < ts.size(); ++i) {
-//			os<<*(ts.data_[i])<<"\n";
-//		}
+	//	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
+	//	{
+	//		os<<"tensorSrep.size="<<ts.size()<<"\n";
+	//		for (SizeType i = 0; i < ts.size(); ++i) {
+	//			os<<*(ts.data_[i])<<"\n";
+	//		}
 
-//		return os;
-//	}
+	//		return os;
+	//	}
 
 private:
 
@@ -398,16 +395,10 @@ private:
 			}
 		}
 
-		VectorSizeType usummed;
-		if (!verifySummed(&usummed))
-			throw PsimagLite::RuntimeError("canonicalize: Invalid Srep\n");
-
-		srep_ = "";
-		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->setIndices(usummed,'s');
+		for (SizeType i = 0; i < ntensors; ++i)
 			data_[i]->setIndices(frees,'f');
-			srep_ += data_[i]->sRep();
-		}
+
+		simplifySummed();
 	}
 
 	void simplify()
@@ -452,6 +443,29 @@ private:
 		}
 
 		return simplificationHappended;
+	}
+
+	void simplifyFrees(VectorPairSizeType& replacements)
+	{
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_FREE);
+
+		refresh();
+	}
+
+	void simplifySummed()
+	{
+		VectorSizeType usummed;
+		if (!verifySummed(&usummed))
+			throw PsimagLite::RuntimeError("simplifySummed: Invalid Srep\n");
+
+		srep_ = "";
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->setIndices(usummed,'s');
+			srep_ += data_[i]->sRep();
+		}
 	}
 
 	bool computeReplacements(VectorPairSizeType& replacements,

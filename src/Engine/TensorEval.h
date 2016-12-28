@@ -87,7 +87,7 @@ public:
 		//		PsimagLite::String brokenResult = tensorBreakup.brokenResult();
 		// loop over temporaries definitions
 		assert(!(vstr.size() & 1));
-		SizeType outputLocation = 1 + vstr.size();
+		//SizeType outputLocation = 1 + vstr.size();
 		for (SizeType i = 0; i < vstr.size(); i += 2) {
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
@@ -96,7 +96,7 @@ public:
 				std::cout<<"Definition of "<<srepEq_.rhs().sRep()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
 				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
-				outputLocation = i;
+				//outputLocation = i;
 			}
 
 			if (temporaryName[0] != 't') continue;
@@ -120,7 +120,7 @@ public:
 		for (SizeType i = 0; i < vstr.size(); i += 2) {
 			veqs.push_back(new SrepEquationType(vstr[i] + "=" + vstr[i+1]));
 			SizeType j = veqs.size() - 1;
-			if (i != outputLocation)
+			//if (i != outputLocation)
 				veqs[j]->canonicalize();
 			TensorEval tEval(*(veqs[j]),
 			                 data_,

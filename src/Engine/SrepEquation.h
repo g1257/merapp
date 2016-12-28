@@ -57,7 +57,7 @@ public:
 		std::cerr<<"FREES "<<frees<<"\n";
 		if (frees.size() == 0) return;
 		assert(frees[0].second == 0);
-		rhs_->simplifyFrees(frees);
+		rhs_->simplify(frees);
 		lhs_->replaceSummedOrFrees(frees,TensorStanza::INDEX_TYPE_FREE);
 		lhs_->refresh();
 	}
