@@ -356,13 +356,16 @@ private:
 		VectorSizeType iperm(n);
 		sort.sort(summed,iperm);
 
-		if (usummed) usummed->resize(n,1000);
-		for (SizeType i = 0; i < n; i+=2) {
+		if (usummed) usummed->resize(1 + maxTag('s'),1000);
+		for (SizeType i = 0; i < n; i += 2) {
+			if (i + 1 >= summed.size()) break;
 			if (summed[i] != summed[i + 1])
 				return false;
 			if (i > 0 && summed[i] == summed[i - 1])
 				return false;
 			if (!usummed) continue;
+			assert(summed[i] < usummed->size());
+			assert(summed[i + 1] < usummed->size());
 			usummed->operator[](summed[i]) = usummed->operator[](summed[i + 1]) = i/2;
 		}
 
@@ -447,6 +450,7 @@ private:
 
 	void simplifyFrees(VectorPairSizeType& replacements)
 	{
+		if (replacements.size() == 0) return;
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i)
 			data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_FREE);

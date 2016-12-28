@@ -9,9 +9,10 @@ DONE	sRepEqs spec
 DONE	symbolic: generate sRepEqs, use u100 and above
 DONE	symbolic: generate DimensionSrep for u100 and above
 DONE	symbolic should generate H only on certain links
-	correct last step of breakup
+DONE	correct last step of breakup
 	update testsuite
 	test all again
+	tensorBreakup: recursive
 	interface of TensorStanza/TensorSrep ==> all legs looping
 	Clear output tensor storage (?)
 	Figure out Layer=
