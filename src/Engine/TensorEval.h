@@ -125,6 +125,7 @@ public:
 			else
 				veqs[j]->rhs().simplify(empty);
 
+
 			TensorEval tEval(*(veqs[j]),
 			                 data_,
 			                 tensorNameIds_,

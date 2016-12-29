@@ -190,6 +190,7 @@ private:
 
 		for (SizeType i = 0; i < args.size(); ++i) {
 			if (dimensions_[i] == 0) continue;
+			assert(args[i] < dimensions_[i]);
 			index += args[i]*prod;
 			prod *= dimensions_[i];
 		}

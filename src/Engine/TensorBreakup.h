@@ -119,7 +119,7 @@ private:
 		actualStr = str;
 		bool seen = false;
 		bool seenActual = false;
-		SizeType addedDummyIndex = 0;
+
 		for (SizeType i = 0; i < stanza.ins(); ++i) {
 			TensorStanza::IndexTypeEnum legType = stanza.legType(i,in);
 			SizeType legTag = stanza.legTag(i,in);
@@ -137,7 +137,7 @@ private:
 			} else {
 				if (!seenActual) actualStr += "(";
 				else actualStr += ",";
-				actualStr += "d" + ttos(addedDummyIndex++);
+				actualStr += "d" + ttos(legTag);
 				seenActual = true;
 			}
 		}
@@ -161,7 +161,7 @@ private:
 			} else {
 				if (!seenActual) actualStr += "|";
 				else actualStr += ",";
-				actualStr += "d" + ttos(addedDummyIndex++);
+				actualStr += "d" + ttos(legTag);
 				seenActual = true;
 			}
 		}
@@ -249,6 +249,8 @@ private:
 		PsimagLite::String str1("");
 		PsimagLite::String actualStr1("");
 		stringT0Part(str1,actualStr1,setS,stanza1);
+		if (str0.find("()") != PsimagLite::String::npos) str0 = "";
+		if (str1.find("()") != PsimagLite::String::npos) str1 = "";
 		str0 += str1;
 		actualStr0 += actualStr1;
 
@@ -270,6 +272,7 @@ private:
 		// tensor jnd becomes t0
 		TensorStanza t0stanza(t0);
 		srep_.replaceStanza(jnd,t0stanza);
+		std::cerr<<"Defined="<<lhs<<"="<<rhs<<"\n";
 		std::cerr<<"Remaining="<<srep_.sRep()<<"\n";
 		tid_++;
 		return true;
@@ -362,7 +365,7 @@ private:
 			const TensorStanza& stanza = srep_(i);
 			if (stanza.type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-			if (stanza.name() == "t") continue;
+//			if (stanza.name() == "t") continue;
 			if (counter == 0) {
 				pair.first = i;
 				counter++;
