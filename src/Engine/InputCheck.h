@@ -144,7 +144,6 @@ public:
 
 private:
 
-
 	bool checkForVector(const PsimagLite::Vector<PsimagLite::String>::Type& vec) const
 	{
 		if (vec.size() == 0) return false;

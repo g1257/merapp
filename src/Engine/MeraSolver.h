@@ -109,7 +109,7 @@ public:
 			if (name == "r") {
 				if (rootTensorFound) {
 					PsimagLite::String msg("FATAL: File " + filename);
-					throw PsimagLite::RuntimeError(msg + " more than one root tensor found\n");
+					throw PsimagLite::RuntimeError(msg + " more than one root found\n");
 				}
 
 				assert(tensorOptimizer_.size() > 0);

@@ -43,7 +43,6 @@ struct ProgramGlobals {
 		return counter - 1;
 	}
 
-
 	static PsimagLite::String addLf(PsimagLite::String str, SizeType each)
 	{
 		SizeType l = str.length();

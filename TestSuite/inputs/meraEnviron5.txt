@@ -1,41 +1,42 @@
-TauMax=3
+#./merapp version 0.24
+DimensionSrep=u0(D2,D2|D4)u1(D2,D2|D2,D2)w0(D4,D2|D6)w1(D2|D2)r0(D6,D2)h0(2,2|2,2)i0(2|2)u100(1|1,1)u101(1|1,1)u102(1,1|1,1)u103(1,1|1,1)u104(1|1,1)u105(1|1,1)u106(1|1,1)u107(1|1)u108(1|1)u109(1,1|1,1)u110(1,1|1,1)u111(1,1|1,1)
 IterMera=50
 IterTensor=5
-DimensionSrep=u0(2,2|4)u1(2,2|2,2)w0(4,2|6)w1(2,2)h0(2,2|2,2)r(6,2)u99(2|2)
-
+MERA=u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)
 TensorId=u,0
-Layer=0
-IgnoreTerm=200
 Terms=2
-Environ=w0(f0,s0|s1)r(s1,s2)r*(s3,s2)w0*(s4,s0|s3)u0*(s5,s6|s4)h0(s5,s6|f1,f2)
-Environ=r(s0,s1)w0(f0,s2|s0)w1(s3|s1)u1(s4,s5|s2,s3)h0(s6,s7|f2,s4)u0*(f1,s6|s8)u1(s7,s5|s9,s10)w0*(s8,s9|s11)w1*(s10|s12)r*(s11|s12)
+IgnoreTerm=7
+Layer=0
+Environ=u100(f0|f1,f2)=w0(f0,s0|s1)r0(s1,s2)h0(s5,s6|f1,f2)u0*(s5,s6|s3)w0*(s3,s0|s4)r0*(s4,s2)
+Environ=u101(f0|f1,f2)=u1(s4,s12|s0,s1)w0(f0,s0|s2)w1(s1|s3)r0(s2,s3)h0(s10,s11|f1,s4)u0*(f2,s10|s5)u1*(s11,s12|s6,s7)w0*(s5,s6|s8)w1*(s7|s9)r0*(s8,s9)
 
 TensorId=u,1
-Layer=0
-IgnoreTerm=200
 Terms=2
-Environ=r(s0,s1)w0(s2,f0|s0)w1(f1|s1)u0(s3,s4|s2)h0(s5,s6|s4,f2)u0*(s3,s5|s7)u1*(s6,f3|s8,s9)w0*(s7,s8|s10)w1*(s9|s11)r*(s10,s11)
-Environ=r(s0,s1)w0(s8,f0|s0)w1(f1|s1)h0(f2,f3|s2,s3)u1*(s2,s3|s4,s5)w0*(s8,s4|s6)w1*(s5|s7)r*(s6,s7)
+IgnoreTerm=7
+Layer=0
+Environ=u102(f0,f1|f2,f3)=u0(s11,s3|s0)w0(s0,f0|s1)w1(f1|s2)r0(s1,s2)h0(s9,s10|s3,f2)u0*(s11,s9|s4)u1*(s10,f3|s5,s6)w0*(s4,s5|s7)w1*(s6|s8)r0*(s7,s8)
+Environ=u103(f0,f1|f2,f3)=w0(s0,f0|s1)w1(f1|s2)r0(s1,s2)h0(s7,s8|f2,f3)u1*(s7,s8|s3,s4)w0*(s0,s3|s5)w1*(s4|s6)r0*(s5,s6)
 
 TensorId=w,0
-Layer=0
-IgnoreTerm=200
 Terms=3
-Environ=r(f0,s0)r*(s1,s0)w0*(s2,f2|s1)u0*(s3,s4|s2)h0(s3,s4|s5,s6)u0(s5,s6|f1)
-Environ=r(f0,s0)u0(s2,s3|f1)u1(s4,s5|f2,s1)w1(s1|s0)h0(s6,s7|s3,s4)u0*(s2,s6|s8)u1*(s7,s5|s9,s10)w0*(s8,s9|s11)w1*(s10|s12)r*(s11|s12)
-Environ=r(f0,s8)w1(s9|s8)u1(s0,s1|f2,s9)h0(s0,s1|s2,s3)u1*(s2,s3|s4,s5)w0*(f1,s4|s6)w1*(s5|s7)r*(s6,s7)
+IgnoreTerm=7
+Layer=0
+Environ=u104(f1|f0,f2)=u0(s1,s2|f0)r0(f1,s0)h0(s5,s6|s1,s2)u0*(s5,s6|s3)w0*(s3,f2|s4)r0*(s4,s0)
+Environ=u105(f2|f0,f1)=u0(s11,s2|f0)u1(s3,s12|f1,s0)w1(s0|s1)r0(f2,s1)h0(s9,s10|s2,s3)u0*(s11,s9|s4)u1*(s10,s12|s5,s6)w0*(s4,s5|s7)w1*(s6|s8)r0*(s7,s8)
+Environ=u106(f1|f0,f2)=u1(s2,s3|f0,s0)w1(s0|s1)r0(f1,s1)h0(s8,s9|s2,s3)u1*(s8,s9|s4,s5)w0*(f2,s4|s6)w1*(s5|s7)r0*(s6,s7)
 
 TensorId=w,1
-Layer=0
-IgnoreTerm=200
 Terms=2
-Environ=r(s0,f0)w0(s1,s2|s0)u0(s3,s4|s1)u1(s5,s6|s2,f1)h0(s4,s5|s7,s8)u0*(s3,s7|s9)u1*(s8,s6|s10,s11)w0*(s9,s10|s12)w1*(s11|s13)r*(s12,s13)
-Environ=r(s9,f0)w0(s8,s10|s9)u1(s0,s1|s10,f1)h0(s0,s1|s2,s3)u1*(s2,s3|s4,s5)w0*(s8,s4|s6)w1*(s5,s7)r*(s6|s7)
+IgnoreTerm=7
+Layer=0
+Environ=u107(f1|f0)=u0(s12,s3|s0)u1(s4,s13|s1,f0)w0(s0,s1|s2)r0(s2,f1)h0(s10,s11|s3,s4)u0*(s12,s10|s5)u1*(s11,s13|s6,s7)w0*(s5,s6|s8)w1*(s7|s9)r0*(s8,s9)
+Environ=u108(f1|f0)=u1(s3,s4|s1,f0)w0(s0,s1|s2)r0(s2,f1)h0(s9,s10|s3,s4)u1*(s9,s10|s5,s6)w0*(s0,s5|s7)w1*(s6|s8)r0*(s7,s8)
 
 TensorId=r,0
-Layer=0
-IgnoreTerm=200
 Terms=3
-Environ=w0(s0,s1|f0)u0(s2,s3|s0)h0(s4,s5|s2,s3)u0*(s4,s5|s6)w0*(s6,s1|f2)u99(f3|f1)
-Environ=w0(s0,s1|f0)w1(s2|f1)u0(s3,s4|s0)u1(s5,s6|s1,s2)h0(s7,s8|s4,s5)u0*(s3,s7|s9)u1*(s8,s6|s10,s11)w0*(s9,s10|f2)w1*(s11|f3)
-Environ=w0(s8,s7|f0)u1(s5,s0|s7,s6)w1(s6|f1)h0(s1,s2|s5,s0)u1*(s1,s2|s3,s4)w0*(s8,s3|f2)w1*(s4|f3)
+IgnoreTerm=7
+Layer=0
+Environ=u109(f1,f2|f0,f3)=u0(s2,s3|s0)w0(s0,s1|f0)h0(s5,s6|s2,s3)u0*(s5,s6|s4)w0*(s4,s1|f1)i0(f2|f3)
+Environ=u110(f2,f3|f0,f1)=u0(s10,s3|s0)u1(s4,s11|s1,s2)w0(s0,s1|f0)w1(s2|f1)h0(s8,s9|s3,s4)u0*(s10,s8|s5)u1*(s9,s11|s6,s7)w0*(s5,s6|f2)w1*(s7|f3)
+Environ=u111(f2,f3|f0,f1)=u1(s3,s4|s1,s2)w0(s0,s1|f0)w1(s2|f1)h0(s7,s8|s3,s4)u1*(s7,s8|s5,s6)w0*(s0,s5|f2)w1*(s6|f3)
+

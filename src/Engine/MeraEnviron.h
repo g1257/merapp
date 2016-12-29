@@ -122,7 +122,7 @@ private:
 		bool isRootTensor = (tensorSrep_(ind).name() == "r");
 		if (!hasConjugate) {
 			if (isRootTensor) {
-				throw PsimagLite::RuntimeError("Environ for root tensor: INTERNAL ERROR\n");
+				throw PsimagLite::RuntimeError("Environ for root: INTERNAL ERROR\n");
 			} else {
 				std::cerr<<"EMPTY_ENVIRON="<<tensorSrep4.sRep()<<"\n";
 				return TensorSrep("");

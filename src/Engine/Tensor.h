@@ -124,13 +124,13 @@ public:
 	void setSizes(const VectorSizeType& dimensions)
 	{
 		if (ins_ > dimensions.size())
-			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions.size < ins\n");
+			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions < ins\n");
 
 		dimensions_ = dimensions;
 
 		SizeType v = volume();
 		if (v == 0)
-			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions.size == 0\n");
+			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions == 0\n");
 		data_.resize(v,0.0);
 	}
 

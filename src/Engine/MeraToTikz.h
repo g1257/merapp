@@ -80,8 +80,8 @@ private:
 			       tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_H) {
 				RealType factor = (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) ?
 				            1.0 : 0.5;
-				PsimagLite::String style = (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) ?
-				            "disen" : "ham";
+				PsimagLite::String style = (tensorSrep(i).type() ==
+				                            TensorStanza::TENSOR_TYPE_U) ? "disen" : "ham";
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\coordinate (B";
@@ -111,12 +111,14 @@ private:
 				assert(outs > 0);
 				RealType divisor = (outs == 1) ? 1 : outs - 1;
 				a = dx/divisor;
-				RealType doy = (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) ? dy : 0.5*dy;
+				RealType doy = (tensorSrep(i).type() ==
+				                TensorStanza::TENSOR_TYPE_U) ? dy : 0.5*dy;
 				for (SizeType j = 0; j < outs; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
 					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (O" + label;
-					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i] + doy) + ");\n";
+					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
+					buffer_ += ttos(y[i] + doy) + ");\n";
 					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) ==
 					        TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (O" + label + "F");
