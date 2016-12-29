@@ -154,8 +154,9 @@ int main(int argc, char **argv)
 		srep = meraBuilder();
 	}
 
+	std::cout<<"Sites="<<sites<<"\n";
+
 	if (buildOnly) {
-		std::cout<<"Sites="<<sites<<"\n";
 		std::cout<<"Srep="<<srep<<"\n";
 		std::cerr<<argv[0]<<": Stoping here because of -b (build only). ";
 		std::cerr<<"Not computing environments\n";

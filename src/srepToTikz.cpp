@@ -24,8 +24,8 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 int main(int argc, char** argv)
 {
-	if (argc < 2) {
-		std::cerr<<"USAGE: "<<argv[0]<<" filename\n";
+	if (argc < 3) {
+		std::cerr<<"USAGE: "<<argv[0]<<" filename label\n";
 		return 1;
 	}
 
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	SizeType sites = 0;
 	io.readline(sites,"Sites=");
 	io.rewind();
-	io.readline(srep,"Srep=");
+	io.readline(srep,argv[2]);
 
 	Mera::MeraToTikz<double> obj(srep,sites);
 	std::cout<<"%Created by "<<argv[0]<<" version "<<MERA_VERSION<<"\n";

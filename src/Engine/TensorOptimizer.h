@@ -193,8 +193,11 @@ private:
 		MatrixType mSrc = m;
 		VectorRealType s(m.n_row(),0);
 		if (tensorToOptimize_.first == "r") { // diagonalize
-			if (!isHermitian(m,true))
+			if (!isHermitian(m,true)) {
+				std::cout<<"MATRIX_MAY_FOLLOW\n";
+				if (m.n_row() < 512) std::cout<<m;
 				throw PsimagLite::RuntimeError("Not Hermitian H\n");
+			}
 
 			SizeType rows = tensors_[indToOptimize_]->argSize(0);
 			SizeType cols = tensors_[indToOptimize_]->argSize(1);
