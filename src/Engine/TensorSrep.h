@@ -330,15 +330,40 @@ private:
 		if (indicesToContract && indicesToContract->size() == 0)
 			return;
 
+		shiftCertainSummed(indicesToContract);
+
+		srep_ = "";
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->contract(indicesToContract);
+			srep_ += data_[i]->sRep();
+		}
+
+		fixDuplicatedFrees();
+
+		canonicalize();
+	}
+
+	// we assume here that all stanzas are valid
+	// but the srep_ might not be due to duplicated frees
+	void fixDuplicatedFrees()
+	{
+		VectorSizeType frees;
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->loadSummedOrFree(frees,'f');
+			srep_ += data_[i]->sRep();
+		}
+	}
+
+	void shiftCertainSummed(const VectorSizeType* indicesToContract)
+	{
 		SizeType ms = 1 + maxTag('s');
 		srep_ = "";
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->contract(indicesToContract,ms);
+			data_[i]->shiftCertainSummed(indicesToContract,ms);
 			srep_ += data_[i]->sRep();
 		}
-
-		canonicalize();
 	}
 
 	bool verifySummed(VectorSizeType* usummed) const
@@ -613,6 +638,7 @@ private:
 	void shiftSummedBy(SizeType ms)
 	{
 		SizeType ntensors = data_.size();
+		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
 			data_[i]->shiftSummedBy(ms);
 			srep_ += data_[i]->sRep();

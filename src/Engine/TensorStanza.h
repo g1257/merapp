@@ -211,7 +211,7 @@ public:
 		return simplificationHappended;
 	}
 
-	void contract(const VectorSizeType* indicesToContract, SizeType ms)
+	void contract(const VectorSizeType* indicesToContract)
 	{
 		if (indicesToContract && indicesToContract->size() == 0)
 			return;
@@ -226,7 +226,6 @@ public:
 				continue;
 
 			insSi_[i].first = 's';
-			insSi_[i].second += ms;
 		}
 
 		SizeType outs = outsSi_.size();
@@ -238,11 +237,43 @@ public:
 				continue;
 
 			outsSi_[i].first = 's';
-			outsSi_[i].second += ms;
 		}
 
-		maxSummed_ += ms;
+		maxSummed_ = maxIndex('s');
 		maxFree_ = maxIndex('f');
+		srep_ = srepFromObject();
+	}
+
+	void shiftCertainSummed(const VectorSizeType* indicesToContract,
+	                        int ms)
+	{
+		if (indicesToContract && indicesToContract->size() == 0)
+			return;
+
+		SizeType ins = insSi_.size();
+
+		for (SizeType i = 0; i < ins; ++i) {
+			if (insSi_[i].first != 's') continue;
+			if (indicesToContract && std::find(indicesToContract->begin(),
+			                                   indicesToContract->end(),
+			                                   insSi_[i].second) == indicesToContract->end())
+				continue;
+
+			insSi_[i].second = ms++;
+		}
+
+		SizeType outs = outsSi_.size();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (outsSi_[i].first != 's') continue;
+			if (indicesToContract && std::find(indicesToContract->begin(),
+			                                   indicesToContract->end(),
+			                                   outsSi_[i].second) == indicesToContract->end())
+				continue;
+
+			outsSi_[i].second = ms++;
+		}
+
+		maxSummed_ = maxIndex('s');
 		srep_ = srepFromObject();
 	}
 
@@ -351,19 +382,20 @@ public:
 		srep_ = srepFromObject();
 	}
 
-	void loadSummed(VectorSizeType& summed) const
+	void loadSummedOrFree(VectorSizeType& summed,
+	                      char c) const
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return;
 
 		SizeType total = insSi_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != 's') continue;
+			if (insSi_[i].first != c) continue;
 			summed.push_back(insSi_[i].second);
 		}
 
 		total = outsSi_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != 's') continue;
+			if (outsSi_[i].first != c) continue;
 			summed.push_back(outsSi_[i].second);
 		}
 	}

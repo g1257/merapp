@@ -126,10 +126,10 @@ private:
 		tensorSrep4->contract(tensorSrep3,indicesToContract);
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		std::cerr<<"LOWER="<<tensorSrep2.sRep()<<"\n";
-		std::cerr<<"UPPER="<<tensorSrep4->sRep()<<"\n";
+		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
+		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
 		tensorSrep4->contract(tensorSrep2);
-		std::cerr<<"ENERGY="<<tensorSrep4->sRep()<<"\n";
+		std::cerr<<"ENERGY"<<site<<"="<<tensorSrep4->sRep()<<"\n";
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		return tensorSrep4;
