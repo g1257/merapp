@@ -28,15 +28,29 @@ class MeraEnviron {
 	typedef ParametersForSolver ParametersForSolverType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
-
+	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 public:
 
 	MeraEnviron(const TensorSrep& srep, const ParametersForSolver& params)
 	    : params_(params), tensorSrep_(srep), envs_(""), dsrep_("")
 	{
+		SizeType sites = tensorSrep_.maxTag('f');
+		assert(params_.hamiltonianTerm.size() == sites);
+		VectorTensorSrepType energy(sites, 0);
+		for (SizeType site = 0; site < sites; ++site) {
+			if (!params_.hamiltonianTerm[site]) continue;
+			energy[site] = buildEnergyTerm(site);
+		}
+
 		SizeType counterForOutput = 100;
 		for (SizeType i = 0; i < tensorSrep_.size(); ++i) {
-			counterForOutput += environForTensor(i, counterForOutput);
+			counterForOutput += environForTensor(i, counterForOutput, energy);
+		}
+
+		for (SizeType site = 0; site < sites; ++site) {
+			if (!params_.hamiltonianTerm[site]) continue;
+			delete energy[site];
+			energy[site] = 0;
 		}
 	}
 
@@ -58,7 +72,8 @@ private:
 
 	// find Y (environment) for this tensor
 	SizeType environForTensor(SizeType ind,
-	                          SizeType counterForOutput)
+	                          SizeType counterForOutput,
+	                          const VectorTensorSrepType& energy)
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
@@ -70,7 +85,8 @@ private:
 		assert(params_.hamiltonianTerm.size() == sites);
 		for (SizeType site = 0; site < sites; ++site) {
 			if (!params_.hamiltonianTerm[site]) continue;
-			TensorSrep tmp = environForTensorOneSite(ind,site);
+			assert(energy[site]);
+			TensorSrep tmp = environForTensorOneSite(ind, site, *(energy[site]));
 			vstr[site] = tmp.sRep();
 			argForOutput[site] = calcArgForOutput(vdsrep[site],tmp);
 			if (vstr[site] != "") ++terms;
@@ -92,7 +108,7 @@ private:
 		return terms;
 	}
 
-	TensorSrep environForTensorOneSite(SizeType ind, SizeType site) const
+	TensorSrep* buildEnergyTerm(SizeType site) const
 	{
 		TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();
@@ -106,14 +122,24 @@ private:
 		TensorSrep tensorSrep3(str3);
 		TensorSrep::VectorSizeType indicesToContract(2,site);
 		indicesToContract[1] = site + 1;
-		TensorSrep tensorSrep4(tensorSrep_);
-		tensorSrep4.contract(tensorSrep3,indicesToContract);
-		if (!tensorSrep4.isValid(true))
+		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep_);
+		tensorSrep4->contract(tensorSrep3,indicesToContract);
+		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		tensorSrep4.contract(tensorSrep2);
-		std::cerr<<"ENERGY="<<tensorSrep4.sRep()<<"\n";
-		if (!tensorSrep4.isValid(true))
+		std::cerr<<"LOWER="<<tensorSrep2.sRep()<<"\n";
+		std::cerr<<"UPPER="<<tensorSrep4->sRep()<<"\n";
+		tensorSrep4->contract(tensorSrep2);
+		std::cerr<<"ENERGY="<<tensorSrep4->sRep()<<"\n";
+		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
+		return tensorSrep4;
+	}
+
+	TensorSrep environForTensorOneSite(SizeType ind,
+	                                   SizeType,
+	                                   const TensorSrep& energySrep) const
+	{
+		TensorSrep tensorSrep4(energySrep);
 		tensorSrep4.eraseTensor(ind);
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
