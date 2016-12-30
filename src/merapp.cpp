@@ -37,20 +37,20 @@ void usageMain(const PsimagLite::String& str)
 	throw PsimagLite::RuntimeError(str);
 }
 
-void main1(PsimagLite::String srep,
+void main1(const Mera::MeraBuilder& builder,
            const Mera::ParametersForSolver& params)
 {
+	PsimagLite::String srep = builder();
 	Mera::DimensionSrep dimSrep(srep,params.h,params.m);
 	PsimagLite::String dsrep = dimSrep();
 	PsimagLite::String hString = ttos(params.h);
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	dsrep += "i0(" + hString + "|" + hString + ")";
 
-	Mera::TensorSrep tSrep(srep);
-	Mera::MeraEnviron environ(tSrep,params);
+	Mera::MeraEnviron environ(builder,params);
 
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep()<<"\n";
-	std::cout<<"MERA="<<tSrep.sRep()<<"\n";
+	std::cout<<"MERA="<<srep<<"\n";
 
 	std::cout<<environ.environs();
 }
@@ -78,13 +78,12 @@ int main(int argc, char **argv)
 	Mera::TensorSrep::VectorSizeType hamTerms;
 	SizeType h = 0;
 	SizeType m = 0;
-	PsimagLite::String srep("");
 	PsimagLite::String strUsage(argv[0]);
 	strUsage += " -n sites -a arity -d dimension -h hilbertSize [-m m] ";
 	strUsage += "| -S srep | -V\n";
 	strUsage += "-h hilbertSize is always mandatory\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:h:m:S:s:bV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:h:m:s:bV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
@@ -112,9 +111,6 @@ int main(int argc, char **argv)
 			std::fill(hamTerms.begin(),hamTerms.end(),0);
 			fillHamTerms(hamTerms,optarg);
 			break;
-		case 'S':
-			srep = optarg;
-			break;
 		case 'b':
 			buildOnly = true;
 			break;
@@ -133,31 +129,16 @@ int main(int argc, char **argv)
 		return 0;
 
 	// sanity checks here
-	if (h == 0)
+	if (h == 0 || sites*arity*dimension == 0)
 		usageMain(strUsage);
 
-	bool buildMode = (sites*arity*dimension > 0);
-	if (buildMode && srep != "") {
-		strUsage += "Either n*a*d > 0 or srep != "" but not both\n";
-		usageMain(strUsage);
-	}
-
-	if (!buildMode && srep == "") {
-		srep = "u0(f0,f1|s0)u1(f2,f3|s1,s2)w0(s0,s1|s3)w1(s2|s4)r(s3,s4)\n";
-		sites = 4;
-		hamTerms.resize(3,1);
-	}
-
-	if (buildMode) {
-		// here build srep
-		Mera::MeraBuilder meraBuilder(sites,arity,dimension);
-		srep = meraBuilder();
-	}
+	// here build srep
+	Mera::MeraBuilder meraBuilder(sites,arity,dimension,hamTerms);
 
 	std::cout<<"Sites="<<sites<<"\n";
 
 	if (buildOnly) {
-		std::cout<<"Srep="<<srep<<"\n";
+		std::cout<<"Srep="<<meraBuilder()<<"\n";
 		std::cerr<<argv[0]<<": Stoping here because of -b (build only). ";
 		std::cerr<<"Not computing environments\n";
 		return 1;
@@ -166,5 +147,5 @@ int main(int argc, char **argv)
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
 	Mera::ParametersForSolver params(hamTerms,h,m);
-	main1(srep,params);
+	main1(meraBuilder,params);
 }

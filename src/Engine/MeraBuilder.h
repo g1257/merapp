@@ -1,15 +1,23 @@
 #ifndef MERABUILDER_H
 #define MERABUILDER_H
 #include "ProgramGlobals.h"
+#include "TensorSrep.h"
+#include "Vector.h"
 
 namespace Mera {
 
 class MeraBuilder {
 
+	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
+	typedef TensorSrep::VectorSizeType VectorSizeType;
+
 public:
 
-	MeraBuilder(SizeType sites,SizeType arity,SizeType dimension)
-	    : srep_("")
+	MeraBuilder(SizeType sites,
+	            SizeType arity,
+	            SizeType dimension,
+	            const VectorSizeType& hamTerms)
+	    : srep_(""), energy_(sites,0)
 	{
 		if (dimension != 1)
 			throw PsimagLite::RuntimeError("MeraBuilder: dimension must be 1 for now\n");
@@ -38,11 +46,29 @@ public:
 
 		assert(summed > 1);
 		srep_ += "r(s" + ttos(summed-2) + ",s" + ttos(summed-1) + ")";
+
+		buildEnergies(hamTerms);
+	}
+
+	~MeraBuilder()
+	{
+		for (SizeType site = 0; site < energy_.size(); ++site) {
+			if (energy_[site] == 0) continue;
+			delete energy_[site];
+			energy_[site] = 0;
+		}
 	}
 
 	const PsimagLite::String& operator()() const
 	{
 		return srep_;
+	}
+
+	const TensorSrep& energy(SizeType size) const
+	{
+		assert(size < energy_.size());
+		assert(energy_[size]);
+		return *(energy_[size]);
 	}
 
 private:
@@ -114,7 +140,45 @@ private:
 		}
 	}
 
+	void buildEnergies(const VectorSizeType& hamTerm)
+	{
+		TensorSrep tensorSrep(srep_);
+		for (SizeType site = 0; site < hamTerm.size(); ++site) {
+			if (!hamTerm[site]) continue;
+			energy_[site] = buildEnergyTerm(site, tensorSrep);
+		}
+	}
+
+	TensorSrep* buildEnergyTerm(SizeType site, const TensorSrep& tensorSrep) const
+	{
+		TensorSrep tensorSrep2(tensorSrep);
+		tensorSrep2.conjugate();
+		PsimagLite::String str3("h0(f");
+		str3 += ttos(site+2) + ",f";
+		str3 += ttos(site+3) + "|f";
+		str3 += ttos(site) + ",f";
+		str3 += ttos(site+1) + ")\n";
+		TensorSrep tensorSrep3(str3);
+		TensorSrep::VectorSizeType indicesToContract(2,site);
+		indicesToContract[1] = site + 1;
+		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
+		tensorSrep4->contract(tensorSrep3,indicesToContract);
+		if (!tensorSrep4->isValid(true))
+			throw PsimagLite::RuntimeError("Invalid tensor\n");
+		tensorSrep4->swapFree(0,site);
+		tensorSrep4->swapFree(1,site+1);
+
+		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
+		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
+		tensorSrep4->contract(tensorSrep2);
+		std::cerr<<"ENERGY"<<site<<"="<<tensorSrep4->sRep()<<"\n";
+		if (!tensorSrep4->isValid(true))
+			throw PsimagLite::RuntimeError("Invalid tensor\n");
+		return tensorSrep4;
+	}
+
 	PsimagLite::String srep_;
+	VectorTensorSrepType energy_;
 }; // class MeraBuilder
 } // namespace Mera
 #endif // MERABUILDER_H

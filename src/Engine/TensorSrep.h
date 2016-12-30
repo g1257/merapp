@@ -206,6 +206,7 @@ public:
 			}
 		}
 
+		refresh();
 	}
 
 	SizeType size() const { return data_.size(); }
@@ -233,16 +234,19 @@ public:
 
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType legs = data_[i]->ins();
-			for (SizeType j = 0; j < legs; ++j) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
+			SizeType ins = data_[i]->ins();
+			SizeType outs = data_[i]->outs();
+			if (ins + outs == 0) return false;
+			for (SizeType j = 0; j < ins; ++j) {
 				if (data_[i]->legType(j,in) == TensorStanzaType::INDEX_TYPE_SUMMED)
 					summedIndices[data_[i]->legTag(j,in)]++;
 				else if (data_[i]->legType(j,in) == TensorStanzaType::INDEX_TYPE_FREE)
 					freeIndices[data_[i]->legTag(j,in)]++;
 			}
 
-			legs = data_[i]->outs();
-			for (SizeType j = 0; j < legs; ++j) {
+			for (SizeType j = 0; j < outs; ++j) {
 				if (data_[i]->legType(j,out) == TensorStanzaType::INDEX_TYPE_SUMMED)
 					summedIndices[data_[i]->legTag(j,out)]++;
 				else if (data_[i]->legType(j,out) == TensorStanzaType::INDEX_TYPE_FREE)
@@ -374,6 +378,8 @@ private:
 
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
 			data_[i]->refresh();
 			srep_ += data_[i]->sRep();
 		}
@@ -438,6 +444,8 @@ private:
 
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
 			data_[i]->setIndices(frees,'f');
 			data_[i]->refresh();
 			srep_ += data_[i]->sRep();
@@ -649,6 +657,8 @@ private:
 			count = data_[i]->relabelFrees(count);
 
 		for (SizeType i = 0; i < ntensors; ++i) {
+			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
 			data_[i]->refresh();
 			srep_ += data_[i]->sRep();
 		}
