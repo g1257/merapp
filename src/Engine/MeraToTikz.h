@@ -238,7 +238,8 @@ private:
 				x[i] = (savedXForR[0] + savedXForR[1])*0.5;
 				y[i] = ysign*3.5*tauMax_ + yoffset0*ysign;
 			} else if (type == TensorStanza::TENSOR_TYPE_H) {
-				x[i] = xsep*dx*tensorX + xoffset;
+				RealType tmp = findXForH(i,tensorSrep);
+				x[i] = xsep*dx*tmp + xoffset;
 				y[i] = 0;
 			}
 		}
@@ -347,6 +348,76 @@ private:
 			stage /= 2;
 			y++;
 		}
+	}
+
+	RealType findXForH(SizeType indexOfH,const TensorSrep& tSrep) const
+	{
+		VectorSizeType legs;
+		findAllSummedLegTagOf(legs,tSrep(indexOfH));
+		if (legs.size() == 0) {
+			std::cerr<<"WARNING: findXForH failed\n";
+			return 0;
+		}
+
+		RealType summedIds = 0.0;
+		for (SizeType i = 0; i < legs.size(); ++i) {
+			SizeType index = findTensorWithSummedLeg(legs[i],indexOfH,tSrep);
+			SizeType tmp =  tSrep(index).id();
+			summedIds += unpackTimeAndSpace_[tmp].first;
+		}
+
+		return summedIds/legs.size();
+	}
+
+	void findAllSummedLegTagOf(VectorSizeType& legs, const TensorStanza& stanza) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType ins = stanza.ins();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+				continue;
+			legs.push_back(stanza.legTag(i,in));
+		}
+
+		SizeType outs = stanza.outs();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
+				continue;
+			legs.push_back(stanza.legTag(i,out));
+		}
+	}
+
+	SizeType findTensorWithSummedLeg(SizeType legTag,
+	                                 SizeType indexOfH,
+	                                 const TensorSrep& tSrep) const
+	{
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+		SizeType ntensors = tSrep.size();
+		for (SizeType j = 0; j < ntensors; ++j) {
+			if (j == indexOfH) continue;
+			const TensorStanza& stanza = tSrep(j);
+			SizeType ins = stanza.ins();
+			for (SizeType i = 0; i < ins; ++i) {
+				if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+					continue;
+				if (legTag != stanza.legTag(i,in)) continue;
+				return j;
+			}
+
+			SizeType outs = stanza.outs();
+			for (SizeType i = 0; i < outs; ++i) {
+				if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
+					continue;
+				if (legTag != stanza.legTag(i,out)) continue;
+				return j;
+			}
+		}
+
+		std::cerr<<"WARNING: findTensorWithSummedLeg failed\n";
+		return 0;
 	}
 
 	static void printHeader(std::ostream& os)
