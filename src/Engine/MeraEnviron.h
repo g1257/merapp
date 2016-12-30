@@ -112,8 +112,8 @@ private:
 	{
 		TensorSrep tensorSrep2(tensorSrep_);
 		tensorSrep2.conjugate();
-		tensorSrep2.swapFree(0,site);
-		tensorSrep2.swapFree(1,site+1);
+//		tensorSrep2.swapFree(0,site);
+//		tensorSrep2.swapFree(1,site+1);
 		PsimagLite::String str3("h0(f");
 		str3 += ttos(site+2) + ",f";
 		str3 += ttos(site+3) + "|f";

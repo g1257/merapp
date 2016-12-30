@@ -159,11 +159,9 @@ public:
 	}
 
 	bool replaceSummedOrFrees(const VectorPairSizeType& replacements,
-	                          IndexTypeEnum type1)
+	                          char type)
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return false;
-		PsimagLite::String type2 = indexTypeToString(type1);
-		char type = type2[0];
 
 		bool simplificationHappended = false;
 		SizeType r = replacements.size();
@@ -241,39 +239,6 @@ public:
 
 		maxSummed_ = maxIndex('s');
 		maxFree_ = maxIndex('f');
-		srep_ = srepFromObject();
-	}
-
-	void shiftCertainSummed(const VectorSizeType* indicesToContract,
-	                        int ms)
-	{
-		if (indicesToContract && indicesToContract->size() == 0)
-			return;
-
-		SizeType ins = insSi_.size();
-
-		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != 's') continue;
-			if (indicesToContract && std::find(indicesToContract->begin(),
-			                                   indicesToContract->end(),
-			                                   insSi_[i].second) == indicesToContract->end())
-				continue;
-
-			insSi_[i].second = ms++;
-		}
-
-		SizeType outs = outsSi_.size();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != 's') continue;
-			if (indicesToContract && std::find(indicesToContract->begin(),
-			                                   indicesToContract->end(),
-			                                   outsSi_[i].second) == indicesToContract->end())
-				continue;
-
-			outsSi_[i].second = ms++;
-		}
-
-		maxSummed_ = maxIndex('s');
 		srep_ = srepFromObject();
 	}
 

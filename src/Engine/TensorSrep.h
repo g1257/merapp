@@ -330,7 +330,8 @@ private:
 		if (indicesToContract && indicesToContract->size() == 0)
 			return;
 
-		shiftCertainSummed(indicesToContract);
+		SizeType mf = maxTag('f') + 1;
+		shiftSummedBy(mf);
 
 		srep_ = "";
 		SizeType ntensors = data_.size();
@@ -339,29 +340,41 @@ private:
 			srep_ += data_[i]->sRep();
 		}
 
+		verifySummed(0);
+
 		fixDuplicatedFrees();
 
 		canonicalize();
 	}
 
 	// we assume here that all stanzas are valid
-	// but the srep_ might not be due to duplicated frees
+	// but the srep_ might not be, due to duplicated frees
 	void fixDuplicatedFrees()
 	{
-		VectorSizeType frees;
-		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->loadSummedOrFree(frees,'f');
-			srep_ += data_[i]->sRep();
-		}
-	}
-
-	void shiftCertainSummed(const VectorSizeType* indicesToContract)
-	{
-		SizeType ms = 1 + maxTag('s');
-		srep_ = "";
+		SizeType mf = maxTag('f') + 1;
+		VectorSizeType counter(mf,0);
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			data_[i]->shiftCertainSummed(indicesToContract,ms);
+			VectorSizeType newfrees;
+			data_[i]->loadSummedOrFree(newfrees,'f');
+			if (newfrees.size() == 0) continue;
+			// if newfrees in frees calculate replacements and replace
+			VectorPairSizeType replacements;
+			for (SizeType j = 0; j < newfrees.size(); ++j) {
+				if (counter[newfrees[j]] == 1) {
+					replacements.push_back(PairSizeType(newfrees[j],mf++));
+				} else {
+					assert(counter[newfrees[j]] == 0);
+					counter[newfrees[j]]++;
+				}
+			}
+
+			if (replacements.size() > 0) data_[i]->replaceSummedOrFrees(replacements, 'f');
+		}
+
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->refresh();
 			srep_ += data_[i]->sRep();
 		}
 	}
@@ -371,7 +384,7 @@ private:
 		VectorSizeType summed;
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i)
-			data_[i]->loadSummed(summed);
+			data_[i]->loadSummedOrFree(summed,'s');
 
 		SizeType n = summed.size();
 		if (n&1)
@@ -423,8 +436,12 @@ private:
 			}
 		}
 
-		for (SizeType i = 0; i < ntensors; ++i)
+		srep_ = "";
+		for (SizeType i = 0; i < ntensors; ++i) {
 			data_[i]->setIndices(frees,'f');
+			data_[i]->refresh();
+			srep_ += data_[i]->sRep();
+		}
 
 		simplifySummed();
 	}
@@ -465,7 +482,7 @@ private:
 		SizeType ntensors = data_.size();
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_SUMMED))
+			if (data_[i]->replaceSummedOrFrees(replacements,'s'))
 				simplificationHappended = true;
 			srep_ += data_[i]->sRep();
 		}
@@ -478,7 +495,7 @@ private:
 		if (replacements.size() == 0) return;
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i)
-			data_[i]->replaceSummedOrFrees(replacements,TensorStanzaType::INDEX_TYPE_FREE);
+			data_[i]->replaceSummedOrFrees(replacements,'f');
 
 		refresh();
 	}
@@ -588,11 +605,11 @@ private:
 
 		VectorSizeType summed0;
 		assert(loc0 < data_.size());
-		data_[loc0]->loadSummed(summed0);
+		data_[loc0]->loadSummedOrFree(summed0,'s');
 
 		VectorSizeType summed1;
 		assert(loc1 < data_.size());
-		data_[loc1]->loadSummed(summed1);
+		data_[loc1]->loadSummedOrFree(summed1,'s');
 
 		// check that r or r* haven't been deleted
 		if (summed1.size() == 0 || summed0.size() == 0) return "";
@@ -631,8 +648,10 @@ private:
 		for (SizeType i = 0; i < start; ++i)
 			count = data_[i]->relabelFrees(count);
 
-		for (SizeType i = 0; i < ntensors; ++i)
+		for (SizeType i = 0; i < ntensors; ++i) {
+			data_[i]->refresh();
 			srep_ += data_[i]->sRep();
+		}
 	}
 
 	void shiftSummedBy(SizeType ms)

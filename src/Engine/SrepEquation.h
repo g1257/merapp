@@ -58,7 +58,7 @@ public:
 		if (frees.size() == 0) return;
 		assert(frees[0].second == 0);
 		rhs_->simplify(frees);
-		lhs_->replaceSummedOrFrees(frees,TensorStanza::INDEX_TYPE_FREE);
+		lhs_->replaceSummedOrFrees(frees,'f');
 		lhs_->refresh();
 	}
 
