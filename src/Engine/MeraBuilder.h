@@ -10,6 +10,8 @@ class MeraBuilder {
 
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
 	typedef TensorSrep::VectorSizeType VectorSizeType;
+	typedef TensorSrep::VectorPairSizeType VectorPairSizeType;
+	typedef TensorSrep::PairSizeType PairSizeType;
 
 public:
 
@@ -165,8 +167,7 @@ private:
 		tensorSrep4->contract(tensorSrep3,indicesToContract);
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		tensorSrep4->swapFree(0,site);
-		tensorSrep4->swapFree(1,site+1);
+		correctFreeIndicesBeforeContraction(*tensorSrep4, site);
 
 		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
@@ -175,6 +176,45 @@ private:
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		return tensorSrep4;
+	}
+
+	void correctFreeIndicesBeforeContraction(TensorSrep& t,
+	                                         SizeType site) const
+	{
+		if (site < 1) return;
+		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+
+		t.swapFree(1,site+1);
+		t.swapFree(0,site);
+		t.refresh();
+
+		SizeType max = site/2;
+		if (site & 1) ++max;
+		for (SizeType i = 0; i < t.size(); ++i) {
+			TensorStanza& stanza = t(i);
+			if (stanza.name() != "u") continue;
+			SizeType id = stanza.id();
+			if (id > max) continue;
+			SizeType ins = stanza.ins();
+			SizeType k = 0;
+			VectorPairSizeType replacements;
+			for (SizeType j = 0; j < ins; ++j) {
+				if (stanza.legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+					continue;
+				SizeType legTag = stanza.legTag(j,in);
+				SizeType shouldBe = 2*id + k;
+				if (shouldBe > site) break;
+				if (legTag != shouldBe)
+					replacements.push_back(PairSizeType(legTag, shouldBe));
+				++k;
+			}
+
+			stanza.replaceSummedOrFrees(replacements, 'f');
+			stanza.refresh();
+		}
+
+		t.refresh();
+		assert(t.isValid(true));
 	}
 
 	PsimagLite::String srep_;
