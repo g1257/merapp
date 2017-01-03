@@ -21,6 +21,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorStanza.h"
 #include <algorithm>
 #include "Sort.h"
+#include "IrreducibleIdentity.h"
 
 namespace Mera {
 
@@ -96,7 +97,7 @@ public:
 	}
 
 	// FIXME: Erase tensor by name/id not index
-	void eraseTensor(SizeType& identityId,
+	void eraseTensor(IrreducibleIdentity& irrIdentity,
 	                 SizeType index,
 	                 VectorSizeType* mapping)
 	{
@@ -104,8 +105,8 @@ public:
 
 		bool identityIdIncreased = false;
 		if (data_[index]->name() == "r")
-			identityIdIncreased = addIrreducibleIdentity(identityId);
-		if (identityIdIncreased) ++identityId;
+			identityIdIncreased = addIrreducibleIdentity(irrIdentity);
+		if (identityIdIncreased) irrIdentity.increase();
 
 		VectorSizeType sErased;
 		data_[index]->eraseTensor(sErased);
@@ -576,12 +577,12 @@ private:
 		}
 	}
 
-	bool addIrreducibleIdentity(SizeType identityId)
+	bool addIrreducibleIdentity(IrreducibleIdentity& irrIdentity)
 	{
 		SizeType loc1 = 0;
 		VectorSizeType summed1;
 		PsimagLite::String str("");
-		if ((str = findRandRifContracted(loc1,summed1,identityId)) == "")
+		if ((str = findRandRifContracted(loc1,summed1,irrIdentity.maxIndex())) == "")
 			return false;
 
 		data_[loc1]->setIndices(summed1,'s');

@@ -33,8 +33,7 @@ class MeraEnviron {
 
 public:
 
-	MeraEnviron(SizeType& identityId,
-	            const MeraBuilder& builder,
+	MeraEnviron(const MeraBuilder& builder,
 	            const ParametersForSolver& params)
 	    : builder_(builder),
 	      params_(params),
@@ -42,8 +41,10 @@ public:
 	{
 		SizeType counterForOutput = 100;
 		for (SizeType i = 0; i < tensorSrep_.size(); ++i) {
-			counterForOutput += environForTensor(identityId, i, counterForOutput);
+			counterForOutput += environForTensor(i, counterForOutput);
 		}
+
+		dsrep_ += irreducibleIdentity_.dimensionSrep();
 	}
 
 	const PsimagLite::String& environs() const
@@ -63,8 +64,7 @@ private:
 	MeraEnviron& operator=(const MeraEnviron&);
 
 	// find Y (environment) for this tensor
-	SizeType environForTensor(SizeType& identityId,
-	                          SizeType ind,
+	SizeType environForTensor(SizeType ind,
 	                          SizeType counterForOutput)
 	{
 		SizeType id = tensorSrep_(ind).id();
@@ -77,7 +77,7 @@ private:
 		assert(params_.hamiltonianTerm.size() == sites);
 		for (SizeType site = 0; site < sites; ++site) {
 			if (!params_.hamiltonianTerm[site]) continue;
-			TensorSrep tmp = environForTensorOneSite(identityId, ind, site);
+			TensorSrep tmp = environForTensorOneSite(ind, site);
 			vstr[site] = tmp.sRep();
 			argForOutput[site] = calcArgForOutput(vdsrep[site],tmp);
 			if (vstr[site] != "") ++terms;
@@ -96,16 +96,16 @@ private:
 
 		thisEnv += "\n";
 		envs_ += thisEnv;
+
 		return terms;
 	}
 
-	TensorSrep environForTensorOneSite(SizeType& identityId,
-	                                   SizeType ind,
+	TensorSrep environForTensorOneSite(SizeType ind,
 	                                   SizeType site) const
 	{
 		const TensorSrep& energySrep = builder_.energy(site);
 		TensorSrep tensorSrep4(energySrep);
-		tensorSrep4.eraseTensor(identityId,ind,0);
+		tensorSrep4.eraseTensor(irreducibleIdentity_,ind,0);
 		if (!tensorSrep4.isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		SizeType jnd = tensorSrep4.findConjugate(ind);
@@ -119,7 +119,7 @@ private:
 				return TensorSrep("");
 			}
 		} else if (isRootTensor) {
-			tensorSrep4.eraseTensor(identityId,jnd,0);
+			tensorSrep4.eraseTensor(irreducibleIdentity_,jnd,0);
 			if (!tensorSrep4.isValid(true))
 				throw PsimagLite::RuntimeError("Invalid tensor\n");
 		}
@@ -194,6 +194,7 @@ private:
 	TensorSrep tensorSrep_;
 	PsimagLite::String envs_;
 	PsimagLite::String dsrep_;
+	mutable IrreducibleIdentity irreducibleIdentity_;
 }; //class
 
 } //namespace
