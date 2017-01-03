@@ -30,9 +30,11 @@ public:
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	TensorBreakup(const TensorStanza& lhs,
-	              const TensorSrep& srep)
+	              const TensorSrep& srep,
+	              bool verbose = false)
 	    : lhs_(lhs),
 	      srep_(srep), // deep copy of srep
+	      verbose_(verbose),
 	      tid_(computeInitialTid()),
 	      brokenResult_("")
 	{}
@@ -235,12 +237,16 @@ private:
 
 		TensorStanza stanza0 = srep_(ind);
 		TensorStanza stanza1 = srep_(jnd);
-		std::cerr<<"We're going to break tensor ";
+		if (verbose_)
+			std::cerr<<"We're going to break tensor ";
 		PsimagLite::String c = (stanza0.isConjugate()) ? "*" : "";
-		std::cerr<<stanza0.name()<<stanza0.id()<<c<<" and ";
+		if (verbose_)
+			std::cerr<<stanza0.name()<<stanza0.id()<<c<<" and ";
 		c = (stanza1.isConjugate()) ? "*" : "";
-		std::cerr<<stanza1.name()<<stanza1.id()<<c;
-		std::cerr<<" from "<<srep_.sRep()<<"\n";
+		if (verbose_) {
+			std::cerr<<stanza1.name()<<stanza1.id()<<c;
+			std::cerr<<" from "<<srep_.sRep()<<"\n";
+		}
 
 		// build t0
 		PsimagLite::String str0("");
@@ -272,8 +278,11 @@ private:
 		// tensor jnd becomes t0
 		TensorStanza t0stanza(t0);
 		srep_.replaceStanza(jnd,t0stanza);
-		std::cerr<<"Defined="<<lhs<<"="<<rhs<<"\n";
-		std::cerr<<"Remaining="<<srep_.sRep()<<"\n";
+		if (verbose_) {
+			std::cerr<<"Defined="<<lhs<<"="<<rhs<<"\n";
+			std::cerr<<"Remaining="<<srep_.sRep()<<"\n";
+		}
+
 		tid_++;
 		return true;
 	}
@@ -381,6 +390,7 @@ private:
 
 	const TensorStanza& lhs_;
 	TensorSrep srep_;
+	bool verbose_;
 	SizeType tid_;
 	PsimagLite::String brokenResult_;
 };

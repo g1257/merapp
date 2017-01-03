@@ -71,12 +71,19 @@ public:
 	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
 	      layer_(0),
 	      indexOfRootTensor_(0),
-	      params_(params)
+	      params_(params),
+	      verbose_(false)
 	{
 		io.readline(layer_,"Layer=");
 		io.readline(ignore_,"IgnoreTerm=");
 		SizeType terms = 0;
 		io.readline(terms,"Terms=");
+		try {
+			int tmp = 0;
+			io.readline(tmp,"Verbose=");
+			verbose_ = (tmp > 0);
+		} catch (std::exception&) {}
+
 		tensorSrep_.resize(terms,0);
 
 		PsimagLite::String findStr = "Environ=";
@@ -134,9 +141,10 @@ public:
 
 			if (condSrep.maxTag('f') == 0) continue;
 
-			//			MatrixType condMatrix;
-			//			appendToMatrix(condMatrix,condSrep);
-			//			assert(isTheIdentity(condMatrix));
+//			if (!verbose_) continue;
+//			MatrixType condMatrix;
+//			appendToMatrix(condMatrix,condSrep);
+//			assert(isTheIdentity(condMatrix));
 		}
 	}
 
@@ -184,7 +192,8 @@ private:
 	{
 		SizeType terms = tensorSrep_.size();
 		MatrixType m;
-		std::cerr<<"ignore="<<ignore_<<"\n";
+		if (verbose_)
+			std::cerr<<"ignore="<<ignore_<<"\n";
 		for (SizeType i = 0; i < terms; ++i) {
 			if (i == ignore_) continue;
 			appendToMatrix(m,*(tensorSrep_[i]));
@@ -215,20 +224,22 @@ private:
 			assert(0 < s.size());
 
 			RealType e = computeRyR(mSrc);
-			std::cerr<<"r*Y(r)r="<<e<<"\n";
+			if (verbose_) std::cerr<<"r*Y(r)r="<<e<<"\n";
 
 			return s[0];
 		}
 
 		RealType tmp = PsimagLite::norm2(m);
-		std::cerr<<"About to do svd matrix with norm2= "<<tmp<<"\n";
+		if (verbose_)
+			std::cerr<<"About to do svd matrix with norm2= "<<tmp<<"\n";
 		MatrixType vt;
 		svd('S',m,s,vt);
 		page14StepL3(m,vt);
 		RealType result = 0.0;
 		for (SizeType i = 0; i < s.size(); ++i)
 			result += s[i];
-		std::cerr<<"TensorOptimizer["<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
+		if (verbose_)
+			std::cerr<<"TensorOptimizer["<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
 		return result;
 	}
 
@@ -318,11 +329,9 @@ private:
 		do {
 			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
 			ComplexOrRealType tmp = outputTensor(eq)(freeIndices);
-			//std::cerr<<"MATRIX i=" <<rc.first<<" j="<<rc.second<<"\n";
 			m(rc.first,rc.second) += tmp;
 			count++;
 		} while (TensorEvalType::nextIndex(freeIndices,dimensions,total));
-		//std::cerr<<count<<"\n";
 	}
 
 	void prepareFreeIndices(VectorDirType& directions,
@@ -492,6 +501,7 @@ private:
 	SizeType layer_;
 	SizeType indexOfRootTensor_;
 	const ParametersForSolverType& params_;
+	bool verbose_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
