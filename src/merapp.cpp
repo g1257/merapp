@@ -46,7 +46,7 @@ void main1(const Mera::MeraBuilder& builder,
 	PsimagLite::String hString = ttos(params.h);
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 
-	Mera::MeraEnviron environ(builder,params);
+	Mera::MeraEnviron environ(builder,params,dsrep);
 
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep()<<"\n";
 	std::cout<<"MERA="<<srep<<"\n";

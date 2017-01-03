@@ -34,17 +34,18 @@ class MeraEnviron {
 public:
 
 	MeraEnviron(const MeraBuilder& builder,
-	            const ParametersForSolver& params)
+	            const ParametersForSolver& params,
+	            PsimagLite::String dimensionSrep)
 	    : builder_(builder),
 	      params_(params),
+	      dimensionSrep_(dimensionSrep),
 	      tensorSrep_(builder()), envs_(""), dsrep_("")
 	{
+		sizeOfRoot_ = findSizeOfRoot();
 		SizeType counterForOutput = 100;
 		for (SizeType i = 0; i < tensorSrep_.size(); ++i) {
 			counterForOutput += environForTensor(i, counterForOutput);
 		}
-
-		dsrep_ += irreducibleIdentity_.dimensionSrep();
 	}
 
 	const PsimagLite::String& environs() const
@@ -87,11 +88,14 @@ private:
 		thisEnv += "Terms=" + ttos(terms) + "\n";
 		thisEnv += "IgnoreTerm=" + ttos(2*sites+1) + "\n";
 		thisEnv += "Layer=0\n"; // FIXME
+		bool isRootTensor = (tensorSrep_(ind).name() == "r");
 		for (SizeType site = 0; site < sites; ++site) {
 			if (vstr[site] == "") continue;
 			PsimagLite::String tmp = "u" + ttos(counterForOutput++);
 			thisEnv += "Environ=" + tmp + argForOutput[site] + "=" + vstr[site] + "\n";
 			dsrep_ += tmp + vdsrep[site];
+			if (isRootTensor)
+				irreducibleIdentityDsrep(tmp + argForOutput[site], vstr[site]);
 		}
 
 		thisEnv += "\n";
@@ -120,6 +124,8 @@ private:
 			}
 		} else if (isRootTensor) {
 			tensorSrep4.eraseTensor(irreducibleIdentity_,jnd,0);
+			// use energySrep to compute r size
+			//
 			if (!tensorSrep4.isValid(true))
 				throw PsimagLite::RuntimeError("Invalid tensor\n");
 		}
@@ -189,8 +195,122 @@ private:
 		}
 	}
 
+	void irreducibleIdentityDsrep(PsimagLite::String left, PsimagLite::String right)
+	{
+		TensorSrep rightSrep(right);
+		SizeType ntensors = rightSrep.size();
+		int indexOfIdentity = -1;
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (rightSrep(i).name() == "i") {
+				indexOfIdentity = i;
+				break;
+			}
+		}
+
+		if (indexOfIdentity < 0) return;
+
+		static const TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+
+		TensorStanza leftSrep(left);
+		SizeType ins = rightSrep(indexOfIdentity).ins();
+		VectorSizeType frees;
+		for (SizeType i = 0; i < ins; ++i) {
+			if (rightSrep(indexOfIdentity).legType(i,in) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			frees.push_back(rightSrep(indexOfIdentity).legTag(i,in));
+		}
+
+		VectorSizeType frees2;
+		ins = leftSrep.ins();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (leftSrep.legType(i,in) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			SizeType tag = leftSrep.legTag(i,in);
+			if (std::find(frees.begin(), frees.end(), tag) != frees.end())
+				continue;
+			frees2.push_back(tag);
+		}
+
+		// find dimensions of frees2
+		SizeType sizeWithoutIrrIdentity = 1;
+		for (SizeType i = 0; i < frees2.size(); ++i) {
+			sizeWithoutIrrIdentity *= findDimension(rightSrep, frees2[i]);
+		}
+
+		if (sizeOfRoot_ % sizeWithoutIrrIdentity != 0)
+			throw PsimagLite::RuntimeError("irreducibleIdentityDsrep\n");
+
+		SizeType tmp = sizeOfRoot_/sizeWithoutIrrIdentity;
+		SizeType id = rightSrep(indexOfIdentity).id();
+		dsrep_ += "i" + ttos(id) + "(D" + ttos(tmp) + "|D" + ttos(tmp) + ")";
+	}
+
+	SizeType findDimension(const TensorSrep& srep, SizeType indexOfFree) const
+	{
+		static const TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		static const TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
+
+		SizeType ntensors = srep.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			SizeType ins = srep(i).ins();
+			for (SizeType j = 0; j < ins; ++j) {
+				if (srep(i).legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+					continue;
+				if (srep(i).legTag(j,in) != indexOfFree)
+					continue;
+				return findDimension(srep(i).name(), srep(i).id(), in, j);
+			}
+
+			SizeType outs = srep(i).outs();
+			for (SizeType j = 0; j < outs; ++j) {
+				if (srep(i).legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
+					continue;
+				if (srep(i).legTag(j,out) != indexOfFree)
+					continue;
+				return findDimension(srep(i).name(), srep(i).id(), out, j);
+			}
+		}
+
+		throw PsimagLite::RuntimeError("findDimension(1)\n");
+	}
+
+	SizeType findDimension(PsimagLite::String name,
+	                       SizeType id,
+	                       TensorStanza::IndexDirectionEnum inOrOut,
+	                       SizeType legIndex) const
+	{
+		SizeType ntensors = dimensionSrep_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (dimensionSrep_(i).name() != name) continue;
+			if (dimensionSrep_(i).id() != id) continue;
+
+			return dimensionSrep_(i).legTag(legIndex, inOrOut);
+		}
+
+		throw PsimagLite::RuntimeError("findDimension(2)\n");
+	}
+
+	SizeType findSizeOfRoot() const
+	{
+		static const TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
+		SizeType ntensors = dimensionSrep_.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			if (dimensionSrep_(i).name() != "r") continue;
+
+			SizeType ins = dimensionSrep_(i).ins();
+			SizeType ret = 1;
+			for (SizeType j = 0; j < ins; ++j)
+				ret *= dimensionSrep_(i).legTag(j,in);
+			return ret;
+		}
+
+		throw PsimagLite::RuntimeError("findSizeOfRoot\n");
+	}
+
 	const MeraBuilder& builder_;
 	const ParametersForSolver& params_;
+	TensorSrep dimensionSrep_;
+	SizeType sizeOfRoot_;
 	TensorSrep tensorSrep_;
 	PsimagLite::String envs_;
 	PsimagLite::String dsrep_;
