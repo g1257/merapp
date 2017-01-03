@@ -47,8 +47,10 @@ void main1(const Mera::MeraBuilder& builder,
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	dsrep += "i0(" + hString + "|" + hString + ")";
 
-	Mera::MeraEnviron environ(builder,params);
+	SizeType identityId = 0;
+	Mera::MeraEnviron environ(identityId,builder,params);
 
+	std::cout<<"IDENTITY_ID="<<identityId<<"\n";
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep()<<"\n";
 	std::cout<<"MERA="<<srep<<"\n";
 

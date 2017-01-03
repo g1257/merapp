@@ -96,11 +96,17 @@ public:
 	}
 
 	// FIXME: Erase tensor by name/id not index
-	void eraseTensor(SizeType index, VectorSizeType* mapping = 0)
+	void eraseTensor(SizeType& identityId,
+	                 SizeType index,
+	                 VectorSizeType* mapping)
 	{
 		assert(index < data_.size());
+
+		bool identityIdIncreased = false;
 		if (data_[index]->name() == "r")
-			addIrreducibleIdentity();
+			identityIdIncreased = addIrreducibleIdentity(identityId);
+		if (identityIdIncreased) ++identityId;
+
 		VectorSizeType sErased;
 		data_[index]->eraseTensor(sErased);
 		SizeType ntensors = data_.size();
@@ -570,13 +576,13 @@ private:
 		}
 	}
 
-	void addIrreducibleIdentity()
+	bool addIrreducibleIdentity(SizeType identityId)
 	{
 		SizeType loc1 = 0;
 		VectorSizeType summed1;
 		PsimagLite::String str("");
-		if ((str = findRandRifContracted(loc1,summed1)) == "")
-			return;
+		if ((str = findRandRifContracted(loc1,summed1,identityId)) == "")
+			return false;
 
 		data_[loc1]->setIndices(summed1,'s');
 		data_.push_back(new TensorStanzaType(str));
@@ -585,10 +591,12 @@ private:
 		srep_ = "";
 		for (SizeType i = 0; i < ntensors; ++i)
 			srep_ += data_[i]->sRep();
+		return true;
 	}
 
 	PsimagLite::String findRandRifContracted(SizeType& loc1,
-	                                         VectorSizeType& usummed1) const
+	                                         VectorSizeType& usummed1,
+	                                         SizeType identityId) const
 	{
 		SizeType ntensors = data_.size();
 		SizeType flag0 = 0;
@@ -629,7 +637,7 @@ private:
 
 		// one index summed must be common to r and r*
 		flag0 = 0;
-		PsimagLite::String str = "i(s";
+		PsimagLite::String str = "i" + ttos(identityId) + "(s";
 		for (SizeType i = 0; i < summed0.size(); ++i) {
 			for (SizeType j = 0; j < summed1.size(); ++j) {
 				if (summed0[i] == summed1[j]) {
