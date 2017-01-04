@@ -182,7 +182,6 @@ private:
 	                                         SizeType site) const
 	{
 		if (site < 1) return;
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 
 		t.swapFree(1,site+1);
 		t.swapFree(0,site);
@@ -199,9 +198,9 @@ private:
 			SizeType k = 0;
 			VectorPairSizeType replacements;
 			for (SizeType j = 0; j < ins; ++j) {
-				if (stanza.legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+				if (stanza.legType(j) != TensorStanza::INDEX_TYPE_FREE)
 					continue;
-				SizeType legTag = stanza.legTag(j,in);
+				SizeType legTag = stanza.legTag(j);
 				SizeType shouldBe = 2*id + k;
 				if (shouldBe > site) break;
 				if (legTag != shouldBe)

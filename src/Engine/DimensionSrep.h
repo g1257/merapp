@@ -29,29 +29,17 @@ private:
 
 	void alterFrees(SizeType d)
 	{
-		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
-		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
-
 		for (SizeType i = 0; i < dsrep_.size(); ++i) {
 			TensorStanzaType ts = dsrep_(i);
 			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
 
-			SizeType ins = ts.ins();
-			for (SizeType j = 0; j < ins; ++j) {
-				TensorStanzaType::IndexTypeEnum t = ts.legType(j,in);
+			SizeType legs = ts.legs();
+			for (SizeType j = 0; j < legs; ++j) {
+				TensorStanzaType::IndexTypeEnum t = ts.legType(j);
 				if (t == TensorStanzaType::INDEX_TYPE_FREE) {
-					dsrep_.legTypeChar(i,j,in) = 'D';
-					dsrep_.legTag(i,j,in) = d;
-				}
-			}
-
-			SizeType outs = ts.outs();
-			for (SizeType j = 0; j < outs; ++j) {
-				TensorStanzaType::IndexTypeEnum t = ts.legType(j,out);
-				if (t == TensorStanzaType::INDEX_TYPE_FREE) {
-					dsrep_.legTypeChar(i,j,out) = 'D';
-					dsrep_.legTag(i,j,out) = d;
+					dsrep_.legTypeChar(i,j) = 'D';
+					dsrep_.legTag(i,j) = d;
 				}
 			}
 		}
@@ -61,9 +49,6 @@ private:
 
 	void alterSummed()
 	{
-		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
-		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
-
 		for (SizeType i = 0; i < dsrep_.size(); ++i) {
 			TensorStanzaType ts = dsrep_(i);
 			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
@@ -73,9 +58,9 @@ private:
 			VectorSizeType dim(ins,0);
 			SizeType counter = 0;
 			for (SizeType j = 0; j < ins; ++j) {
-				TensorStanzaType::IndexTypeEnum t = ts.legType(j,in);
+				TensorStanzaType::IndexTypeEnum t = ts.legType(j);
 				if (t != TensorStanzaType::INDEX_TYPE_DIM) continue;
-				dim[j] = ts.legTag(j,in);
+				dim[j] = ts.legTag(j);
 				counter++;
 			}
 
@@ -83,19 +68,19 @@ private:
 
 			SizeType outs = ts.outs();
 			for (SizeType j = 0; j < outs; ++j) {
-				TensorStanzaType::IndexTypeEnum t = ts.legType(j,out);
+				TensorStanzaType::IndexTypeEnum t = ts.legType(j + ins);
 				if (t != TensorStanzaType::INDEX_TYPE_SUMMED) continue;
-				dsrep_.legTypeChar(i,j,out) = 'D';
-				SizeType s = dsrep_.legTag(i,j,out);
+				dsrep_.legTypeChar(i,j + ins) = 'D';
+				SizeType s = dsrep_.legTag(i,j + ins);
 				if (outs == 1) {
-					dsrep_.legTag(i,j,out) = truncateDimension(productOf(dim));
+					dsrep_.legTag(i,j + ins) = truncateDimension(productOf(dim));
 				} else if (outs == dim.size()) {
-					dsrep_.legTag(i,j,out) = dim[j];
+					dsrep_.legTag(i,j + ins) = dim[j];
 				} else {
 					throw PsimagLite::RuntimeError("DimensionSrep: outs > ins not supported\n");
 				}
 
-				replaceSummed(s,dsrep_.legTag(i,j,out));
+				replaceSummed(s,dsrep_.legTag(i,j + ins));
 			}
 		}
 
@@ -115,30 +100,18 @@ private:
 
 	void replaceSummed(SizeType s, SizeType val)
 	{
-		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
-		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
-
 		for (SizeType i = 0; i < dsrep_.size(); ++i) {
 			TensorStanzaType ts = dsrep_(i);
 			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
 
-			SizeType ins = ts.ins();
-			for (SizeType j = 0; j < ins; ++j) {
-				TensorStanzaType::IndexTypeEnum t = ts.legType(j,in);
+			SizeType legs = ts.legs();
+			for (SizeType j = 0; j < legs; ++j) {
+				TensorStanzaType::IndexTypeEnum t = ts.legType(j);
 				if (t != TensorStanzaType::INDEX_TYPE_SUMMED) continue;
-				if (ts.legTag(j,in) != s) continue;
-				dsrep_.legTypeChar(i,j,in) = 'D';
-				dsrep_.legTag(i,j,in) = val;
-			}
-
-			SizeType outs = ts.outs();
-			for (SizeType j = 0; j < outs; ++j) {
-				TensorStanzaType::IndexTypeEnum t = ts.legType(j,out);
-				if (t != TensorStanzaType::INDEX_TYPE_SUMMED) continue;
-				if (ts.legTag(j,out) != s) continue;
-				dsrep_.legTypeChar(i,j,out) = 'D';
-				dsrep_.legTag(i,j,out) = val;
+				if (ts.legTag(j) != s) continue;
+				dsrep_.legTypeChar(i,j) = 'D';
+				dsrep_.legTag(i,j) = val;
 			}
 		}
 	}

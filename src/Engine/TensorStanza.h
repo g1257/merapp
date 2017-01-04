@@ -373,18 +373,22 @@ public:
 
 	SizeType id() const { return id_; }
 
+	SizeType legs() const { return insSi_.size() + outsSi_.size(); }
+
 	SizeType ins() const { return insSi_.size(); }
 
 	SizeType outs() const { return outsSi_.size(); }
 
-	IndexTypeEnum legType(SizeType ind, IndexDirectionEnum dir) const
+	IndexTypeEnum legType(SizeType ind) const
 	{
 		char c = '\0';
+		SizeType ins = insSi_.size();
+		IndexDirectionEnum dir = (ind < ins) ? INDEX_DIR_IN : INDEX_DIR_OUT;
 		if (dir == INDEX_DIR_IN) {
-			assert(ind < insSi_.size());
+			assert(ind < ins);
 			c = insSi_[ind].first;
 		}  else {
-			assert(ind < outsSi_.size());
+			assert(ind - ins < outsSi_.size());
 			c = outsSi_[ind].first;
 		}
 
@@ -394,44 +398,42 @@ public:
 		return INDEX_TYPE_DUMMY;
 	}
 
-	char& legTypeChar(SizeType ind, IndexDirectionEnum dir)
+	char& legTypeChar(SizeType ind)
 	{
-		if (dir == INDEX_DIR_IN) {
+		SizeType ins = insSi_.size();
+		if (ind < ins) {
 			assert(ind < insSi_.size());
 			return insSi_[ind].first;
 		}
 
-		assert(ind < outsSi_.size());
-		return outsSi_[ind].first;
+		assert(ind - ins < outsSi_.size());
+		return outsSi_[ind - ins].first;
 	}
 
-	void refresh()
+	const SizeType& legTag(SizeType ind) const
 	{
-		srep_ = srepFromObject();
-		maxFree_ = maxIndex('f');
-		maxSummed_ = maxIndex('s');
-	}
-
-	const SizeType& legTag(SizeType ind, IndexDirectionEnum dir) const
-	{
+		SizeType ins = insSi_.size();
+		IndexDirectionEnum dir = (ind < ins) ? INDEX_DIR_IN : INDEX_DIR_OUT;
 		if (dir == INDEX_DIR_IN) {
 			assert(ind < insSi_.size());
 			return insSi_[ind].second;
 		}
 
-		assert(ind < outsSi_.size());
-		return outsSi_[ind].second;
+		assert(ind - ins < outsSi_.size());
+		return outsSi_[ind - ins].second;
 	}
 
-	SizeType& legTag(SizeType ind, IndexDirectionEnum dir)
+	SizeType& legTag(SizeType ind)
 	{
+		SizeType ins = insSi_.size();
+		IndexDirectionEnum dir = (ind < ins) ? INDEX_DIR_IN : INDEX_DIR_OUT;
 		if (dir == INDEX_DIR_IN) {
 			assert(ind < insSi_.size());
 			return insSi_[ind].second;
 		}
 
-		assert(ind < outsSi_.size());
-		return outsSi_[ind].second;
+		assert(ind - ins < outsSi_.size());
+		return outsSi_[ind - ins].second;
 	}
 
 	TensorTypeEnum type() const { return type_; }
@@ -454,6 +456,13 @@ public:
 		if (t == INDEX_TYPE_FREE) return "f";
 		if (t == INDEX_TYPE_DIM) return "D";
 		return "d";
+	}
+
+	void refresh()
+	{
+		srep_ = srepFromObject();
+		maxFree_ = maxIndex('f');
+		maxSummed_ = maxIndex('s');
 	}
 
 //	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)

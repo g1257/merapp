@@ -139,19 +139,17 @@ public:
 	const PsimagLite::String& sRep() const { return srep_; }
 
 	char& legTypeChar(SizeType i,
-	                  SizeType ind,
-	                  TensorStanzaType::IndexDirectionEnum dir)
+	                  SizeType ind)
 	{
 		assert(i < data_.size());
-		return data_[i]->legTypeChar(ind,dir);
+		return data_[i]->legTypeChar(ind);
 	}
 
 	SizeType& legTag(SizeType i,
-	                 SizeType ind,
-	                 TensorStanzaType::IndexDirectionEnum dir)
+	                 SizeType ind)
 	{
 		assert(i < data_.size());
-		return data_[i]->legTag(ind,dir);
+		return data_[i]->legTag(ind);
 	}
 
 	void refresh()
@@ -184,32 +182,18 @@ public:
 
 	void swapFree(SizeType ind, SizeType jnd)
 	{
-		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
-		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType legs = data_[i]->ins();
+			SizeType legs = data_[i]->legs();
 			for (SizeType j = 0; j < legs; ++j) {
-				if (data_[i]->legType(j,in) != TensorStanzaType::INDEX_TYPE_FREE)
+				if (data_[i]->legType(j) != TensorStanzaType::INDEX_TYPE_FREE)
 					continue;
 
-				SizeType index = data_[i]->legTag(j,in);
+				SizeType index = data_[i]->legTag(j);
 				if (index == ind)
-					data_[i]->legTag(j,in) = jnd;
+					data_[i]->legTag(j) = jnd;
 				if (index == jnd)
-					data_[i]->legTag(j,in) = ind;
-			}
-
-			legs = data_[i]->outs();
-			for (SizeType j = 0; j < legs; ++j) {
-				if (data_[i]->legType(j,out) != TensorStanzaType::INDEX_TYPE_FREE)
-					continue;
-
-				SizeType index = data_[i]->legTag(j,out);
-				if (index == ind)
-					data_[i]->legTag(j,out) = jnd;
-				if (index == jnd)
-					data_[i]->legTag(j,out) = ind;
+					data_[i]->legTag(j) = ind;
 			}
 		}
 
@@ -233,9 +217,6 @@ public:
 
 	bool isValid(bool verbose) const
 	{
-		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
-		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
-
 		VectorSizeType summedIndices(maxTag('s')+1,0);
 		VectorSizeType freeIndices(maxTag('f')+1,0);
 
@@ -243,21 +224,13 @@ public:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
-			SizeType ins = data_[i]->ins();
-			SizeType outs = data_[i]->outs();
-			if (ins + outs == 0) return false;
-			for (SizeType j = 0; j < ins; ++j) {
-				if (data_[i]->legType(j,in) == TensorStanzaType::INDEX_TYPE_SUMMED)
-					summedIndices[data_[i]->legTag(j,in)]++;
-				else if (data_[i]->legType(j,in) == TensorStanzaType::INDEX_TYPE_FREE)
-					freeIndices[data_[i]->legTag(j,in)]++;
-			}
-
-			for (SizeType j = 0; j < outs; ++j) {
-				if (data_[i]->legType(j,out) == TensorStanzaType::INDEX_TYPE_SUMMED)
-					summedIndices[data_[i]->legTag(j,out)]++;
-				else if (data_[i]->legType(j,out) == TensorStanzaType::INDEX_TYPE_FREE)
-					freeIndices[data_[i]->legTag(j,out)]++;
+			SizeType legs = data_[i]->legs();
+			if (legs == 0) return false;
+			for (SizeType j = 0; j < legs; ++j) {
+				if (data_[i]->legType(j) == TensorStanzaType::INDEX_TYPE_SUMMED)
+					summedIndices[data_[i]->legTag(j)]++;
+				else if (data_[i]->legType(j) == TensorStanzaType::INDEX_TYPE_FREE)
+					freeIndices[data_[i]->legTag(j)]++;
 			}
 		}
 
@@ -427,25 +400,15 @@ private:
 	{
 		simplify();
 
-		TensorStanzaType::IndexDirectionEnum in = TensorStanzaType::INDEX_DIR_IN;
-		TensorStanzaType::IndexDirectionEnum out = TensorStanzaType::INDEX_DIR_OUT;
-
 		VectorSizeType frees(maxTag('f') + 1,0);
 		SizeType ntensors = data_.size();
 		SizeType counter = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType legs = data_[i]->ins();
+			SizeType legs = data_[i]->legs();
 			for (SizeType j = 0; j < legs; ++j) {
-				if (data_[i]->legType(j,in) != TensorStanzaType::INDEX_TYPE_FREE)
+				if (data_[i]->legType(j) != TensorStanzaType::INDEX_TYPE_FREE)
 					continue;
-				frees[data_[i]->legTag(j,in)] = counter++;
-			}
-
-			legs = data_[i]->outs();
-			for (SizeType j = 0; j < legs; ++j) {
-				if (data_[i]->legType(j,out) != TensorStanzaType::INDEX_TYPE_FREE)
-					continue;
-				frees[data_[i]->legTag(j,out)] = counter++;
+				frees[data_[i]->legTag(j)] = counter++;
 			}
 		}
 
@@ -533,16 +496,17 @@ private:
 	                         SizeType ind,
 	                         SizeType jnd) const
 	{
+		SizeType ins = data_[ind]->ins();
 		SizeType outs = data_[ind]->outs();
 		if (outs != data_[jnd]->outs()) return false;
 
 		for (SizeType i = 0; i < outs; ++i) {
-			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_OUT) !=
-			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
-			if (data_[jnd]->legType(i,TensorStanzaType::INDEX_DIR_OUT) !=
-			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
-			SizeType s1 = data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
-			SizeType s2 = data_[jnd]->legTag(i,TensorStanzaType::INDEX_DIR_OUT);
+			if (data_[ind]->legType(i + ins) != TensorStanzaType::INDEX_TYPE_SUMMED)
+				return false;
+			if (data_[jnd]->legType(i + ins) != TensorStanzaType::INDEX_TYPE_SUMMED)
+				return false;
+			SizeType s1 = data_[ind]->legTag(i + ins);
+			SizeType s2 = data_[jnd]->legTag(i + ins);
 			replacements[i] = PairSizeType((s1 < s2) ? s2 : s1,(s1 < s2) ? s1 : s2);
 		}
 
@@ -554,12 +518,11 @@ private:
 		SizeType ins = data_[ind]->ins();
 		if (ins != data_[jnd]->ins()) return false;
 		for (SizeType i = 0; i < ins; ++i) {
-			if (data_[ind]->legType(i,TensorStanzaType::INDEX_DIR_IN) !=
-			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
-			if (data_[jnd]->legType(i,TensorStanzaType::INDEX_DIR_IN) !=
-			        TensorStanzaType::INDEX_TYPE_SUMMED) return false;
-			if (data_[ind]->legTag(i,TensorStanzaType::INDEX_DIR_IN) !=
-			        data_[jnd]->legTag(i,TensorStanzaType::INDEX_DIR_IN))
+			if (data_[ind]->legType(i) != TensorStanzaType::INDEX_TYPE_SUMMED)
+				return false;
+			if (data_[jnd]->legType(i) != TensorStanzaType::INDEX_TYPE_SUMMED)
+				return false;
+			if (data_[ind]->legTag(i) != data_[jnd]->legTag(i))
 				return false;
 		}
 

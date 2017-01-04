@@ -173,12 +173,10 @@ private:
 	                      VectorStringType& outs,
 	                      const TensorStanza& stanza) const
 	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		for (SizeType i = 0; i < stanza.ins(); ++i) {
-			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_FREE) continue;
-			PsimagLite::String tmp = "f" + ttos(stanza.legTag(i,in));
+		SizeType insNumber = stanza.ins();
+		for (SizeType i = 0; i < insNumber; ++i) {
+			if (stanza.legType(i) != TensorStanza::INDEX_TYPE_FREE) continue;
+			PsimagLite::String tmp = "f" + ttos(stanza.legTag(i));
 			if (stanza.isConjugate())
 				outs.push_back(tmp);
 			else
@@ -186,8 +184,8 @@ private:
 		}
 
 		for (SizeType i = 0; i < stanza.outs(); ++i) {
-			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_FREE) continue;
-			PsimagLite::String tmp = "f" + ttos(stanza.legTag(i,out));
+			if (stanza.legType(i + insNumber) != TensorStanza::INDEX_TYPE_FREE) continue;
+			PsimagLite::String tmp = "f" + ttos(stanza.legTag(i + insNumber));
 			if (stanza.isConjugate())
 				ins.push_back(tmp);
 			else
@@ -209,23 +207,21 @@ private:
 
 		if (indexOfIdentity < 0) return;
 
-		static const TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-
 		TensorStanza leftSrep(left);
 		SizeType ins = rightSrep(indexOfIdentity).ins();
 		VectorSizeType frees;
 		for (SizeType i = 0; i < ins; ++i) {
-			if (rightSrep(indexOfIdentity).legType(i,in) != TensorStanza::INDEX_TYPE_FREE)
+			if (rightSrep(indexOfIdentity).legType(i) != TensorStanza::INDEX_TYPE_FREE)
 				continue;
-			frees.push_back(rightSrep(indexOfIdentity).legTag(i,in));
+			frees.push_back(rightSrep(indexOfIdentity).legTag(i));
 		}
 
 		VectorSizeType frees2;
 		ins = leftSrep.ins();
 		for (SizeType i = 0; i < ins; ++i) {
-			if (leftSrep.legType(i,in) != TensorStanza::INDEX_TYPE_FREE)
+			if (leftSrep.legType(i) != TensorStanza::INDEX_TYPE_FREE)
 				continue;
-			SizeType tag = leftSrep.legTag(i,in);
+			SizeType tag = leftSrep.legTag(i);
 			if (std::find(frees.begin(), frees.end(), tag) != frees.end())
 				continue;
 			frees2.push_back(tag);
@@ -247,27 +243,15 @@ private:
 
 	SizeType findDimension(const TensorSrep& srep, SizeType indexOfFree) const
 	{
-		static const TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		static const TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
 		SizeType ntensors = srep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType ins = srep(i).ins();
-			for (SizeType j = 0; j < ins; ++j) {
-				if (srep(i).legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+			SizeType legs = srep(i).legs();
+			for (SizeType j = 0; j < legs; ++j) {
+				if (srep(i).legType(j) != TensorStanza::INDEX_TYPE_FREE)
 					continue;
-				if (srep(i).legTag(j,in) != indexOfFree)
+				if (srep(i).legTag(j) != indexOfFree)
 					continue;
-				return findDimension(srep(i).name(), srep(i).id(), in, j);
-			}
-
-			SizeType outs = srep(i).outs();
-			for (SizeType j = 0; j < outs; ++j) {
-				if (srep(i).legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
-					continue;
-				if (srep(i).legTag(j,out) != indexOfFree)
-					continue;
-				return findDimension(srep(i).name(), srep(i).id(), out, j);
+				return findDimension(srep(i).name(), srep(i).id(), j);
 			}
 		}
 
@@ -276,7 +260,6 @@ private:
 
 	SizeType findDimension(PsimagLite::String name,
 	                       SizeType id,
-	                       TensorStanza::IndexDirectionEnum inOrOut,
 	                       SizeType legIndex) const
 	{
 		SizeType ntensors = dimensionSrep_.size();
@@ -284,7 +267,7 @@ private:
 			if (dimensionSrep_(i).name() != name) continue;
 			if (dimensionSrep_(i).id() != id) continue;
 
-			return dimensionSrep_(i).legTag(legIndex, inOrOut);
+			return dimensionSrep_(i).legTag(legIndex);
 		}
 
 		throw PsimagLite::RuntimeError("findDimension(2)\n");
@@ -292,7 +275,6 @@ private:
 
 	SizeType findSizeOfRoot() const
 	{
-		static const TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
 		SizeType ntensors = dimensionSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (dimensionSrep_(i).name() != "r") continue;
@@ -300,7 +282,7 @@ private:
 			SizeType ins = dimensionSrep_(i).ins();
 			SizeType ret = 1;
 			for (SizeType j = 0; j < ins; ++j)
-				ret *= dimensionSrep_(i).legTag(j,in);
+				ret *= dimensionSrep_(i).legTag(j);
 			return ret;
 		}
 

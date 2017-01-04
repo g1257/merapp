@@ -97,8 +97,7 @@ private:
 					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (I" + label;
 					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]) + ");\n";
-					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) ==
-					        TensorStanza::INDEX_TYPE_FREE) {
+					if (tensorSrep(i).legType(j) == TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (I" + label + "F");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
@@ -119,8 +118,7 @@ private:
 					buffer_ += "\\coordinate (O" + label;
 					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 					buffer_ += ttos(y[i] + doy) + ");\n";
-					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_OUT) ==
-					        TensorStanza::INDEX_TYPE_FREE) {
+					if (tensorSrep(i).legType(j + ins) == TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (O" + label + "F");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(y[i]+1.5*dy) + ");\n";
@@ -149,8 +147,7 @@ private:
 					RealType xtmp = a*j + x[i];
 					buffer_ += "\\coordinate (I" + label;
 					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]) + ");\n";
-					if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) ==
-					        TensorStanza::INDEX_TYPE_FREE) {
+					if (tensorSrep(i).legType(j) == TensorStanza::INDEX_TYPE_FREE) {
 						buffer_ += ("\\coordinate (I" + label + "F");
 						buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 						buffer_ += ttos(y[i]-0.5*dy-1.5*ysign) + ");\n";
@@ -289,14 +286,13 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType ins = tensorSrep(i).ins();
 			for (SizeType j = 0; j < ins; ++j) {
-				if (tensorSrep(i).legType(j,TensorStanza::INDEX_DIR_IN) !=
-				        TensorStanza::INDEX_TYPE_SUMMED) continue;
+				if (tensorSrep(i).legType(j) != TensorStanza::INDEX_TYPE_SUMMED) continue;
 				SizeType k1 = absoluteLegNumber(i,j,ntensors);
 				PsimagLite::String label1 = "(I";
 				label1 += tensorSrep(i).label();
 				label1 += ttos(k1) + ")";
 
-				SizeType what = tensorSrep(i).legTag(j,TensorStanza::INDEX_DIR_IN);
+				SizeType what = tensorSrep(i).legTag(j);
 				PairSizeType k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_OUT);
 				if (k.first < ntensors) {
 					PsimagLite::String label2 = "(O";
@@ -325,12 +321,13 @@ private:
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (i == selfInd) continue;
-			SizeType s = (dir == TensorStanza::INDEX_DIR_IN) ?
-			            tensorSrep(i).ins() : tensorSrep(i).outs();
+			SizeType ins = tensorSrep(i).ins();
+			SizeType s = (dir == TensorStanza::INDEX_DIR_IN) ? ins : tensorSrep(i).outs();
+			SizeType offset = (dir == TensorStanza::INDEX_DIR_IN) ? 0 : ins;
 			for (SizeType j = 0; j < s; ++j) {
-				if (tensorSrep(i).legType(j,dir) !=
-				        TensorStanza::INDEX_TYPE_SUMMED) continue;
-				if (tensorSrep(i).legTag(j,dir) == what)
+				if (tensorSrep(i).legType(j + offset) != TensorStanza::INDEX_TYPE_SUMMED)
+					continue;
+				if (tensorSrep(i).legTag(j + offset) == what)
 					return PairSizeType(i,j);
 			}
 		}
@@ -371,21 +368,11 @@ private:
 
 	void findAllSummedLegTagOf(VectorSizeType& legs, const TensorStanza& stanza) const
 	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		SizeType ins = stanza.ins();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+		SizeType legsNumber = stanza.legs();
+		for (SizeType i = 0; i < legsNumber; ++i) {
+			if (stanza.legType(i) != TensorStanza::INDEX_TYPE_SUMMED)
 				continue;
-			legs.push_back(stanza.legTag(i,in));
-		}
-
-		SizeType outs = stanza.outs();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
-				continue;
-			legs.push_back(stanza.legTag(i,out));
+			legs.push_back(stanza.legTag(i));
 		}
 	}
 
@@ -393,25 +380,15 @@ private:
 	                                 SizeType indexOfH,
 	                                 const TensorSrep& tSrep) const
 	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
 		SizeType ntensors = tSrep.size();
 		for (SizeType j = 0; j < ntensors; ++j) {
 			if (j == indexOfH) continue;
 			const TensorStanza& stanza = tSrep(j);
-			SizeType ins = stanza.ins();
-			for (SizeType i = 0; i < ins; ++i) {
-				if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+			SizeType legs = stanza.legs();
+			for (SizeType i = 0; i < legs; ++i) {
+				if (stanza.legType(i) != TensorStanza::INDEX_TYPE_SUMMED)
 					continue;
-				if (legTag != stanza.legTag(i,in)) continue;
-				return j;
-			}
-
-			SizeType outs = stanza.outs();
-			for (SizeType i = 0; i < outs; ++i) {
-				if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
-					continue;
-				if (legTag != stanza.legTag(i,out)) continue;
+				if (legTag != stanza.legTag(i)) continue;
 				return j;
 			}
 		}
