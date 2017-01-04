@@ -238,19 +238,14 @@ private:
 			SizeType ind = x - tensorNameIds_.begin();
 			assert(ind < tensors_.size());
 
-			SizeType ins = td(i).ins();
-			SizeType outs = td(i).outs();
-			VectorSizeType dimensions(ins + outs);
-			for (SizeType j = 0; j < ins; ++j) {
-				SizeType legTag = td(i).legTag(j,TensorStanza::INDEX_DIR_IN);
+			SizeType legs = td(i).legs();
+			VectorSizeType dimensions(legs,0);
+			for (SizeType j = 0; j < legs; ++j) {
+				SizeType legTag = td(i).legTag(j);
 				dimensions[j] = legTag;
 			}
 
-			for (SizeType j = 0; j < outs; ++j) {
-				SizeType legTag = td(i).legTag(j,TensorStanza::INDEX_DIR_OUT);
-				dimensions[j+ins] = legTag;
-			}
-
+			SizeType ins = td(i).ins();
 			assert(ind < tensors_.size());
 			tensors_[ind] = new TensorType(dimensions,ins);
 			if (name == "h") {

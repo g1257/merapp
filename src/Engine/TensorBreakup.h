@@ -94,18 +94,10 @@ private:
 	void getAllStags(VectorSizeType& v0,
 	                 const TensorStanza& stanza0) const
 	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-		for (SizeType i = 0; i < stanza0.ins(); ++i) {
-			if (stanza0.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+		for (SizeType i = 0; i < stanza0.legs(); ++i) {
+			if (stanza0.legType(i) != TensorStanza::INDEX_TYPE_SUMMED)
 				continue;
-			v0.push_back(stanza0.legTag(i,in));
-		}
-
-		for (SizeType i = 0; i < stanza0.outs(); ++i) {
-			if (stanza0.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
-				continue;
-			v0.push_back(stanza0.legTag(i,out));
+			v0.push_back(stanza0.legTag(i));
 		}
 	}
 
@@ -114,17 +106,15 @@ private:
 	                  const VectorSizeType& setS,
 	                  const TensorStanza& stanza) const
 	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
 		str = stanza.name() + ttos(stanza.id());
 		if (stanza.isConjugate()) str += "*";
 		actualStr = str;
 		bool seen = false;
 		bool seenActual = false;
-
-		for (SizeType i = 0; i < stanza.ins(); ++i) {
-			TensorStanza::IndexTypeEnum legType = stanza.legType(i,in);
-			SizeType legTag = stanza.legTag(i,in);
+		SizeType ins = stanza.ins();
+		for (SizeType i = 0; i < ins; ++i) {
+			TensorStanza::IndexTypeEnum legType = stanza.legType(i);
+			SizeType legTag = stanza.legTag(i);
 			bool isSummed = (legType == TensorStanza::INDEX_TYPE_SUMMED);
 			bool notInSet = (isSummed && std::find(setS.begin(),setS.end(),legTag) == setS.end());
 			if (!isSummed || notInSet) {
@@ -148,8 +138,8 @@ private:
 		if (!seen && !seenActual) actualStr += "(";
 		seen = seenActual = false;
 		for (SizeType i = 0; i < stanza.outs(); ++i) {
-			TensorStanza::IndexTypeEnum legType = stanza.legType(i,out);
-			SizeType legTag = stanza.legTag(i,out);
+			TensorStanza::IndexTypeEnum legType = stanza.legType(i + ins);
+			SizeType legTag = stanza.legTag(i + ins);
 			bool isSummed = (legType == TensorStanza::INDEX_TYPE_SUMMED);
 			bool notInSet = (isSummed && std::find(setS.begin(),setS.end(),legTag) == setS.end());
 			if (!isSummed || notInSet) {
@@ -178,9 +168,10 @@ private:
 	{
 		PsimagLite::String str("");
 		SizeType counter = 0;
+		SizeType offset = (inOrOut == TensorStanza::INDEX_DIR_IN) ? 0 : stanza.ins();
 		for (SizeType i = 0; i < legs; ++i) {
-			TensorStanza::IndexTypeEnum legType = stanza.legType(i,inOrOut);
-			SizeType legTag = stanza.legTag(i,inOrOut);
+			TensorStanza::IndexTypeEnum legType = stanza.legType(i + offset);
+			SizeType legTag = stanza.legTag(i + offset);
 			if (counter++ > 0) str += ",";
 			str += TensorStanza::indexTypeToString(legType) + ttos(legTag);
 		}
@@ -291,41 +282,24 @@ private:
 	                   VectorSizeType& mapping) const
 	{
 		bool leftHandSide = (mapping.size() == 0);
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
 		SizeType counter = stanza.maxTag('f') + 1;
+
 		if (leftHandSide)
 			mapping.resize(stanza.maxTag('s')+1,1000);
-		SizeType ins = stanza.ins();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (!leftHandSide &&
-			        stanza.legType(i,in) == TensorStanza::INDEX_TYPE_DUMMY) {
-				stanza.legTypeChar(i,in) = 's';
+
+		SizeType legs = stanza.legs();
+		for (SizeType i = 0; i < legs; ++i) {
+			if (!leftHandSide && stanza.legType(i) == TensorStanza::INDEX_TYPE_DUMMY) {
+				stanza.legTypeChar(i) = 's';
 				continue;
 			}
 
-			if (stanza.legType(i,in) != TensorStanza::INDEX_TYPE_SUMMED)
+			if (stanza.legType(i) != TensorStanza::INDEX_TYPE_SUMMED)
 				continue;
-			SizeType index = stanza.legTag(i,in);
-			stanza.legTypeChar(i,in) = 'f';
+			SizeType index = stanza.legTag(i);
+			stanza.legTypeChar(i) = 'f';
 			if (leftHandSide) mapping[index] = counter++;
-			stanza.legTag(i,in) = mapping[index];
-		}
-
-		SizeType outs = stanza.outs();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (!leftHandSide &&
-			        stanza.legType(i,out) == TensorStanza::INDEX_TYPE_DUMMY) {
-				stanza.legTypeChar(i,out) = 's';
-				continue;
-			}
-
-			if (stanza.legType(i,out) != TensorStanza::INDEX_TYPE_SUMMED)
-				continue;
-			SizeType index = stanza.legTag(i,out);
-			stanza.legTypeChar(i,out) = 'f';
-			if (leftHandSide) mapping[index] = counter++;
-			stanza.legTag(i,out) = mapping[index];
+			stanza.legTag(i) = mapping[index];
 		}
 
 		stanza.refresh();

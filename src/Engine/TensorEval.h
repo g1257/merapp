@@ -269,26 +269,15 @@ private:
 		SizeType id = stanza.id();
 		SizeType mid = idNameToIndex(stanza.name(),id);
 		assert(mid < data_.size());
-		SizeType ins = stanza.ins();
-		for (SizeType j = 0; j < ins; ++j) {
-			if (stanza.legType(j,TensorStanza::INDEX_DIR_IN) != type)
+		SizeType legs = stanza.legs();
+		for (SizeType j = 0; j < legs; ++j) {
+			if (stanza.legType(j) != type)
 				continue;
-			SizeType sIndex = stanza.legTag(j,TensorStanza::INDEX_DIR_IN);
+			SizeType sIndex = stanza.legTag(j);
 
 			assert(j < data_[mid]->args());
 			assert(sIndex < dimensions.size());
 			dimensions[sIndex] = data_[mid]->argSize(j);
-		}
-
-		SizeType outs = stanza.outs();
-		for (SizeType j = 0; j < outs; ++j) {
-			if (stanza.legType(j,TensorStanza::INDEX_DIR_OUT) != type)
-				continue;
-			SizeType sIndex = stanza.legTag(j,TensorStanza::INDEX_DIR_OUT);
-
-			assert(sIndex < dimensions.size());
-			assert(j + ins < data_[mid]->args());
-			dimensions[sIndex] = data_[mid]->argSize(j+ins);
 		}
 	}
 
@@ -312,15 +301,15 @@ private:
 	{
 		SizeType id = ts.id();
 		SizeType mid = idNameToIndex(ts.name(),id);
-		SizeType ins = ts.ins();
-		SizeType outs = ts.outs();
-		assert(data_[mid]->args() == ins + outs);
+		SizeType legs = ts.legs();
+		assert(data_[mid]->args() == legs);
+
 		VectorSizeType args(data_[mid]->args(),0);
 
-		for (SizeType j = 0; j < ins; ++j) {
-			SizeType index = ts.legTag(j,TensorStanza::INDEX_DIR_IN);
+		for (SizeType j = 0; j < legs; ++j) {
+			SizeType index = ts.legTag(j);
 
-			switch (ts.legType(j,TensorStanza::INDEX_DIR_IN)) {
+			switch (ts.legType(j)) {
 
 			case TensorStanza::INDEX_TYPE_SUMMED:
 				assert(index < summed.size());
@@ -337,32 +326,6 @@ private:
 			case  TensorStanza::INDEX_TYPE_DUMMY:
 				assert(j < args.size());
 				args[j] = 0;
-				break;
-			default:
-				PsimagLite::RuntimeError("evalThisTensor: Wrong index type\n");
-			}
-		}
-
-		for (SizeType j = 0; j < outs; ++j) {
-			SizeType index = ts.legTag(j,TensorStanza::INDEX_DIR_OUT);
-
-			switch (ts.legType(j,TensorStanza::INDEX_DIR_OUT)) {
-
-			case TensorStanza::INDEX_TYPE_SUMMED:
-				assert(index < summed.size());
-				assert(j+ins < args.size());
-				args[j+ins] = summed[index];
-				break;
-
-			case TensorStanza::INDEX_TYPE_FREE:
-				assert(index < free.size());
-				assert(j+ins < args.size());
-				args[j+ins] = free[index];
-				break;
-
-			case  TensorStanza::INDEX_TYPE_DUMMY:
-				assert(j+ins < args.size());
-				args[j+ins] = 0;
 				break;
 			default:
 				PsimagLite::RuntimeError("evalThisTensor: Wrong index type\n");

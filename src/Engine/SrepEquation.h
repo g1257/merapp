@@ -95,26 +95,14 @@ private:
 
 	void computeFrees(VectorPairSizeType& replacements) const
 	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-
-		SizeType legs = lhs_->ins();
+		SizeType legs = lhs_->legs();
 		SizeType counter = 0;
 		for (SizeType j = 0; j < legs; ++j) {
-			if (lhs_->legType(j,in) != TensorStanza::INDEX_TYPE_FREE)
+			if (lhs_->legType(j) != TensorStanza::INDEX_TYPE_FREE)
 				continue;
-			replacements.push_back(PairSizeType(lhs_->legTag(j,in),counter++));
-		}
-
-		legs = lhs_->outs();
-		for (SizeType j = 0; j < legs; ++j) {
-			if (lhs_->legType(j,out) != TensorStanza::INDEX_TYPE_FREE)
-				continue;
-			replacements.push_back(PairSizeType(lhs_->legTag(j,out),counter++));
+			replacements.push_back(PairSizeType(lhs_->legTag(j),counter++));
 		}
 	}
-
-	//	SrepEquation(const SrepEquation&);
 
 	SrepEquation& operator=(const SrepEquation&);
 

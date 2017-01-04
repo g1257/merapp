@@ -351,32 +351,16 @@ private:
 			SizeType ind = nameIdsTensor_[p];
 			assert(ind < tensors_.size());
 
-			SizeType ins = t(i).ins();
-			SizeType outs = t(i).outs();
+			SizeType legs = t(i).legs();
 			bool conjugate1 = t(i).isConjugate();
-			for (SizeType j = 0; j < ins; ++j) {
-				TensorStanza::IndexTypeEnum legType = t(i).legType(j,
-				                                                   TensorStanza::INDEX_DIR_IN);
+			for (SizeType j = 0; j < legs; ++j) {
+				TensorStanza::IndexTypeEnum legType = t(i).legType(j);
 				if (legType != TensorStanza::INDEX_TYPE_FREE) continue;
-				SizeType index = t(i).legTag(j,
-				                             TensorStanza::INDEX_DIR_IN);
+				SizeType index = t(i).legTag(j);
 				assert(index < dimensions.size());
 				dimensions[index] = tensors_[ind]->dimension(j);
 				assert(index < directions.size());
 				directions[index] = TensorStanza::INDEX_DIR_IN;
-				conjugate[index] = conjugate1;
-			}
-
-			for (SizeType j = 0; j < outs; ++j) {
-				TensorStanza::IndexTypeEnum legType = t(i).legType(j,
-				                                                   TensorStanza::INDEX_DIR_OUT);
-				if (legType != TensorStanza::INDEX_TYPE_FREE) continue;
-				SizeType index = t(i).legTag(j,
-				                             TensorStanza::INDEX_DIR_OUT);
-				assert(index < dimensions.size());
-				dimensions[index] = tensors_[ind]->dimension(j+ins);
-				assert(index < directions.size());
-				directions[index] = TensorStanza::INDEX_DIR_OUT;
 				conjugate[index] = conjugate1;
 			}
 		}
