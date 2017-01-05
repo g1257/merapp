@@ -351,6 +351,7 @@ private:
 			SizeType ind = nameIdsTensor_[p];
 			assert(ind < tensors_.size());
 
+			SizeType ins = t(i).ins();
 			SizeType legs = t(i).legs();
 			bool conjugate1 = t(i).isConjugate();
 			for (SizeType j = 0; j < legs; ++j) {
@@ -360,7 +361,8 @@ private:
 				assert(index < dimensions.size());
 				dimensions[index] = tensors_[ind]->dimension(j);
 				assert(index < directions.size());
-				directions[index] = TensorStanza::INDEX_DIR_IN;
+				directions[index] = (j < ins) ? TensorStanza::INDEX_DIR_IN :
+				                                TensorStanza::INDEX_DIR_OUT;
 				conjugate[index] = conjugate1;
 			}
 		}
