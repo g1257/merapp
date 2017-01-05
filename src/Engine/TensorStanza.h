@@ -383,13 +383,12 @@ public:
 	{
 		char c = '\0';
 		SizeType ins = insSi_.size();
-		IndexDirectionEnum dir = (ind < ins) ? INDEX_DIR_IN : INDEX_DIR_OUT;
-		if (dir == INDEX_DIR_IN) {
+		if (ind < ins) {
 			assert(ind < ins);
 			c = insSi_[ind].first;
 		}  else {
 			assert(ind - ins < outsSi_.size());
-			c = outsSi_[ind].first;
+			c = outsSi_[ind - ins].first;
 		}
 
 		if (c == 's') return INDEX_TYPE_SUMMED;
@@ -413,8 +412,7 @@ public:
 	const SizeType& legTag(SizeType ind) const
 	{
 		SizeType ins = insSi_.size();
-		IndexDirectionEnum dir = (ind < ins) ? INDEX_DIR_IN : INDEX_DIR_OUT;
-		if (dir == INDEX_DIR_IN) {
+		if (ind < ins) {
 			assert(ind < insSi_.size());
 			return insSi_[ind].second;
 		}
@@ -426,8 +424,7 @@ public:
 	SizeType& legTag(SizeType ind)
 	{
 		SizeType ins = insSi_.size();
-		IndexDirectionEnum dir = (ind < ins) ? INDEX_DIR_IN : INDEX_DIR_OUT;
-		if (dir == INDEX_DIR_IN) {
+		if (ind < ins) {
 			assert(ind < insSi_.size());
 			return insSi_[ind].second;
 		}
@@ -438,7 +435,10 @@ public:
 
 	TensorTypeEnum type() const { return type_; }
 
-	const SizeType& maxTag(char c) const { return (c == 's') ? maxSummed_ : maxFree_; }
+	const SizeType& maxTag(char c) const
+	{
+		return (c == 's') ? maxSummed_ : maxFree_;
+	}
 
 	PsimagLite::String label() const
 	{

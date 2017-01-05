@@ -169,7 +169,8 @@ private:
 		PsimagLite::String str("");
 		SizeType counter = 0;
 		SizeType offset = (inOrOut == TensorStanza::INDEX_DIR_IN) ? 0 : stanza.ins();
-		for (SizeType i = 0; i < legs; ++i) {
+		SizeType total = (inOrOut == TensorStanza::INDEX_DIR_IN) ? stanza.ins() : stanza.outs();
+		for (SizeType i = 0; i < total; ++i) {
 			TensorStanza::IndexTypeEnum legType = stanza.legType(i + offset);
 			SizeType legTag = stanza.legTag(i + offset);
 			if (counter++ > 0) str += ",";
