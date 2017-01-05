@@ -163,7 +163,6 @@ private:
 	}
 
 	PsimagLite::String buildT0Part(const TensorStanza& stanza,
-	                               SizeType legs,
 	                               TensorStanza::IndexDirectionEnum inOrOut) const
 	{
 		PsimagLite::String str("");
@@ -191,10 +190,8 @@ private:
 		SizeType counter = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
 			const TensorStanza& stanza = srep(i);
-			SizeType ins = stanza.ins();
-			SizeType outs = stanza.outs();
 			PsimagLite::String tmp = (stanza.isConjugate()) ?
-			            buildT0Part(stanza,outs,out) : buildT0Part(stanza,ins,in);
+			            buildT0Part(stanza,out) : buildT0Part(stanza,in);
 			if (tmp == "") continue;
 			if (counter++ > 0) t0In += ",";
 			t0In += tmp;
@@ -204,10 +201,8 @@ private:
 		PsimagLite::String t0Out("");
 		for (SizeType i = 0; i < ntensors; ++i) {
 			const TensorStanza& stanza = srep(i);
-			SizeType ins = stanza.ins();
-			SizeType outs = stanza.outs();
 			PsimagLite::String tmp = (stanza.isConjugate()) ?
-			            buildT0Part(stanza,ins,in) : buildT0Part(stanza,outs,out);
+			            buildT0Part(stanza,in) : buildT0Part(stanza,out);
 			if (tmp == "") continue;
 			if (counter++ > 0) t0Out += ",";
 			t0Out += tmp;
