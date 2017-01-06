@@ -48,7 +48,11 @@ void main1(const Mera::MeraBuilder& builder,
 
 	Mera::MeraEnviron environ(builder,params,dsrep);
 
-	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep()<<"\n";
+	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep();
+	// add output u1000 to be used by unitary condition checking
+	std::cout<<"u1000(1,1)\n";
+	SizeType iterMera = 5;
+	std::cout<<"IterMera="<<iterMera<<"\n";
 	std::cout<<"MERA="<<srep<<"\n";
 
 	std::cout<<environ.environs();
