@@ -40,12 +40,7 @@ public:
 
 	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,
 		                 TENSOR_TYPE_ERASED,
-		                 TENSOR_TYPE_ROOT,
-		                 TENSOR_TYPE_W,
-		                 TENSOR_TYPE_U,
-		                 TENSOR_TYPE_H,
-		                 TENSOR_TYPE_T,
-		                 TENSOR_TYPE_I};
+		                 TENSOR_TYPE_GP};
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
@@ -55,7 +50,7 @@ public:
 	    : conjugate_(false),
 	      srep_(srep),
 	      name_(""),
-	      type_(TENSOR_TYPE_UNKNOWN),
+	      type_(TENSOR_TYPE_GP),
 	      maxSummed_(0),
 	      maxFree_(0)
 	{
@@ -112,14 +107,7 @@ public:
 		else
 			id_ = atoi(nameAndId.substr(index,l-index).c_str());
 
-		if (name_ == "u") type_ = TENSOR_TYPE_U;
-		if (name_ == "w") type_ = TENSOR_TYPE_W;
-		if (name_ == "h") type_ = TENSOR_TYPE_H;
-		if (name_ == "r") type_ = TENSOR_TYPE_ROOT;
-		if (name_ == "t") type_ = TENSOR_TYPE_T;
-		if (name_ == "i") type_ = TENSOR_TYPE_I;
-
-		if (neededId(type_) && index == PsimagLite::String::npos) {
+		if (index == PsimagLite::String::npos) {
 			PsimagLite::String str("TensorStanza: no digit for token ");
 			throw PsimagLite::RuntimeError(str + nameAndId + "\n");
 		}
@@ -440,16 +428,6 @@ public:
 		return (c == 's') ? maxSummed_ : maxFree_;
 	}
 
-	PsimagLite::String label() const
-	{
-		if (type_ == TENSOR_TYPE_U) return "u";
-		if (type_ == TENSOR_TYPE_W) return "w";
-		if (type_ == TENSOR_TYPE_ROOT) return "r";
-		if (type_ == TENSOR_TYPE_H) return "h";
-		if (type_ == TENSOR_TYPE_T) return "t";
-		return "unknown";
-	}
-
 	static PsimagLite::String indexTypeToString(IndexTypeEnum t)
 	{
 		if (t == INDEX_TYPE_SUMMED) return "s";
@@ -577,14 +555,6 @@ private:
 		}
 
 		return max;
-	}
-
-	bool neededId(TensorTypeEnum type) const
-	{
-		if (type == TENSOR_TYPE_ROOT ||
-		        type == TENSOR_TYPE_I) return false;
-
-		return true;
 	}
 
 	SizeType id_;

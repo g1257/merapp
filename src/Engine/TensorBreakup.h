@@ -24,6 +24,8 @@ namespace Mera {
 
 class TensorBreakup {
 
+	static const int RECURSIVE_BREAKUP = 1;
+
 public:
 
 	typedef TensorStanza::VectorSizeType VectorSizeType;
@@ -344,7 +346,7 @@ private:
 			const TensorStanza& stanza = srep_(i);
 			if (stanza.type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-			if (stanza.name() == "t") continue;
+			if (!RECURSIVE_BREAKUP && stanza.name() == "t") continue;
 			if (counter == 0) {
 				pair.first = i;
 				counter++;

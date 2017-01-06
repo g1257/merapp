@@ -74,14 +74,11 @@ private:
 			SizeType outs = tensorSrep(i).outs();
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			RealType dy = ysign*dy0;
-			PsimagLite::String label = tensorSrep(i).label();
+			PsimagLite::String label = tensorSrep(i).name();
 
-			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U ||
-			       tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_H) {
-				RealType factor = (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_U) ?
-				            1.0 : 0.5;
-				PsimagLite::String style = (tensorSrep(i).type() ==
-				                            TensorStanza::TENSOR_TYPE_U) ? "disen" : "ham";
+			if (label == "u" || label == "h") {
+				RealType factor = (label == "u") ? 1.0 : 0.5;
+				PsimagLite::String style = (label == "u") ? "disen" : "ham";
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\coordinate (B";
@@ -110,8 +107,7 @@ private:
 				assert(outs > 0);
 				RealType divisor = (outs == 1) ? 1 : outs - 1;
 				a = dx/divisor;
-				RealType doy = (tensorSrep(i).type() ==
-				                TensorStanza::TENSOR_TYPE_U) ? dy : 0.5*dy;
+				RealType doy = (label == "u") ? dy : 0.5*dy;
 				for (SizeType j = 0; j < outs; ++j) {
 					SizeType k = absoluteLegNumber(i,j,ntensors);
 					RealType xtmp = a*j + x[i];
@@ -126,7 +122,7 @@ private:
 						buffer_ += ") -- (O" + label + "F" + ttos(k) + ");\n";
 					}
 				}
-			} else if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_W) {
+			} else if (label == "w") {
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\coordinate (B";
@@ -167,7 +163,7 @@ private:
 				buffer_ += "\\coordinate (O" + label;
 				SizeType k = absoluteLegNumber(i,0,ntensors);
 				buffer_ +=  ttos(k) + ") at (" + ttos(xtmp) + "," + ttos(y[i]+dy) + ");\n";
-			} else if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ROOT) {
+			} else if (label == "r") {
 				buffer_ += "\\coordinate (A";
 				buffer_ += ttos(i) + ") at (" + ttos(x[i]) + "," + ttos(y[i]) + ");\n";
 				buffer_ += "\\draw[fill=myblue] (A" + ttos(i) + ") circle (0.5);\n";
@@ -198,43 +194,36 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
+			PsimagLite::String name = tensorSrep(i).name();
 			assert(tensorSrep(i).id() < unpackTimeAndSpace_.size());
 			PairSizeType tensorXY = unpackTimeAndSpace_[tensorSrep(i).id()];
 			SizeType tensorX = tensorXY.first;
 			SizeType tensorY = tensorXY.second;
 
-			SizeType type = tensorSrep(i).type();
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			RealType xsep = 3.0*dx*(1+tensorY);
 			RealType xwsign = (tensorY & 1) ? -1 : 1;
 			RealType xoffset = 3.0*pow(2,tensorY);
-			if (tensorX == 0 && tensorY > 0 && type == TensorStanza::TENSOR_TYPE_U) {
+			if (tensorX == 0 && tensorY > 0 && name == "u") {
 				SizeType id = tensorSrep(i).id();
-				SizeType j = findTensor(tensorSrep,id,TensorStanza::TENSOR_TYPE_W);
+				SizeType j = findTensor(tensorSrep, id, name);
 				if (tensorSrep(j).type() == TensorStanza::TENSOR_TYPE_ERASED)
 					continue;
-//				if (tensorSrep(j).ins() > 1 &&
-//				        tensorSrep(i).legTag(0,TensorStanza::INDEX_DIR_OUT) ==
-//				        tensorSrep(j).legTag(1,TensorStanza::INDEX_DIR_IN)) {
-//					xwoffset = -1.5*dx;
-//				} else {
-//					xwoffset = 1.5*dx;
-//				}
 			}
 
-			if (type == TensorStanza::TENSOR_TYPE_U) {
+			if (name == "u") {
 				x[i] = xsep*dx*tensorX + xoffset;
 				y[i] = 3.5*tensorY*ysign + yoffset0*ysign;
-			} else if (type == TensorStanza::TENSOR_TYPE_W) {
+			} else if (name == "w") {
 				x[i] = xsep*dx*tensorX  + xoffset + pow(2,tensorY)*xwsign;
 				y[i] = ysign*(3.5*tensorY + 1.5) + yoffset0*ysign;
 				savedXForR[modeForSavingForR] = x[i];
 				modeForSavingForR = (modeForSavingForR == 0) ? 1 : 0;
-			} else if (type == TensorStanza::TENSOR_TYPE_ROOT) {
+			} else if (name == "r") {
 				// x[i] = 1.5*tauMax_*xsep;
 				x[i] = (savedXForR[0] + savedXForR[1])*0.5;
 				y[i] = ysign*3.5*tauMax_ + yoffset0*ysign;
-			} else if (type == TensorStanza::TENSOR_TYPE_H) {
+			} else if (name == "h") {
 				RealType tmp = findXForH(i,tensorSrep);
 				x[i] = xsep*dx*tmp + xoffset;
 				y[i] = 0;
@@ -262,12 +251,11 @@ private:
 
 	SizeType findTensor(const TensorSrep& tensorSrep,
 	                    SizeType id,
-	                    TensorStanza::TensorTypeEnum type) const
+	                    PsimagLite::String name) const
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			TensorStanza::TensorTypeEnum t = tensorSrep(i).type();
-			if (t != type) continue;
+			if (tensorSrep(i).name() != name) continue;
 			if (tensorSrep(i).id() != id) continue;
 			return i;
 		}
@@ -289,14 +277,14 @@ private:
 				if (tensorSrep(i).legType(j) != TensorStanza::INDEX_TYPE_SUMMED) continue;
 				SizeType k1 = absoluteLegNumber(i,j,ntensors);
 				PsimagLite::String label1 = "(I";
-				label1 += tensorSrep(i).label();
+				label1 += tensorSrep(i).name();
 				label1 += ttos(k1) + ")";
 
 				SizeType what = tensorSrep(i).legTag(j);
 				PairSizeType k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_OUT);
 				if (k.first < ntensors) {
 					PsimagLite::String label2 = "(O";
-					label2 += tensorSrep(k.first).label();
+					label2 += tensorSrep(k.first).name();
 					SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
 					label2 += ttos(k2) + ")";
 					buffer_ += "\\draw " + label1 + " -- " + label2 + ";\n";
@@ -305,7 +293,7 @@ private:
 				k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_IN);
 				if (k.first >= ntensors) continue;
 				PsimagLite::String label2 = "(I";
-				label2 += tensorSrep(k.first).label();
+				label2 += tensorSrep(k.first).name();
 				SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
 				label2 += ttos(k2) + ")";
 				buffer_ += "\\draw " + label1 + " -- " + label2 + ";\n";

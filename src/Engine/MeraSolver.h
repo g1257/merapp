@@ -44,6 +44,8 @@ class MeraSolver {
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
 
+	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
+
 public:
 
 	MeraSolver(PsimagLite::String filename)
@@ -163,8 +165,30 @@ private:
 
 			if (i == indexOfRootTensor_) continue;
 			tensorOptimizer_[i]->optimize(iterTensor_,iter);
+			std::cout<<"energy= "<<energy()<<"\n";
 		}
 	}
+
+	RealType energy() const
+	{
+		RealType e = 0;
+//		for (SizeType i = 0; i < energyTerms_.size(); ++i)
+//			e += energy(i);
+
+		return e;
+	}
+
+//	RealType energy(SizeType ind) const
+//	{
+//		TensorEval tensorEval(energyTerms_[ind],
+//		                      tensors_,
+//		                      tensorNameIds_,
+//		                      nameIdsTensor_,
+//		                      EVAL_BREAKUP);
+//		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
+//		while (!handle.done());
+//		return 0.0;
+//	}
 
 	// FIXME: pick up model dependency here
 	void setTwoSiteHam(bool testWithIdentity)
