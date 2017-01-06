@@ -344,7 +344,7 @@ private:
 			const TensorStanza& stanza = srep_(i);
 			if (stanza.type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-//			if (stanza.name() == "t") continue;
+			if (stanza.name() == "t") continue;
 			if (counter == 0) {
 				pair.first = i;
 				counter++;

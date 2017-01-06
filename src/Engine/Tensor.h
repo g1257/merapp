@@ -35,7 +35,7 @@ public:
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 
 	Tensor(SizeType dim0, SizeType ins)
-	    : dimensions_(1,dim0),data_(dim0),ins_(ins)
+	    : dimensions_(1,dim0),data_(dim0,0.0),ins_(ins)
 	{}
 
 	Tensor(const VectorSizeType& d, SizeType ins)
@@ -45,7 +45,7 @@ public:
 		if (n == 0) return;
 		assert(0 < n);
 
-		data_.resize(volume(),0);
+		data_.resize(volume(),0.0);
 	}
 
 	void setToIdentity(ComplexOrRealType value)

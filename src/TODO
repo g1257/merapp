@@ -20,6 +20,7 @@ DONE	tensorBreakup: recursive
 DONE	interface of TensorStanza/TensorSrep ==> all legs looping
 	we must have only a few reserved tensor names, and accept
 	           the rest as general purpose tensor names
+	numbering of output tensors
 	Clear output tensor storage (?)
 	Figure out Layer=
 	Symmetries

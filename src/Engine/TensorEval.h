@@ -221,7 +221,8 @@ public:
 		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
 		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
 			PsimagLite::String msg("SrepEquation: Could not find ");
-			msg += "output tensor " + eq.nameIdOfOutput().first + "\n";
+			msg += "output tensor " + eq.nameIdOfOutput().first;
+			msg += ttos(eq.nameIdOfOutput().second) + "\n";
 			throw PsimagLite::RuntimeError(msg);
 		}
 

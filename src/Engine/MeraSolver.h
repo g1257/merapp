@@ -162,8 +162,7 @@ private:
 			}
 
 			if (i == indexOfRootTensor_) continue;
-			tensorOptimizer_[i]->optimize(iterTensor_,
-			                              iter);
+			tensorOptimizer_[i]->optimize(iterTensor_,iter);
 		}
 	}
 

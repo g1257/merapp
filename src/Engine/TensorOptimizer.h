@@ -125,8 +125,12 @@ public:
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
 		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
-		std::cout<<"cond="<<cond<<"\n";
-		TensorSrep condSrep(cond);
+
+		SrepEquationType* condSrep = 0;
+		if (cond != "") {
+			condSrep = new SrepEquationType(cond);
+			std::cout<<"cond="<<cond<<"\n";
+		}
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
@@ -139,13 +143,17 @@ public:
 				break;
 			eprev = e;
 
-			if (condSrep.maxTag('f') == 0) continue;
+			if (!condSrep) continue;
 
-//			if (!verbose_) continue;
-//			MatrixType condMatrix;
-//			appendToMatrix(condMatrix,condSrep);
-//			assert(isTheIdentity(condMatrix));
+			if (condSrep->lhs().maxTag('f') == 0) continue;
+
+			MatrixType condMatrix;
+			appendToMatrix(condMatrix,*condSrep);
+			if (!isTheIdentity(condMatrix))
+				throw PsimagLite::RuntimeError("not a isometry or unitary\n");
 		}
+
+		delete condSrep;
 	}
 
 	const PairSizeType& nameId() const { return tensorToOptimize_; }
@@ -161,15 +169,22 @@ private:
 		PsimagLite::String name = nameId.first;
 		SizeType id = nameId.second;
 		PsimagLite::String srep = name + ttos(id) + "(";
+		PsimagLite::String args("");
+
 		for (SizeType j = 0; j < ins; ++j) {
 			srep += "s" + ttos(j);
 			if (j < ins - 1) srep += ",";
 		}
 
 		if (outs > 0) srep += "|";
+
 		for (SizeType j = 0; j < outs; ++j) {
 			srep += "f" + ttos(j);
-			if (j < outs - 1) srep += ",";
+			args += "f" + ttos(j);
+			if (j < outs - 1) {
+				srep += ",";
+				args += ",";
+			}
 		}
 
 		srep += ")" + name + "*" + ttos(id) + "(";
@@ -178,14 +193,22 @@ private:
 			if (j < ins - 1) srep += ",";
 		}
 
-		if (outs > 0) srep += "|";
+		if (outs > 0) {
+			srep += "|";
+			args += "|";
+		}
+
 		for (SizeType j = 0; j < outs; ++j) {
 			srep += "f" + ttos(j + outs);
-			if (j < outs - 1) srep += ",";
+			args += "f" + ttos(j + outs);
+			if (j < outs - 1) {
+				srep += ",";
+				args += ",";
+			}
 		}
 
 		srep += ")";
-		return srep;
+		return (args == "") ? "" : "u1000(" + args + ")= " + srep;
 	}
 
 	RealType optimizeInternal(SizeType iter, SizeType upIter)
