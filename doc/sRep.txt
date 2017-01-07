@@ -39,7 +39,7 @@ Else the number of commas plus one defines the number outs. The number of commas
 If the indicesout is empty the | may be omitted
 [Implementation Note: Current implementation mandates that | be omitted in this case]
 
-A tensor stanza MUST have ins + outs > 0.
+A tensor stanza may have ins + outs == 0.
 
 -- Symbolic indices of legs
 

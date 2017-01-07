@@ -24,12 +24,14 @@ namespace Mera {
 
 class TensorBreakup {
 
-	static const int RECURSIVE_BREAKUP = 1;
+	static const int RECURSIVE_BREAKUP = 0;
 
 public:
 
 	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
+
+	static const SizeType EVAL_BREAKUP = 0;
 
 	TensorBreakup(const TensorStanza& lhs,
 	              const TensorSrep& srep,

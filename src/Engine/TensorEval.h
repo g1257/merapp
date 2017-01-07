@@ -65,6 +65,8 @@ public:
 	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
+	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
+
 	TensorEval(SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
@@ -165,6 +167,8 @@ public:
 		if (total != free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
+		if (dimensions.size() == 1 && dimensions[0] == 0)
+			dimensions[0] = 1;
 		outputTensor().setSizes(dimensions);
 
 		do {
@@ -303,7 +307,7 @@ private:
 		SizeType id = ts.id();
 		SizeType mid = idNameToIndex(ts.name(),id);
 		SizeType legs = ts.legs();
-		assert(data_[mid]->args() == legs);
+		assert(legs == 0 || data_[mid]->args() == legs);
 
 		VectorSizeType args(data_[mid]->args(),0);
 

@@ -71,14 +71,6 @@ public:
 			setArgVector(outsSi_,tokens[1]);
 		}
 
-		SizeType ins = insSi_.size();
-		SizeType outs = outsSi_.size();
-
-		if (ins + outs == 0) {
-			PsimagLite::String str("TensorStanza: no ins or outs ");
-			throw PsimagLite::RuntimeError(str + srep_ + "\n");
-		}
-
 		SizeType l = nameAndId.length();
 		if (l == 0) {
 			PsimagLite::String str("TensorStanza: malformed partial srep, empty name/id ");
@@ -486,7 +478,7 @@ private:
 
 	void setArgVector(VectorPairCharSizeType& si, PsimagLite::String part) const
 	{
-		if (part.length() == 0) return;
+		if (part.length() == 0 || part == ")") return;
 		VectorStringType tokens;
 		PsimagLite::tokenizer(part,tokens,",");
 		SizeType total = tokens.size();

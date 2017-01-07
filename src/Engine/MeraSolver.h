@@ -120,6 +120,9 @@ public:
 				continue;
 			}
 
+			if (name != "u" && name != "w" && name != "r")
+				continue;
+
 			SizeType id = atoi(tokens[1].c_str());
 			tensorOptimizer_.push_back(new TensorOptimizerType(io,
 			                                                   name,
@@ -180,18 +183,22 @@ private:
 	void optimizeAllTensors(SizeType iter)
 	{
 		SizeType ntensors = tensorOptimizer_.size();
-		SizeType prevLayer = 0;
+//		SizeType prevLayer = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
-			SizeType thisLayer = tensorOptimizer_[i]->layer();
-			if (prevLayer != thisLayer || i == 0) {
-				tensorOptimizer_[indexOfRootTensor_]->optimize(iterTensor_,
-				                                               iter);
-				prevLayer = thisLayer;
-			}
+//			SizeType thisLayer = tensorOptimizer_[i]->layer();
+//			if (prevLayer != thisLayer || i == 0) {
+//				tensorOptimizer_[indexOfRootTensor_]->optimize(iterTensor_,
+//				                                               iter);
+//				prevLayer = thisLayer;
+//			}
 
-			if (i == indexOfRootTensor_) continue;
-			tensorOptimizer_[i]->optimize(iterTensor_,iter);
-			std::cout<<"energy= "<<energy()<<"\n";
+//			if (i != indexOfRootTensor_)
+				tensorOptimizer_[i]->optimize(iterTensor_,iter);
+
+			PsimagLite::String str("energy after optimizing ");
+			str += tensorOptimizer_[i]->nameId().first;
+			str += ttos(tensorOptimizer_[i]->nameId().second) + "= ";
+			std::cout<<str<<energy()<<"\n";
 		}
 	}
 
@@ -213,7 +220,7 @@ private:
 		                          EVAL_BREAKUP);
 		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
 		while (!handle.done());
-		VectorSizeType args;
+		VectorSizeType args(1,0);
 		return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
 	}
 

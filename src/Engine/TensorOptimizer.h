@@ -37,8 +37,6 @@ class TensorOptimizer {
 
 public:
 
-	static const SizeType EVAL_BREAKUP = true;
-
 	typedef Mera::TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
@@ -56,6 +54,8 @@ public:
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
 	LanczosSolverType;
+
+	static const SizeType EVAL_BREAKUP = TensorEvalType::EVAL_BREAKUP;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
@@ -156,7 +156,7 @@ public:
 		delete condSrep;
 	}
 
-	const PairSizeType& nameId() const { return tensorToOptimize_; }
+	const PairStringSizeType& nameId() const { return tensorToOptimize_; }
 
 	SizeType layer() const { return layer_; }
 

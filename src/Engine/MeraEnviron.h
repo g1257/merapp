@@ -47,7 +47,7 @@ public:
 			counterForOutput += environForTensor(i, counterForOutput);
 		}
 
-		envs_ += energies();
+		energies();
 	}
 
 	const PsimagLite::String& environs() const
@@ -287,17 +287,20 @@ private:
 		throw PsimagLite::RuntimeError("findSizeOfRoot\n");
 	}
 
-	PsimagLite::String energies() const
+	void energies()
 	{
 		PsimagLite::String e("TensorId=E,0\n");
+		PsimagLite::String d("");
 		SizeType terms = params_.hamiltonianTerm.size();
 		e += "Terms=" + ttos(terms) + "\n";
 		for (SizeType i = 0; i < terms; ++i) {
 			if (!params_.hamiltonianTerm[i]) continue;
 			e += "Environ=e" + ttos(i) + "()=" + builder_.energy(i).sRep() + "\n";
+			d += "e" + ttos(i) + "()";
 		}
 
-		return e;
+		envs_ += e;
+		dsrep_ += d;
 	}
 
 	MeraEnviron(const MeraEnviron&);
