@@ -31,7 +31,7 @@ public:
 	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
-	static const SizeType EVAL_BREAKUP = 0;
+	static const SizeType EVAL_BREAKUP = 1;
 
 	TensorBreakup(const TensorStanza& lhs,
 	              const TensorSrep& srep,

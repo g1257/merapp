@@ -169,6 +169,11 @@ public:
 			tensors_[i] = 0;
 		}
 
+		for (SizeType i = 0; i < energyTerms_.size(); ++i) {
+			delete energyTerms_[i];
+			energyTerms_[i] = 0;
+		}
+
 		delete paramsForLanczos_;
 	}
 
