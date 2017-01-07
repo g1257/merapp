@@ -43,6 +43,8 @@ class MeraSolver {
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
+	typedef typename TensorOptimizerType::SrepEquationType SrepEquationType;
+	typedef typename TensorOptimizerType::VectorSrepEquationType VectorSrepEquationType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
@@ -99,6 +101,25 @@ public:
 			}
 
 			PsimagLite::String name = tokens[0];
+			if (name == "E") {
+				SizeType terms = 0;
+				io.readline(terms,"Terms=");
+
+				energyTerms_.resize(terms,0);
+
+				PsimagLite::String findStr = "Environ=";
+				for (SizeType i = 0; i < terms; ++i) {
+					PsimagLite::String srep;
+					io.readline(srep,findStr);
+					size_t index = srep.find("equal");
+					if (index != PsimagLite::String::npos)
+						srep.replace(index,5,"=");
+					energyTerms_[i] = new SrepEquationType(srep);
+				}
+
+				continue;
+			}
+
 			SizeType id = atoi(tokens[1].c_str());
 			tensorOptimizer_.push_back(new TensorOptimizerType(io,
 			                                                   name,
@@ -123,6 +144,11 @@ public:
 		if (!rootTensorFound) {
 			PsimagLite::String msg("FATAL: File " + filename);
 			throw PsimagLite::RuntimeError(msg + " root tensor not found\n");
+		}
+
+		if (energyTerms_.size() == 0) {
+			PsimagLite::String msg("FATAL: File " + filename);
+			throw PsimagLite::RuntimeError(msg + " energyTerms not found\n");
 		}
 
 		std::cerr<<"MeraSolver::ctor() done\n";
@@ -169,26 +195,27 @@ private:
 		}
 	}
 
-	RealType energy() const
+	RealType energy()
 	{
 		RealType e = 0;
-//		for (SizeType i = 0; i < energyTerms_.size(); ++i)
-//			e += energy(i);
+		for (SizeType i = 0; i < energyTerms_.size(); ++i)
+			e += energy(i);
 
 		return e;
 	}
 
-//	RealType energy(SizeType ind) const
-//	{
-//		TensorEval tensorEval(energyTerms_[ind],
-//		                      tensors_,
-//		                      tensorNameIds_,
-//		                      nameIdsTensor_,
-//		                      EVAL_BREAKUP);
-//		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
-//		while (!handle.done());
-//		return 0.0;
-//	}
+	RealType energy(SizeType ind)
+	{
+		TensorEvalType tensorEval(*(energyTerms_[ind]),
+		                          tensors_,
+		                          tensorNameIds_,
+		                          nameIdsTensor_,
+		                          EVAL_BREAKUP);
+		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
+		while (!handle.done());
+		VectorSizeType args;
+		return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
+	}
 
 	// FIXME: pick up model dependency here
 	void setTwoSiteHam(bool testWithIdentity)
@@ -308,6 +335,7 @@ private:
 	MatrixType twoSiteHam_;
 	VectorTensorOptimizerType tensorOptimizer_;
 	ParametersForSolverType* paramsForLanczos_;
+	VectorSrepEquationType energyTerms_;
 }; // class MeraSolver
 } // namespace Mera
 #endif // MERASOLVER_H

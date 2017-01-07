@@ -47,7 +47,7 @@ public:
 		}
 
 		assert(summed > 1);
-		srep_ += "r(s" + ttos(summed-2) + ",s" + ttos(summed-1) + ")";
+		srep_ += "r0(s" + ttos(summed-2) + ",s" + ttos(summed-1) + ")";
 
 		buildEnergies(hamTerms);
 	}
@@ -145,7 +145,10 @@ private:
 	void buildEnergies(const VectorSizeType& hamTerm)
 	{
 		TensorSrep tensorSrep(srep_);
-		for (SizeType site = 0; site < hamTerm.size(); ++site) {
+		//std::cout<<"TensorId=E,0\n";
+		SizeType terms =hamTerm.size();
+		//std::cout<<"Terms="<<terms<<"\n";
+		for (SizeType site = 0; site < terms; ++site) {
 			if (!hamTerm[site]) continue;
 			energy_[site] = buildEnergyTerm(site, tensorSrep);
 		}
@@ -172,7 +175,7 @@ private:
 		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
 		tensorSrep4->contract(tensorSrep2);
-		std::cerr<<"ENERGY"<<site<<"="<<tensorSrep4->sRep()<<"\n";
+		//std::cout<<"e"<<site<<"()="<<tensorSrep4->sRep()<<"\n";
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		return tensorSrep4;

@@ -35,9 +35,9 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 
-	static const SizeType EVAL_BREAKUP = true;
-
 public:
+
+	static const SizeType EVAL_BREAKUP = true;
 
 	typedef Mera::TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
@@ -54,9 +54,9 @@ public:
 	typedef PsimagLite::ParametersForSolver<RealType> ParametersForSolverType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
-	typedef PsimagLite::LanczosSolver<ParametersForSolverType,
-	SparseMatrixType,
-	VectorType> LanczosSolverType;
+	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
+	LanczosSolverType;
+
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize,
