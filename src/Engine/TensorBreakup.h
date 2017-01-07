@@ -24,7 +24,7 @@ namespace Mera {
 
 class TensorBreakup {
 
-	static const int RECURSIVE_BREAKUP = 0;
+	static const int RECURSIVE_BREAKUP = 1;
 
 public:
 

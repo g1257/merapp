@@ -25,6 +25,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Matrix.h"
 #include "LanczosSolver.h"
 #include "CrsMatrix.h"
+#include "BLAS.h"
 
 namespace Mera {
 
@@ -282,6 +283,15 @@ private:
 				t(i,j) = PsimagLite::conj(sum);
 			}
 		}
+
+#ifndef DNDEBUG
+		if (r1 == r2) {
+			MatrixType tmp(r1,r2);
+			psimag::BLAS::GEMM('C','N',r1,r1,r1,1.0,&(t(0,0)),r1,&(t(0,0)),r1,0.0,&(tmp(0,0)),r1);
+			if (!isTheIdentity(tmp))
+				throw PsimagLite::RuntimeError("internal error\n");
+		}
+#endif
 
 		tensors_[indToOptimize_]->setToMatrix(t);
 	}

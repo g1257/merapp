@@ -104,13 +104,15 @@ public:
 			if (name == "E") {
 				SizeType terms = 0;
 				io.readline(terms,"Terms=");
-
+				SizeType ignoreTerm = terms + 1;
+				io.readline(ignoreTerm,"IgnoreTerm=");
 				energyTerms_.resize(terms,0);
 
 				PsimagLite::String findStr = "Environ=";
 				for (SizeType i = 0; i < terms; ++i) {
 					PsimagLite::String srep;
 					io.readline(srep,findStr);
+					if (i == ignoreTerm) continue;
 					size_t index = srep.find("equal");
 					if (index != PsimagLite::String::npos)
 						srep.replace(index,5,"=");
@@ -187,18 +189,17 @@ private:
 
 	void optimizeAllTensors(SizeType iter)
 	{
+		static bool seenRoot = false;
 		SizeType ntensors = tensorOptimizer_.size();
-//		SizeType prevLayer = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
-//			SizeType thisLayer = tensorOptimizer_[i]->layer();
-//			if (prevLayer != thisLayer || i == 0) {
-//				tensorOptimizer_[indexOfRootTensor_]->optimize(iterTensor_,
-//				                                               iter);
-//				prevLayer = thisLayer;
-//			}
+			if (!seenRoot) {
+				if (tensorOptimizer_[i]->nameId().first != "r")
+				        continue;
+				else
+					seenRoot = true;
+			}
 
-//			if (i != indexOfRootTensor_)
-				tensorOptimizer_[i]->optimize(iterTensor_,iter);
+			tensorOptimizer_[i]->optimize(iterTensor_,iter);
 
 			PsimagLite::String str("energy after optimizing ");
 			str += tensorOptimizer_[i]->nameId().first;
@@ -218,7 +219,10 @@ private:
 
 	RealType energy(SizeType ind)
 	{
-		TensorEvalType tensorEval(*(energyTerms_[ind]),
+		assert(ind < energyTerms_.size());
+		SrepEquationType* ptr = energyTerms_[ind];
+		if (!ptr) return 0.0;
+		TensorEvalType tensorEval(*ptr,
 		                          tensors_,
 		                          tensorNameIds_,
 		                          nameIdsTensor_,

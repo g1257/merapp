@@ -293,6 +293,7 @@ private:
 		PsimagLite::String d("");
 		SizeType terms = params_.hamiltonianTerm.size();
 		e += "Terms=" + ttos(terms) + "\n";
+		e += "IgnoreTerm=" + ttos(terms+1) + "\n";
 		for (SizeType i = 0; i < terms; ++i) {
 			if (!params_.hamiltonianTerm[i]) continue;
 			e += "Environ=e" + ttos(i) + "()=" + builder_.energy(i).sRep() + "\n";
