@@ -268,6 +268,15 @@ public:
 		return ntensors;
 	}
 
+	bool hasLegType(char c) const
+	{
+		SizeType ntensors = data_.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			if (data_[i]->hasLegType(c)) return true;
+
+		return false;
+	}
+
 	//	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
 	//	{
 	//		os<<"tensorSrep.size="<<ts.size()<<"\n";

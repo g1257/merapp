@@ -124,8 +124,7 @@ public:
 			SizeType j = veqs.size() - 1;
 			if (i != outputLocation)
 				veqs[j]->canonicalize();
-			else
-				veqs[j]->rhs().simplify(empty);
+			veqs[j]->rhs().simplify(empty);
 
 			TensorEval tEval(*(veqs[j]),
 			                 data_,
@@ -161,7 +160,14 @@ public:
 		static VectorSizeType dimensions;
 		if (total != dimensions.size()) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
-		prepare(dimensions,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
+
+		bool hasFree = srepEq_.lhs().hasLegType('f');
+		if (hasFree) {
+			prepare(dimensions,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
+		} else {
+			assert(dimensions.size() == 1);
+			dimensions[0] = 1;
+		}
 
 		static VectorSizeType free;
 		if (total != free.size()) free.resize(total,0);
@@ -247,7 +253,13 @@ private:
 		if (dimensions.size() != total) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
-		prepare(dimensions, srep, TensorStanza::INDEX_TYPE_SUMMED);
+		bool hasSummed = srep.hasLegType('s');
+		if (hasSummed) {
+			prepare(dimensions, srep, TensorStanza::INDEX_TYPE_SUMMED);
+		} else {
+			assert(dimensions.size() == 1);
+			dimensions[0] = 1;
+		}
 
 		ComplexOrRealType sum = 0.0;
 		do {

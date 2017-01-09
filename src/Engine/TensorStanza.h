@@ -435,6 +435,23 @@ public:
 		maxSummed_ = maxIndex('s');
 	}
 
+	bool hasLegType(char c) const
+	{
+		SizeType ins = insSi_.size();
+		for (SizeType i = 0; i < ins; ++i) {
+			if (insSi_[i].first != c) continue;
+			return true;
+		}
+
+		SizeType outs = outsSi_.size();
+		for (SizeType i = 0; i < outs; ++i) {
+			if (outsSi_[i].first != c) continue;
+			return true;
+		}
+
+		return false;
+	}
+
 //	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
 //	{
 //		os<<"id= "<<ts.id_<<"\n";

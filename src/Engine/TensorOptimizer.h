@@ -151,7 +151,7 @@ public:
 			MatrixType condMatrix;
 			appendToMatrix(condMatrix,*condSrep);
 			if (!isTheIdentity(condMatrix))
-				throw PsimagLite::RuntimeError("not a isometry or unitary\n");
+				std::cerr<<"not a isometry or unitary\n";
 		}
 
 		delete condSrep;

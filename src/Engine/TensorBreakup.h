@@ -74,8 +74,18 @@ private:
 	                        VectorSizeType& setS) const
 	{
 		SizeType minCommonSummed = 2;
+		bool involveTemporaries = false;
 		while (minCommonSummed > 0) {
-			if (findPairForBreakUp(pair,setS,minCommonSummed)) return true;
+			if (findPairForBreakUp(pair,setS,minCommonSummed,involveTemporaries))
+				return true;
+			minCommonSummed--;
+		}
+
+		minCommonSummed = 2;
+		involveTemporaries = true;
+		while (minCommonSummed > 0) {
+			if (findPairForBreakUp(pair,setS,minCommonSummed,involveTemporaries))
+				return true;
 			minCommonSummed--;
 		}
 
@@ -323,12 +333,13 @@ private:
 
 	bool findPairForBreakUp(TensorSrep::PairSizeType& pair,
 	                        VectorSizeType& setS,
-	                        SizeType minCommonSummed) const
+	                        SizeType minCommonSummed,
+	                        bool includeTemporaries) const
 	{
 		if (srep_.size() < 2) return false;
 		for (SizeType start = 0; start < srep_.size()-1; ++start) {
 			setS.clear();
-			findPairForBreakUp(pair,setS,start,minCommonSummed);
+			findPairForBreakUp(pair,setS,start,minCommonSummed, includeTemporaries);
 			if (pair.first < pair.second && setS.size() > 0)
 				return true;
 		}
@@ -339,16 +350,19 @@ private:
 	void findPairForBreakUp(TensorSrep::PairSizeType& pair,
 	                        VectorSizeType& setS,
 	                        SizeType start,
-	                        SizeType minCommonSummed) const
+	                        SizeType minCommonSummed,
+	                        bool includeTemporaries) const
 	{
 		pair.first = pair.second = 0;
 		SizeType ntensors = srep_.size();
 		SizeType counter = 0;
+		bool test1 = (!RECURSIVE_BREAKUP || !includeTemporaries);
 		for (SizeType i = start; i < ntensors; ++i) {
 			const TensorStanza& stanza = srep_(i);
 			if (stanza.type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-			if (!RECURSIVE_BREAKUP && stanza.name() == "t") continue;
+			if (stanza.name() == "t" && test1) continue;
+
 			if (counter == 0) {
 				pair.first = i;
 				counter++;
