@@ -226,11 +226,22 @@ private:
 		MatrixType mSrc = m;
 		VectorRealType s(m.n_row(),0);
 		if (tensorToOptimize_.first == "r") { // diagonalize
+			std::cout<<"MATRIX_MAY_FOLLOW\n";
 			if (!isHermitian(m,true)) {
-				std::cout<<"MATRIX_MAY_FOLLOW\n";
 				if (m.n_row() < 512) std::cout<<m;
 				throw PsimagLite::RuntimeError("Not Hermitian H\n");
 			}
+
+			bool printmatrix = (params_.options.find("printmatrix") != PsimagLite::String::npos);
+			if (params_.options.find("printMatrix") != PsimagLite::String::npos)
+			        printmatrix = true;
+			if (printmatrix)
+				if (m.n_row() < 512) std::cout<<m;
+			bool stopEarly = (params_.options.find("stopEarly") != PsimagLite::String::npos);
+			if (params_.options.find("stopearly") != PsimagLite::String::npos)
+				stopEarly = true;
+			if (stopEarly)
+				throw PsimagLite::RuntimeError("stopEarly requested by user\n");
 
 			SizeType rows = tensors_[indToOptimize_]->argSize(0);
 			SizeType cols = tensors_[indToOptimize_]->argSize(1);
