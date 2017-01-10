@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Math::MatrixReal;
 
+my $pixelPerElement = 8;
+
 my ($label) = @ARGV;
 defined($label) or die "USAGE: cat matrix.txt | $0 label\n";
 
@@ -38,13 +40,14 @@ if ($counter != $rows) {
 
 my $matrix = Math::MatrixReal->new_from_rows(\@m);
 
-my $pixelPerElement = 4;
 my %usedColors;
 my @colors = ("0 0 0","255 0 0", "0 255 0", "0 0 255","255 255 0", "255 0 255", "0 255 255",
 "255 128 0", "128 255 0", "128 0 255", "255 255 128", "255 128 255", "128 255 255");
 printArtistic($matrix,$pixelPerElement, \%usedColors, \@colors);
 
 hermiticity($matrix);
+
+isBlockDiagonal($matrix);
 
 sub loadThisRow
 {
@@ -115,7 +118,7 @@ sub getArtisticValue
 
 sub hermiticity
 {
-	my ($m, $ppe, $usedColors, $colors) = @_;
+	my ($m) = @_;
 	my ($rows, $cols) = $m->dim();
 	for (my $i = 0; $i < $rows; ++$i) {
 		for (my $j = $i + 1; $j < $cols; ++$j) {
@@ -126,3 +129,46 @@ sub hermiticity
 		}
 	}
 }
+
+sub isBlockDiagonal
+{
+	my ($m) = @_;
+	my ($rows, $cols) = $m->dim();
+	my $offset = 0;
+	my $counter = 0;
+	while ($offset < $rows) {
+		my $c = findBlockStartingAt($m,$offset);
+		my $s = $c + 1 - $offset;
+		print STDERR "$0: Found block $counter starting at $offset of size $s\n";
+		$offset = $c + 1;
+		$counter++;
+	}
+}
+
+sub findBlockStartingAt
+{
+	my ($m, $start) = @_;
+	my ($rows, $cols) = $m->dim();
+	my $c = $start;
+	while ($c < $rows) {
+		my $tmp = findLastNzColumn($m,$c);
+		last if ($tmp <= $c);
+		$c = $tmp + 1;
+	}
+
+	return $c;
+}
+
+sub findLastNzColumn
+{
+	my ($m, $row) = @_;
+	my ($rows, $cols) = $m->dim();
+	my $col = $row;
+	for (my $j = $row; $j < $cols; ++$j) {
+		my $e = $m->element($row+1,$j+1);
+		$col = $j if ($e != 0);
+	}
+
+	return $col;
+}
+
