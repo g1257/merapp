@@ -49,6 +49,8 @@ hermiticity($matrix);
 
 isBlockDiagonal($matrix);
 
+findConnected($matrix);
+
 sub loadThisRow
 {
 	my ($m,$row,$data,$cols) = @_;
@@ -171,4 +173,57 @@ sub findLastNzColumn
 
 	return $col;
 }
+
+sub depthFirstSearch
+{
+    my ($visited, $m, $ind) = @_;
+    my $cols = scalar(@$visited);
+    for (my $j = 0; $j < $cols; ++$j) {
+        my $e = $m->element($ind+1,$j+1);
+        next if ($e == 0);
+        next if ($visited->[$j]);
+        $visited->[$j] = 1;
+        depthFirstSearch($visited, $m, $j);
+    }
+}
+
+sub findConnected
+{
+    my ($m) = @_;
+    my ($rows, $cols) = $m->dim();
+    my @visited;
+    for (my $i = 0; $i < $rows; ++$i) {
+        $visited[$i] = 0;
+    }
+
+    my $counter = 0;
+    for (my $i = 0; $i < $rows; ++$i) {
+        next if ($visited[$i]);
+        my @copy = @visited;
+        $visited[$i] = 1;
+        depthFirstSearch(\@visited, $m, $i);
+        printDiffs(\@copy, \@visited);
+        ++$counter;
+    }
+
+    print STDERR "$0: Found $counter connected sub-graphs\n";
+}
+
+sub printDiffs
+{
+    my ($a,$b) = @_;
+    my $n = scalar(@$a);
+    ($n == scalar(@$b)) or die "$0: printDiffs: vectors of different sizes\n";
+    print STDERR "$0: Subgraph: ";
+    my $c = 0;
+    for (my $i = 0; $i < $n; ++$i) {
+        next if ($a->[$i] == $b->[$i]);
+        print STDERR "$i ";
+        ++$c;
+    }
+
+    print STDERR " [$c]\n";
+}
+
+
 
