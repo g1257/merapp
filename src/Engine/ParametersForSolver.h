@@ -33,5 +33,18 @@ struct ParametersForSolver {
 	SizeType m;
 	bool verbose;
 }; // struct ParametersForSolver
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const ParametersForSolver<T>& p)
+{
+	os<<"hamiltonianConnection ";
+	os<<p.hamiltonianConnection;
+	os<<"h="<<p.h<<"\n";
+	os<<"m="<<p.m<<"\n";
+	os<<"verbose="<<((p.verbose) ? 1 : 0)<<"\n";
+
+	return os;
+}
+
 } // namespace Mera
 #endif // PARAMETERSFORSOLVER_H

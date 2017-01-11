@@ -48,7 +48,7 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 
 	Mera::MeraEnviron<ComplexOrRealType> environ(builder,params,dsrep);
-
+	std::cout<<params;
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep();
 	// add output u1000 to be used by unitary condition checking
 	std::cout<<"u1000(1,1)\n";
