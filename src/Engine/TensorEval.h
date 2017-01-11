@@ -15,59 +15,40 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef MERA_TENSOREVAL_H
-#define MERA_TENSOREVAL_H
+#ifndef MERA_TensorEvalSlow_H
+#define MERA_TensorEvalSlow_H
 
 #include "TensorSrep.h"
-#include "Tensor.h"
 #include <map>
 #include "Tokenizer.h"
 #include "SrepEquation.h"
 #include "TensorBreakup.h"
+#include "TensorEvalBase.h"
 
 namespace Mera {
 
 template<typename ComplexOrRealType>
-class TensorEval {
+class TensorEvalSlow : public TensorEvalBase<ComplexOrRealType> {
 
 	typedef TensorSrep TensorSrepType;
 
-	class TensorEvalHandle {
-
-	public:
-
-		enum Status {STATUS_IDLE, STATUS_IN_PROGRESS, STATUS_DONE};
-
-		TensorEvalHandle(Status status = STATUS_IDLE)
-		    : status_(status)
-		{}
-
-		bool done() const
-		{
-			return (status_ == STATUS_DONE);
-		}
-
-	private:
-
-		Status status_;
-	};
-
 public:
 
-	typedef SrepEquation<ComplexOrRealType> SrepEquationType;
+	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
+	typedef typename TensorEvalBaseType::SrepEquationType SrepEquationType;
+	typedef typename TensorEvalBaseType::HandleType HandleType;
+	typedef typename TensorEvalBaseType::TensorType TensorType;
+	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
+	typedef typename TensorEvalBaseType::VectorSizeType VectorSizeType;
+	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
-	typedef TensorEvalHandle HandleType;
-	typedef Tensor<ComplexOrRealType> TensorType;
-	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
-	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
 	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
-	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
-	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
 
-	TensorEval(SrepEquationType& tSrep,
+	TensorEvalSlow(SrepEquationType& tSrep,
 	           const VectorTensorType& vt,
 	           const VectorPairStringSizeType& tensorNameIds,
 	           MapPairStringSizeType& nameIdsTensor,
@@ -126,11 +107,8 @@ public:
 				veqs[j]->canonicalize();
 			veqs[j]->rhs().simplify(empty);
 
-			TensorEval tEval(*(veqs[j]),
-			                 data_,
-			                 tensorNameIds_,
-			                 nameIdsTensor_,
-			                 false);
+			TensorEvalSlow tEval(*(veqs[j]),data_,tensorNameIds_,nameIdsTensor_,false);
+
 			std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
 			tEval(false); //handle the handle here
 		}
@@ -142,7 +120,7 @@ public:
 		}
 	}
 
-	~TensorEval()
+	~TensorEvalSlow()
 	{
 		for (SizeType i = 0; i < garbage_.size(); ++i) {
 			delete garbage_[i];
@@ -373,9 +351,9 @@ private:
 		return *(data_[indexOfOutputTensor_]);
 	}
 
-	TensorEval(const TensorEval& other);
+	TensorEvalSlow(const TensorEvalSlow& other);
 
-	TensorEval& operator=(const TensorEval& other);
+	TensorEvalSlow& operator=(const TensorEvalSlow& other);
 
 	SrepEquationType srepEq_;
 	VectorTensorType data_;
@@ -385,4 +363,4 @@ private:
 	VectorTensorType garbage_;
 };
 }
-#endif // MERA_TENSOREVAL_H
+#endif // MERA_TensorEvalSlow_H

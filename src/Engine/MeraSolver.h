@@ -21,6 +21,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "InputNg.h"
 #include "TensorSrep.h"
 #include "TensorEval.h"
+#include "TensorEvalNew.h"
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
 #include "ParametersForSolver.h"
@@ -34,19 +35,18 @@ class MeraSolver {
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
-	typedef TensorEval<ComplexOrRealType> TensorEvalType;
-	typedef typename TensorEvalType::TensorType TensorType;
 	typedef TensorOptimizer<ComplexOrRealType,InputNgType::Readable> TensorOptimizerType;
 	typedef typename PsimagLite::Vector<TensorOptimizerType*>::Type VectorTensorOptimizerType;
-	typedef typename TensorEvalType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef typename PsimagLite::Vector<MatrixType*>::Type VectorMatrixType;
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
 	typedef typename TensorOptimizerType::SrepEquationType SrepEquationType;
 	typedef typename TensorOptimizerType::VectorSrepEquationType VectorSrepEquationType;
+	typedef typename TensorOptimizerType::BaseType TensorEvalBaseType;
+	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
 	typedef ParametersForSolver<ComplexOrRealType> ParametersForMeraType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
@@ -231,12 +231,14 @@ private:
 		assert(ind < energyTerms_.size());
 		SrepEquationType* ptr = energyTerms_[ind];
 		if (!ptr) return 0.0;
-		TensorEvalType tensorEval(*ptr,
+		TensorEvalBaseType* tensorEval = 0;
+		if (evaluator == "slow") {
+			tensorEval = new TensorEvalSlow(*ptr,
 		                          tensors_,
 		                          tensorNameIds_,
 		                          nameIdsTensor_,
 		                          EVAL_BREAKUP);
-		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
+		typename TensorEvalBaseType::HandleType handle = tensorEval(EVAL_BREAKUP);
 		while (!handle.done());
 		VectorSizeType args(1,0);
 		return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
