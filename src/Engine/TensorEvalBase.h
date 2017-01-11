@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016, UT-Battelle, LLC
+Copyright (c) 2016-2017, UT-Battelle, LLC
 
 MERA++, Version 0.
 
@@ -19,31 +19,12 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define TENSOREVALBASE_H
 #include "Tensor.h"
 #include "SrepEquation.h"
+#include "TensorEvalHandle.h"
 
 namespace Mera {
 
 template<typename ComplexOrRealType>
 class TensorEvalBase {
-
-	class TensorEvalHandle {
-
-	public:
-
-		enum Status {STATUS_IDLE, STATUS_IN_PROGRESS, STATUS_DONE};
-
-		TensorEvalHandle(Status status = STATUS_IDLE)
-		    : status_(status)
-		{}
-
-		bool done() const
-		{
-			return (status_ == STATUS_DONE);
-		}
-
-	private:
-
-		Status status_;
-	};
 
 public:
 
@@ -55,6 +36,8 @@ public:
 	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
 	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+
+	virtual ~TensorEvalBase() {}
 
 	virtual HandleType operator()() = 0;
 

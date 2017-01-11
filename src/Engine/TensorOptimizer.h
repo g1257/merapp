@@ -397,6 +397,9 @@ private:
 		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
 
+		delete tensorEval;
+		tensorEval = 0;
+
 		// copy result into m
 		SizeType count = 0;
 		do {

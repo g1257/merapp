@@ -241,6 +241,8 @@ private:
 
 		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
+		delete tensorEval;
+		tensorEval = 0;
 		VectorSizeType args(1,0);
 		return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
 	}
