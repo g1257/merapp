@@ -26,6 +26,7 @@ namespace Mera {
 struct ProgramGlobals {
 
 	typedef PsimagLite::RandomForTests<double> RngType;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 	static SizeType logBase2Strict(SizeType x)
 	{
@@ -53,6 +54,27 @@ struct ProgramGlobals {
 		}
 
 		return str2;
+	}
+
+	static bool nextIndex(VectorSizeType& summed,
+	                      const VectorSizeType& dimensions,
+	                      SizeType total)
+	{
+		assert(total <= summed.size());
+		for (SizeType i = 0; i < total; ++i)
+			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
+
+		for (SizeType i = 0; i < total; ++i) {
+			summed[i]++;
+			if (summed[i] < dimensions[i]) break;
+			summed[i] = 0;
+			if (i + 1 == total) return false;
+		}
+
+		for (SizeType i = 0; i < total; ++i)
+			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
+
+		return true;
 	}
 
 	static RngType rng;

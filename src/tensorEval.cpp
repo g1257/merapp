@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "TensorEval.h"
+#include "TensorEvalSlow.h"
 #include "TensorEvalNew.h"
 #include "Vector.h"
 #include "SrepEquation.h"
@@ -44,7 +44,8 @@ int main()
 
 	vt[1]->setToConstant(1.5);
 
-	TensorEvalBaseType::VectorPairStringSizeType idNames;
+	typedef TensorEvalBaseType::PairStringSizeType PairStringSizeType;
+	PsimagLite::Vector<PairStringSizeType>::Type idNames;
 	idNames.push_back(TensorEvalBaseType::PairStringSizeType("u",0));
 	idNames.push_back(TensorEvalBaseType::PairStringSizeType("u",1));
 	idNames.push_back(TensorEvalBaseType::PairStringSizeType("r",0));
@@ -57,12 +58,12 @@ int main()
 	if (evaluator == "slow") {
 		tensorEval = new TensorEvalSlowType(srepEq,vt,idNames,nameIdTensor,false);
 	} else if(evaluator == "new") {
-		tensorEval = new TensorEvalNewType(srepEq,vt,idNames,nameIdTensor,false);
+		tensorEval = new TensorEvalNewType(srepEq,vt,idNames,nameIdTensor);
 	} else {
 		throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
 	}
 
-	TensorEvalBaseType::HandleType handle = tensorEval->operator()(false);
+	TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 
 	while (!handle.done());
 

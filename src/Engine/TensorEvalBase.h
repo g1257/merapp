@@ -54,9 +54,26 @@ public:
 	typedef SrepEquation<ComplexOrRealType> SrepEquationType;
 	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
 	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 
-	virtual HandleType operator()(bool cached) = 0;
+	virtual HandleType operator()() = 0;
 
+	virtual void printResult(std::ostream& os) const = 0;
+
+	static SizeType indexOfOutputTensor(const SrepEquationType& eq,
+	                                    const VectorPairStringSizeType& tensorNameIds,
+	                                    MapPairStringSizeType& nameIdsTensor)
+	{
+		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
+		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
+			PsimagLite::String msg("SrepEquation: Could not find ");
+			msg += "output tensor " + eq.nameIdOfOutput().first;
+			msg += ttos(eq.nameIdOfOutput().second) + "\n";
+			throw PsimagLite::RuntimeError(msg);
+		}
+
+		return ret;
+	}
 };
 } // namespace Mera
 #endif // TENSOREVALBASE_H

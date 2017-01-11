@@ -13,8 +13,9 @@ struct ParametersForSolver {
 
 	ParametersForSolver(VectorType& hTerms,
 	                    SizeType h1,
-	                    SizeType m1)
-	    : hamiltonianConnection(hTerms),h(h1),m(m1),verbose(false)
+	                    SizeType m1,
+	                    PsimagLite::String eval)
+	    : hamiltonianConnection(hTerms),h(h1),m(m1),verbose(false),evaluator(eval)
 	{}
 
 	ParametersForSolver(PsimagLite::String filename)
@@ -26,12 +27,14 @@ struct ParametersForSolver {
 		int x = 0;
 		io.readline(x, "verbose=");
 		verbose = (x > 0);
+		io.readline(evaluator, "evaluator=");
 	}
 
 	VectorType hamiltonianConnection;
 	SizeType h;
 	SizeType m;
 	bool verbose;
+	PsimagLite::String evaluator;
 }; // struct ParametersForSolver
 
 template<typename T>
@@ -42,7 +45,7 @@ std::ostream& operator<<(std::ostream& os, const ParametersForSolver<T>& p)
 	os<<"h="<<p.h<<"\n";
 	os<<"m="<<p.m<<"\n";
 	os<<"verbose="<<((p.verbose) ? 1 : 0)<<"\n";
-
+	os<<"evaluator="<<p.evaluator<<"\n";
 	return os;
 }
 

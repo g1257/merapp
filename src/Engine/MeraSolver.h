@@ -20,7 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define MERASOLVER_H
 #include "InputNg.h"
 #include "TensorSrep.h"
-#include "TensorEval.h"
+#include "TensorEvalSlow.h"
 #include "TensorEvalNew.h"
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
@@ -43,9 +43,10 @@ class MeraSolver {
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
 	typedef typename TensorOptimizerType::SrepEquationType SrepEquationType;
 	typedef typename TensorOptimizerType::VectorSrepEquationType VectorSrepEquationType;
-	typedef typename TensorOptimizerType::BaseType TensorEvalBaseType;
+	typedef typename TensorOptimizerType::TensorEvalBaseType TensorEvalBaseType;
 	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
 	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
 	typedef ParametersForSolver<ComplexOrRealType> ParametersForMeraType;
 
@@ -203,12 +204,12 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (!seenRoot) {
 				if (tensorOptimizer_[i]->nameId().first != "r")
-				        continue;
+					continue;
 				else
 					seenRoot = true;
 			}
 
-			tensorOptimizer_[i]->optimize(iterTensor_,iter);
+			tensorOptimizer_[i]->optimize(iterTensor_,iter, paramsForMera_.evaluator);
 
 			PsimagLite::String str("energy after optimizing ");
 			str += tensorOptimizer_[i]->nameId().first;
@@ -231,14 +232,14 @@ private:
 		assert(ind < energyTerms_.size());
 		SrepEquationType* ptr = energyTerms_[ind];
 		if (!ptr) return 0.0;
-		TensorEvalBaseType* tensorEval = 0;
-		if (evaluator == "slow") {
-			tensorEval = new TensorEvalSlow(*ptr,
-		                          tensors_,
-		                          tensorNameIds_,
-		                          nameIdsTensor_,
-		                          EVAL_BREAKUP);
-		typename TensorEvalBaseType::HandleType handle = tensorEval(EVAL_BREAKUP);
+		TensorEvalBaseType* tensorEval = TensorOptimizerType::
+		        getTensorEvalPtr(paramsForMera_.evaluator,
+		                         *ptr,
+		                         tensors_,
+		                         tensorNameIds_,
+		                         nameIdsTensor_);
+
+		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
 		VectorSizeType args(1,0);
 		return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);

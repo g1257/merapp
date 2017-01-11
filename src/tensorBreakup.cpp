@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "TensorBreakup.h"
-#include "TensorEval.h"
 
 int main(int argc, char**argv)
 {

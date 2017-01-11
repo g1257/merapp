@@ -19,7 +19,8 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define TENSOROPTIMIZER_H
 #include "Vector.h"
 #include "TensorSrep.h"
-#include "TensorEval.h"
+#include "TensorEvalSlow.h"
+#include "TensorEvalNew.h"
 #include <algorithm>
 #include "Sort.h"
 #include "Matrix.h"
@@ -38,25 +39,25 @@ class TensorOptimizer {
 
 public:
 
-	typedef Mera::TensorEval<ComplexOrRealType> TensorEvalType;
+	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
+	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
+	typedef TensorEvalNew<ComplexOrRealType> TensorEvalNewType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
-	typedef typename TensorEvalType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename TensorEvalType::TensorType TensorType;
-	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
-	typedef typename TensorEvalType::SrepEquationType SrepEquationType;
+	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename TensorEvalBaseType::TensorType TensorType;
+	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
+	typedef typename TensorEvalBaseType::SrepEquationType SrepEquationType;
 	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
-	typedef typename TensorEvalType::MapPairStringSizeType MapPairStringSizeType;
+	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef PsimagLite::ParametersForSolver<RealType> ParametersForSolverType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
 	LanczosSolverType;
-
-	static const SizeType EVAL_BREAKUP = TensorEvalType::EVAL_BREAKUP;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
@@ -119,7 +120,7 @@ public:
 		}
 	}
 
-	void optimize(SizeType iters, SizeType upIter)
+	void optimize(SizeType iters, SizeType upIter, PsimagLite::String evaluator)
 	{
 		if (tensorSrep_.size() == 0) return;
 
@@ -135,7 +136,7 @@ public:
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
-			RealType e = optimizeInternal(iter, upIter);
+			RealType e = optimizeInternal(iter, upIter, evaluator);
 			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
 			}
@@ -149,7 +150,7 @@ public:
 			if (condSrep->lhs().maxTag('f') == 0) continue;
 
 			MatrixType condMatrix;
-			appendToMatrix(condMatrix,*condSrep);
+			appendToMatrix(condMatrix, *condSrep, evaluator);
 			if (!isTheIdentity(condMatrix))
 				std::cerr<<"not a isometry or unitary\n";
 		}
@@ -160,6 +161,30 @@ public:
 	const PairStringSizeType& nameId() const { return tensorToOptimize_; }
 
 	SizeType layer() const { return layer_; }
+
+	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
+	                                            const SrepEquationType& srep,
+	                                            VectorTensorType& tensors,
+	                                            const VectorPairStringSizeType& tensorNameIds,
+	                                            MapPairStringSizeType& nameIdsTensor)
+	{
+		TensorEvalBaseType* tensorEval = 0;
+		if (evaluator == "slow") {
+			tensorEval = new TensorEvalSlowType(srep,
+			                                    tensors,
+			                                    tensorNameIds,
+			                                    nameIdsTensor);
+		} else if (evaluator == "new") {
+			tensorEval = new TensorEvalNewType(srep,
+			                                   tensors,
+			                                   tensorNameIds,
+			                                   nameIdsTensor);
+		} else {
+			throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
+		}
+
+		return tensorEval;
+	}
 
 private:
 
@@ -212,7 +237,7 @@ private:
 		return (args == "") ? "" : "u1000(" + args + ")= " + srep;
 	}
 
-	RealType optimizeInternal(SizeType iter, SizeType upIter)
+	RealType optimizeInternal(SizeType iter, SizeType upIter, PsimagLite::String evaluator)
 	{
 		SizeType terms = tensorSrep_.size();
 		MatrixType m;
@@ -220,7 +245,7 @@ private:
 			std::cerr<<"ignore="<<ignore_<<"\n";
 		for (SizeType i = 0; i < terms; ++i) {
 			if (i == ignore_) continue;
-			appendToMatrix(m,*(tensorSrep_[i]));
+			appendToMatrix(m, *(tensorSrep_[i]), evaluator);
 		}
 
 		MatrixType mSrc = m;
@@ -234,7 +259,7 @@ private:
 
 			bool printmatrix = (params_.options.find("printmatrix") != PsimagLite::String::npos);
 			if (params_.options.find("printMatrix") != PsimagLite::String::npos)
-			        printmatrix = true;
+				printmatrix = true;
 			if (printmatrix)
 				if (m.n_row() < 512) std::cout<<m;
 
@@ -337,7 +362,9 @@ private:
 				t(i,j) = gsVector[i + j*rows];
 	}
 
-	void appendToMatrix(MatrixType& m, SrepEquationType& eq)
+	void appendToMatrix(MatrixType& m,
+	                    SrepEquationType& eq,
+	                    PsimagLite::String evaluator)
 	{
 		SizeType total = eq.rhs().maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
@@ -361,12 +388,13 @@ private:
 		outputTensor(eq).setSizes(dimensions);
 
 		// evaluate environment
-		TensorEvalType tensorEval(eq,
-		                          tensors_,
-		                          tensorNameIds_,
-		                          nameIdsTensor_,
-		                          EVAL_BREAKUP);
-		typename TensorEvalType::HandleType handle = tensorEval(EVAL_BREAKUP);
+		TensorEvalBaseType* tensorEval = getTensorEvalPtr(evaluator,
+		                                                  eq,
+		                                                  tensors_,
+		                                                  tensorNameIds_,
+		                                                  nameIdsTensor_);
+
+		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
 
 		// copy result into m
@@ -376,7 +404,7 @@ private:
 			ComplexOrRealType tmp = outputTensor(eq)(freeIndices);
 			m(rc.first,rc.second) += tmp;
 			count++;
-		} while (TensorEvalType::nextIndex(freeIndices,dimensions,total));
+		} while (ProgramGlobals::nextIndex(freeIndices,dimensions,total));
 	}
 
 	void prepareFreeIndices(VectorDirType& directions,
@@ -511,9 +539,9 @@ private:
 
 	TensorType& outputTensor(const SrepEquationType& eq)
 	{
-		SizeType indexOfOutputTensor = TensorEvalType::indexOfOutputTensor(eq,
-		                                                                   tensorNameIds_,
-		                                                                   nameIdsTensor_);
+		SizeType indexOfOutputTensor = TensorEvalBaseType::indexOfOutputTensor(eq,
+		                                                                       tensorNameIds_,
+		                                                                       nameIdsTensor_);
 		assert(indexOfOutputTensor < tensors_.size());
 		return *(tensors_[indexOfOutputTensor]);
 	}

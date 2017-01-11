@@ -21,7 +21,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorSrep.h"
 #include <map>
 #include "Tokenizer.h"
-#include "SrepEquation.h"
 #include "TensorBreakup.h"
 #include "TensorEvalBase.h"
 
@@ -41,27 +40,30 @@ public:
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
 	typedef typename TensorEvalBaseType::VectorSizeType VectorSizeType;
 	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
-	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+
 
 	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
 
-	TensorEvalSlow(SrepEquationType& tSrep,
-	           const VectorTensorType& vt,
-	           const VectorPairStringSizeType& tensorNameIds,
-	           MapPairStringSizeType& nameIdsTensor,
-	           bool modify)
+	TensorEvalSlow(const SrepEquationType& tSrep,
+	               const VectorTensorType& vt,
+	               const VectorPairStringSizeType& tensorNameIds,
+	               MapPairStringSizeType& nameIdsTensor,
+	               bool modify = EVAL_BREAKUP)
 	    : srepEq_(tSrep),
 	      data_(vt), // deep copy
 	      tensorNameIds_(tensorNameIds), // deep copy
-	      nameIdsTensor_(nameIdsTensor) // deep copy
-
+	      nameIdsTensor_(nameIdsTensor), // deep copy
+	      modify_(modify)
 	{
-		indexOfOutputTensor_ = indexOfOutputTensor(tSrep, tensorNameIds, nameIdsTensor);
+		indexOfOutputTensor_ = TensorEvalBaseType::indexOfOutputTensor(tSrep,
+		                                                               tensorNameIds,
+		                                                               nameIdsTensor);
 
-		if (!modify) return;
+		if (!modify_) return;
 
 		TensorBreakup tensorBreakup(srepEq_.lhs(), srepEq_.rhs());
 		// get t0, t1, etc definitions and result
@@ -110,7 +112,7 @@ public:
 			TensorEvalSlow tEval(*(veqs[j]),data_,tensorNameIds_,nameIdsTensor_,false);
 
 			std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
-			tEval(false); //handle the handle here
+			tEval(); //handle the handle here
 		}
 
 		std::cout.flush();
@@ -128,10 +130,10 @@ public:
 		}
 	}
 
-	HandleType operator()(bool cached)
+	HandleType operator()()
 	{
 		HandleType handle(HandleType::STATUS_DONE);
-		if (cached) return handle;
+		if (modify_ && EVAL_BREAKUP) return handle;
 
 		SizeType total = srepEq_.lhs().maxTag('f') + 1;
 
@@ -157,7 +159,7 @@ public:
 
 		do {
 			outputTensor()(free) = slowEvaluator(free,srepEq_.rhs());
-		} while (nextIndex(free,dimensions,total));
+		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 
 		return handle;
 	}
@@ -178,43 +180,7 @@ public:
 		do {
 			SizeType index = outputTensor().index(free);
 			std::cout<<index<<" "<<outputTensor()(free)<<"\n";
-		} while (nextIndex(free,dimensions,total));
-	}
-
-	static bool nextIndex(VectorSizeType& summed,
-	                      const VectorSizeType& dimensions,
-	                      SizeType total)
-	{
-		assert(total <= summed.size());
-		for (SizeType i = 0; i < total; ++i)
-			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
-
-		for (SizeType i = 0; i < total; ++i) {
-			summed[i]++;
-			if (summed[i] < dimensions[i]) break;
-			summed[i] = 0;
-			if (i + 1 == total) return false;
-		}
-
-		for (SizeType i = 0; i < total; ++i)
-			assert(dimensions[i] == 0 || summed[i] < dimensions[i]);
-
-		return true;
-	}
-
-	static SizeType indexOfOutputTensor(const SrepEquationType& eq,
-	                                    const VectorPairStringSizeType& tensorNameIds,
-	                                    MapPairStringSizeType& nameIdsTensor)
-	{
-		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
-		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
-			PsimagLite::String msg("SrepEquation: Could not find ");
-			msg += "output tensor " + eq.nameIdOfOutput().first;
-			msg += ttos(eq.nameIdOfOutput().second) + "\n";
-			throw PsimagLite::RuntimeError(msg);
-		}
-
-		return ret;
+		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 	}
 
 private:
@@ -242,7 +208,7 @@ private:
 		ComplexOrRealType sum = 0.0;
 		do {
 			sum += evalInternal(summed,free,srep);
-		} while (nextIndex(summed,dimensions,total));
+		} while (ProgramGlobals::nextIndex(summed,dimensions,total));
 
 		return sum;
 	}
@@ -359,6 +325,7 @@ private:
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
 	mutable MapPairStringSizeType nameIdsTensor_;
+	bool modify_;
 	SizeType indexOfOutputTensor_;
 	VectorTensorType garbage_;
 };

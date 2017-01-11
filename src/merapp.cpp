@@ -98,12 +98,13 @@ int main(int argc, char **argv)
 	MeraParametersType::VectorType hamTerms;
 	SizeType h = 0;
 	SizeType m = 0;
+	PsimagLite::String evaluator("slow");
 	PsimagLite::String strUsage(argv[0]);
 	strUsage += " -n sites -a arity -d dimension -h hilbertSize [-m m] ";
 	strUsage += "| -S srep | -V\n";
 	strUsage += "-h hilbertSize is always mandatory\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:h:m:s:bV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:h:m:s:e:bV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
@@ -130,6 +131,9 @@ int main(int argc, char **argv)
 
 			std::fill(hamTerms.begin(),hamTerms.end(),0.0);
 			fillHamTerms(hamTerms,optarg);
+			break;
+		case 'e':
+			evaluator = optarg;
 			break;
 		case 'b':
 			buildOnly = true;
@@ -166,6 +170,6 @@ int main(int argc, char **argv)
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
-	MeraParametersType params(hamTerms,h,m);
+	MeraParametersType params(hamTerms,h,m,evaluator);
 	main1(meraBuilder,params);
 }
