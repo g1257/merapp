@@ -22,10 +22,16 @@ int main(int argc, char** argv)
 {
 	PsimagLite::String file = "";
 	int opt = 0;
-	while ((opt = getopt(argc, argv,"f:")) != -1) {
+	int precision = 6;
+	while ((opt = getopt(argc, argv,"f:p:")) != -1) {
 		switch (opt) {
 		case 'f':
 			file = optarg;
+			break;
+		case 'p':
+			precision = atoi(optarg);
+			std::cout.precision(precision);
+			std::cerr.precision(precision);
 			break;
 		}
 	}
