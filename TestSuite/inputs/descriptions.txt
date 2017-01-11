@@ -19,6 +19,8 @@ Heisenberg 4 sites, MERA uuw, H = H_{01} + H_{12} + H_{23}
 Truncated to m=6 max
 -2.3660 = -1.6160 - 3*(-1/4)
 
+meraEnviron10.txt
+-4.3362397 = -2.8362397 - 6*(1/4)
 ----------------------------
 
 meraEnviron20.txt
