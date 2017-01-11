@@ -24,17 +24,19 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 namespace Mera {
 
+template<typename ComplexOrRealType>
 class MeraEnviron {
 
-	typedef ParametersForSolver ParametersForSolverType;
+	typedef ParametersForSolver<ComplexOrRealType> ParametersForMeraType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
+	typedef MeraBuilder<ComplexOrRealType> MeraBuilderType;
 
 public:
 
-	MeraEnviron(const MeraBuilder& builder,
-	            const ParametersForSolver& params,
+	MeraEnviron(const MeraBuilderType& builder,
+	            const ParametersForMeraType& params,
 	            PsimagLite::String dimensionSrep)
 	    : builder_(builder),
 	      params_(params),
@@ -73,9 +75,9 @@ private:
 		VectorStringType argForOutput(sites,"");
 		VectorStringType vdsrep(sites,"");
 		SizeType terms = 0;
-		assert(params_.hamiltonianTerm.size() == sites);
+		assert(params_.hamiltonianConnection.size() == sites);
 		for (SizeType site = 0; site < sites; ++site) {
-			if (!params_.hamiltonianTerm[site]) continue;
+			if (params_.hamiltonianConnection[site] == 0.0) continue;
 			TensorSrep tmp = environForTensorOneSite(ind, site);
 			vstr[site] = tmp.sRep();
 			argForOutput[site] = calcArgForOutput(vdsrep[site],tmp);
@@ -291,17 +293,17 @@ private:
 	{
 		PsimagLite::String e("TensorId=E,0\n");
 		PsimagLite::String d("");
-		SizeType terms = params_.hamiltonianTerm.size();
+		SizeType terms = params_.hamiltonianConnection.size();
 		SizeType effectiveTerms = 0;
 		for (SizeType i = 0; i < terms; ++i) {
-			if (!params_.hamiltonianTerm[i]) continue;
+			if (params_.hamiltonianConnection[i] == 0.0) continue;
 			++effectiveTerms;
 		}
 
 		e += "Terms=" + ttos(effectiveTerms) + "\n";
 		e += "IgnoreTerm=" + ttos(terms+1) + "\n";
 		for (SizeType i = 0; i < terms; ++i) {
-			if (!params_.hamiltonianTerm[i]) continue;
+			if (params_.hamiltonianConnection[i] == 0.0) continue;
 			PsimagLite::String rhs = builder_.energy(i).sRep();
 			assert(rhs != "");
 			e += "Environ=e" + ttos(i) + "()=" + rhs + "\n";
@@ -316,8 +318,8 @@ private:
 
 	MeraEnviron& operator=(const MeraEnviron&);
 
-	const MeraBuilder& builder_;
-	const ParametersForSolver& params_;
+	const MeraBuilderType& builder_;
+	const ParametersForMeraType& params_;
 	TensorSrep dimensionSrep_;
 	SizeType sizeOfRoot_;
 	TensorSrep tensorSrep_;

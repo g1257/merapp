@@ -6,10 +6,11 @@
 
 namespace Mera {
 
+template<typename ComplexOrRealType>
 class MeraBuilder {
 
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;
-	typedef TensorSrep::VectorSizeType VectorSizeType;
+	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef TensorSrep::VectorPairSizeType VectorPairSizeType;
 	typedef TensorSrep::PairSizeType PairSizeType;
 
@@ -18,7 +19,7 @@ public:
 	MeraBuilder(SizeType sites,
 	            SizeType arity,
 	            SizeType dimension,
-	            const VectorSizeType& hamTerms)
+	            const VectorType& hamTerms)
 	    : srep_(""), energy_(sites,0)
 	{
 		if (dimension != 1)
@@ -142,14 +143,14 @@ private:
 		}
 	}
 
-	void buildEnergies(const VectorSizeType& hamTerm)
+	void buildEnergies(const VectorType& hamTerm)
 	{
 		TensorSrep tensorSrep(srep_);
 		//std::cout<<"TensorId=E,0\n";
 		SizeType terms =hamTerm.size();
 		//std::cout<<"Terms="<<terms<<"\n";
 		for (SizeType site = 0; site < terms; ++site) {
-			if (!hamTerm[site]) continue;
+			if (hamTerm[site] == 0.0) continue;
 			energy_[site] = buildEnergyTerm(site, tensorSrep);
 		}
 	}

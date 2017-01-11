@@ -1,20 +1,34 @@
 #ifndef PARAMETERSFORSOLVER_H
 #define PARAMETERSFORSOLVER_H
 #include "Vector.h"
+#include "IoSimple.h"
 
 namespace Mera {
 
+template<typename ComplexOrRealType_>
 struct ParametersForSolver {
 
-	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef ComplexOrRealType_ ComplexOrRealType;
+	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 
-	ParametersForSolver(VectorSizeType& hTerms,
+	ParametersForSolver(VectorType& hTerms,
 	                    SizeType h1,
 	                    SizeType m1)
-	    : hamiltonianTerm(hTerms),h(h1),m(m1),verbose(false)
+	    : hamiltonianConnection(hTerms),h(h1),m(m1),verbose(false)
 	{}
 
-	VectorSizeType hamiltonianTerm;
+	ParametersForSolver(PsimagLite::String filename)
+	{
+		PsimagLite::IoSimple::In io(filename);
+		io.read(hamiltonianConnection, "hamiltonianConnection");
+		io.readline(h, "h=");
+		io.readline(m, "m=");
+		int x = 0;
+		io.readline(x, "verbose=");
+		verbose = (x > 0);
+	}
+
+	VectorType hamiltonianConnection;
 	SizeType h;
 	SizeType m;
 	bool verbose;

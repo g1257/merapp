@@ -23,6 +23,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorEval.h"
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
+#include "ParametersForSolver.h"
 
 namespace Mera {
 
@@ -41,20 +42,23 @@ class MeraSolver {
 	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
+	typedef typename PsimagLite::Vector<MatrixType*>::Type VectorMatrixType;
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
 	typedef typename TensorOptimizerType::SrepEquationType SrepEquationType;
 	typedef typename TensorOptimizerType::VectorSrepEquationType VectorSrepEquationType;
+	typedef ParametersForSolver<ComplexOrRealType> ParametersForMeraType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
 public:
 
 	MeraSolver(PsimagLite::String filename)
-	    : iterMera_(1),
+	    : paramsForMera_(filename),
+	      iterMera_(1),
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
-	      twoSiteHam_(4,4),
+	      twoSiteHam_(paramsForMera_.hamiltonianConnection.size(), 0),
 	      paramsForLanczos_(0)
 	{
 		InputCheck inputCheck;
@@ -78,8 +82,7 @@ public:
 
 		initTensorNameIds();
 
-		bool makeHamTheIdentity = false;
-		setTwoSiteHam(makeHamTheIdentity);
+		setTwoSiteHam();
 
 		initTensors(tdstr);
 
@@ -161,6 +164,11 @@ public:
 
 	~MeraSolver()
 	{
+		for (SizeType i = 0; i < twoSiteHam_.size(); ++i) {
+			delete twoSiteHam_[i];
+			twoSiteHam_[i] = 0;
+		}
+
 		for (SizeType i = 0; i < tensorOptimizer_.size(); ++i) {
 			delete tensorOptimizer_[i];
 			tensorOptimizer_[i] = 0;
@@ -234,27 +242,34 @@ private:
 	}
 
 	// FIXME: pick up model dependency here
-	void setTwoSiteHam(bool testWithIdentity)
+	void setTwoSiteHam()
 	{
-		SizeType n = twoSiteHam_.n_row();
-		assert(n = twoSiteHam_.n_col());
-		for (SizeType i = 0; i < n; ++i)
-			twoSiteHam_(i,i) = 1.0;
-		if (testWithIdentity) return;
-
-		// Sz Sz
-		for (SizeType i = 0; i < n; ++i)
-			twoSiteHam_(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
-
-		// S+S- S-S+
-		twoSiteHam_(1,2) = twoSiteHam_(2,1) = 0.5;
-
-		normalizeHam();
+		SizeType h = 2; // model dependency here
+		SizeType h2 = h*h;
+		SizeType n = twoSiteHam_.size();
+		for (SizeType i = 0; i < n; ++i) {
+			twoSiteHam_[i] = new MatrixType(h2,h2);
+			setTwoSiteHam(*(twoSiteHam_[i]),i);
+		}
 	}
 
-	void normalizeHam()
+	void setTwoSiteHam(MatrixType& m, SizeType site)
 	{
-		MatrixType m = twoSiteHam_;
+		SizeType n = m.n_row();
+		assert(n == m.n_col());
+		// Sz Sz
+		for (SizeType i = 0; i < n; ++i)
+			m(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
+
+		// S+S- S-S+
+		m(1,2) = m(2,1) = 0.5;
+
+		normalizeHam(m);
+	}
+
+	void normalizeHam(MatrixType& m2)
+	{
+		MatrixType m = m2;
 		SizeType n = m.n_row();
 		VectorRealType eigs(n,0.0);
 		diag(m,eigs,'N');
@@ -262,7 +277,7 @@ private:
 		RealType diagCorrection = eigs[n-1];
 		std::cout<<"MeraSolver: DiagonalCorrection= "<<diagCorrection<<"\n";
 		for (SizeType i = 0; i < n; ++i)
-			twoSiteHam_(i,i) -= diagCorrection;
+			m2(i,i) -= diagCorrection;
 	}
 
 	void initTensorNameIds()
@@ -315,12 +330,7 @@ private:
 			assert(ind < tensors_.size());
 			tensors_[ind] = new TensorType(dimensions,ins);
 			if (name == "h") {
-				tensors_[ind]->setToMatrix(twoSiteHam_);
-			} else if (name == "r") {
-				assert(0 < dimensions.size());
-				tensors_[ind]->setToIdentity(1.0);
-			} else if (name == "u") {
-				tensors_[ind]->setToIdentity(1.0);
+				tensors_[ind]->setToMatrix(*(twoSiteHam_[id]));
 			} else {
 				tensors_[ind]->setToIdentity(1.0);
 			}
@@ -342,13 +352,14 @@ private:
 
 	MeraSolver& operator=(const MeraSolver&);
 
+	const ParametersForMeraType paramsForMera_;
 	SizeType iterMera_;
 	SizeType iterTensor_;
 	SizeType indexOfRootTensor_;
 	VectorPairStringSizeType tensorNameIds_;
 	MapPairStringSizeType nameIdsTensor_;
 	VectorTensorType tensors_;
-	MatrixType twoSiteHam_;
+	VectorMatrixType twoSiteHam_;
 	VectorTensorOptimizerType tensorOptimizer_;
 	ParametersForSolverType* paramsForLanczos_;
 	VectorSrepEquationType energyTerms_;

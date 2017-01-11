@@ -37,8 +37,9 @@ void usageMain(const PsimagLite::String& str)
 	throw PsimagLite::RuntimeError(str);
 }
 
-void main1(const Mera::MeraBuilder& builder,
-           const Mera::ParametersForSolver& params)
+template<typename ComplexOrRealType>
+void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
+           const Mera::ParametersForSolver<ComplexOrRealType>& params)
 {
 	PsimagLite::String srep = builder();
 	Mera::DimensionSrep dimSrep(srep,params.h,params.m);
@@ -46,39 +47,51 @@ void main1(const Mera::MeraBuilder& builder,
 	PsimagLite::String hString = ttos(params.h);
 	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 
-	Mera::MeraEnviron environ(builder,params,dsrep);
+	Mera::MeraEnviron<ComplexOrRealType> environ(builder,params,dsrep);
 
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep();
 	// add output u1000 to be used by unitary condition checking
 	std::cout<<"u1000(1,1)\n";
 	SizeType iterMera = 5;
+	std::cout<<"MeraOptions=none\n";
 	std::cout<<"IterMera="<<iterMera<<"\n";
 	std::cout<<"MERA="<<srep<<"\n";
 
 	std::cout<<environ.environs();
 }
 
-void fillHamTerms(Mera::TensorSrep::VectorSizeType& v,
+template<typename VectorType>
+void fillHamTerms(VectorType& v,
                   PsimagLite::String terms)
 {
 	PsimagLite::Vector<PsimagLite::String>::Type tokens;
 	PsimagLite::tokenizer(terms,tokens,",");
-	for (SizeType i = 0; i < tokens.size(); ++i) {
+	if (tokens.size() & 1) {
+		std::cerr<<"-s site0,value0,site1,value1,... expected\n";
+		throw PsimagLite::RuntimeError("fillHamTerms\n");
+	}
+
+	for (SizeType i = 0; i < tokens.size(); i += 2) {
 		SizeType ind = atoi(tokens[i].c_str());
 		assert(ind < v.size());
-		v[ind] = 1;
+		assert(i + 1 < tokens.size());
+		v[ind] = atof(tokens[i+1].c_str());;
 	}
 }
 
 int main(int argc, char **argv)
 {
+	// check for complex or real  here FIXME
+	typedef Mera::ParametersForSolver<double> MeraParametersType;
+	typedef Mera::MeraBuilder<double> MeraBuilderType;
+
 	int opt = 0;
 	bool versionOnly = false;
 	bool buildOnly = false;
 	SizeType sites = 0;
 	SizeType arity = 2;
 	SizeType dimension = 1;
-	Mera::TensorSrep::VectorSizeType hamTerms;
+	MeraParametersType::VectorType hamTerms;
 	SizeType h = 0;
 	SizeType m = 0;
 	PsimagLite::String strUsage(argv[0]);
@@ -91,7 +104,7 @@ int main(int argc, char **argv)
 		case 'n':
 			sites = atoi(optarg);
 			assert(sites > 1);
-			hamTerms.resize(sites-1,1);
+			hamTerms.resize(sites - 1,1.0);
 			break;
 		case 'a':
 			arity = atoi(optarg);
@@ -111,7 +124,7 @@ int main(int argc, char **argv)
 				return 1;
 			}
 
-			std::fill(hamTerms.begin(),hamTerms.end(),0);
+			std::fill(hamTerms.begin(),hamTerms.end(),0.0);
 			fillHamTerms(hamTerms,optarg);
 			break;
 		case 'b':
@@ -136,7 +149,7 @@ int main(int argc, char **argv)
 		usageMain(strUsage);
 
 	// here build srep
-	Mera::MeraBuilder meraBuilder(sites,arity,dimension,hamTerms);
+	MeraBuilderType meraBuilder(sites,arity,dimension,hamTerms);
 
 	std::cout<<"Sites="<<sites<<"\n";
 
@@ -149,6 +162,6 @@ int main(int argc, char **argv)
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
-	Mera::ParametersForSolver params(hamTerms,h,m);
+	MeraParametersType params(hamTerms,h,m);
 	main1(meraBuilder,params);
 }
