@@ -253,13 +253,16 @@ private:
 		SizeType h = 2; // model dependency here
 		SizeType h2 = h*h;
 		SizeType n = twoSiteHam_.size();
+		RealType c = 0.0;
 		for (SizeType i = 0; i < n; ++i) {
 			twoSiteHam_[i] = new MatrixType(h2,h2);
-			setTwoSiteHam(*(twoSiteHam_[i]),i);
+			c += setTwoSiteHam(*(twoSiteHam_[i]),i);
 		}
+
+		std::cout<<"Shift="<<c<<"\n";
 	}
 
-	void setTwoSiteHam(MatrixType& m, SizeType site)
+	RealType setTwoSiteHam(MatrixType& m, SizeType site)
 	{
 		SizeType n = m.n_row();
 		assert(n == m.n_col());
@@ -274,10 +277,10 @@ private:
 		// S+S- S-S+
 		m(1,2) = m(2,1) = 0.5*scale;
 
-		normalizeHam(m);
+		return normalizeHam(m);
 	}
 
-	void normalizeHam(MatrixType& m2)
+	RealType normalizeHam(MatrixType& m2) const
 	{
 		MatrixType m = m2;
 		SizeType n = m.n_row();
@@ -288,6 +291,7 @@ private:
 		std::cout<<"MeraSolver: DiagonalCorrection= "<<diagCorrection<<"\n";
 		for (SizeType i = 0; i < n; ++i)
 			m2(i,i) -= diagCorrection;
+		return diagCorrection;
 	}
 
 	void initTensorNameIds()
