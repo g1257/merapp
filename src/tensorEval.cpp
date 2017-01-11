@@ -20,10 +20,15 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include "SrepEquation.h"
 
-int main()
+int main(int argc, char **argv)
 {
 	PsimagLite::String str = "r0(f0) = u0(f0|s0)u1(s0)";
 	PsimagLite::String evaluator = "slow"; // or you can say "new" here when ready
+
+	if (argc == 2)
+		evaluator = argv[1];
+
+	std::cout<<"Using evaluator "<<evaluator<<"\n";
 
 	typedef Mera::TensorEvalSlow<double> TensorEvalSlowType;
 	typedef Mera::TensorEvalNew<double> TensorEvalNewType;
