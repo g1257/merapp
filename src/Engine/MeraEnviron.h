@@ -292,11 +292,19 @@ private:
 		PsimagLite::String e("TensorId=E,0\n");
 		PsimagLite::String d("");
 		SizeType terms = params_.hamiltonianTerm.size();
-		e += "Terms=" + ttos(terms) + "\n";
+		SizeType effectiveTerms = 0;
+		for (SizeType i = 0; i < terms; ++i) {
+			if (!params_.hamiltonianTerm[i]) continue;
+			++effectiveTerms;
+		}
+
+		e += "Terms=" + ttos(effectiveTerms) + "\n";
 		e += "IgnoreTerm=" + ttos(terms+1) + "\n";
 		for (SizeType i = 0; i < terms; ++i) {
 			if (!params_.hamiltonianTerm[i]) continue;
-			e += "Environ=e" + ttos(i) + "()=" + builder_.energy(i).sRep() + "\n";
+			PsimagLite::String rhs = builder_.energy(i).sRep();
+			assert(rhs != "");
+			e += "Environ=e" + ttos(i) + "()=" + rhs + "\n";
 			d += "e" + ttos(i) + "()";
 		}
 

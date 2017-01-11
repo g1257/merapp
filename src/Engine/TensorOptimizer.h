@@ -237,11 +237,6 @@ private:
 			        printmatrix = true;
 			if (printmatrix)
 				if (m.n_row() < 512) std::cout<<m;
-			bool stopEarly = (params_.options.find("stopEarly") != PsimagLite::String::npos);
-			if (params_.options.find("stopearly") != PsimagLite::String::npos)
-				stopEarly = true;
-			if (stopEarly)
-				throw PsimagLite::RuntimeError("stopEarly requested by user\n");
 
 			SizeType rows = tensors_[indToOptimize_]->argSize(0);
 			SizeType cols = tensors_[indToOptimize_]->argSize(1);
@@ -260,6 +255,12 @@ private:
 
 			RealType e = computeRyR(mSrc);
 			if (verbose_) std::cerr<<"r*Y(r)r="<<e<<"\n";
+
+			bool stopEarly = (params_.options.find("stopEarly") != PsimagLite::String::npos);
+			if (params_.options.find("stopearly") != PsimagLite::String::npos)
+				stopEarly = true;
+			if (stopEarly)
+				throw PsimagLite::RuntimeError("stopEarly requested by user\n");
 
 			return s[0];
 		}
