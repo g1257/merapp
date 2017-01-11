@@ -72,7 +72,19 @@ make, perl, and git if you don't have them.
 
     cd merapp/src
 
+    cp Config.make.sample Config.make
+    (edit Config.make if needed)
+
     make
 
-5. You can run it with TBW.
+5. You can run it with
+
+    ./merapp -h 2 -n 4 > n4.txt
+    ./meranpp -f n4.txt
+
+    or run from the TestSuite
+
+    ./meranpp -f ../TestSuite/inputs/meraEnviron1.txt
+    etc.
+
 
