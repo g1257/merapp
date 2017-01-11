@@ -39,7 +39,7 @@ void usageMain(const PsimagLite::String& str)
 
 template<typename ComplexOrRealType>
 void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
-           const Mera::ParametersForSolver<ComplexOrRealType>& params)
+           const Mera::ParametersForMera<ComplexOrRealType>& params)
 {
 	PsimagLite::String srep = builder();
 	Mera::DimensionSrep dimSrep(srep,params.h,params.m);
@@ -86,7 +86,7 @@ void fillHamTerms(VectorType& v,
 int main(int argc, char **argv)
 {
 	// check for complex or real  here FIXME
-	typedef Mera::ParametersForSolver<double> MeraParametersType;
+	typedef Mera::ParametersForMera<double> MeraParametersType;
 	typedef Mera::MeraBuilder<double> MeraBuilderType;
 
 	int opt = 0;

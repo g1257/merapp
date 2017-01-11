@@ -1,24 +1,24 @@
-#ifndef PARAMETERSFORSOLVER_H
-#define PARAMETERSFORSOLVER_H
+#ifndef ParametersForMera_H
+#define ParametersForMera_H
 #include "Vector.h"
 #include "IoSimple.h"
 
 namespace Mera {
 
 template<typename ComplexOrRealType_>
-struct ParametersForSolver {
+struct ParametersForMera {
 
 	typedef ComplexOrRealType_ ComplexOrRealType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 
-	ParametersForSolver(VectorType& hTerms,
-	                    SizeType h1,
-	                    SizeType m1,
-	                    PsimagLite::String eval)
+	ParametersForMera(VectorType& hTerms,
+	                  SizeType h1,
+	                  SizeType m1,
+	                  PsimagLite::String eval)
 	    : hamiltonianConnection(hTerms),h(h1),m(m1),verbose(false),evaluator(eval)
 	{}
 
-	ParametersForSolver(PsimagLite::String filename)
+	ParametersForMera(PsimagLite::String filename)
 	{
 		PsimagLite::IoSimple::In io(filename);
 		io.read(hamiltonianConnection, "hamiltonianConnection");
@@ -35,10 +35,10 @@ struct ParametersForSolver {
 	SizeType m;
 	bool verbose;
 	PsimagLite::String evaluator;
-}; // struct ParametersForSolver
+}; // struct ParametersForMera
 
 template<typename T>
-std::ostream& operator<<(std::ostream& os, const ParametersForSolver<T>& p)
+std::ostream& operator<<(std::ostream& os, const ParametersForMera<T>& p)
 {
 	os<<"hamiltonianConnection ";
 	os<<p.hamiltonianConnection;
@@ -50,4 +50,4 @@ std::ostream& operator<<(std::ostream& os, const ParametersForSolver<T>& p)
 }
 
 } // namespace Mera
-#endif // PARAMETERSFORSOLVER_H
+#endif // ParametersForMera_H

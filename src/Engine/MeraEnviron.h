@@ -18,7 +18,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef MERA_ENVIRON_H
 #define MERA_ENVIRON_H
 #include <iostream>
-#include "ParametersForSolver.h"
+#include "ParametersForMera.h"
 #include "TensorSrep.h"
 #include "MeraBuilder.h"
 
@@ -27,7 +27,7 @@ namespace Mera {
 template<typename ComplexOrRealType>
 class MeraEnviron {
 
-	typedef ParametersForSolver<ComplexOrRealType> ParametersForMeraType;
+	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 	typedef PsimagLite::Vector<TensorSrep*>::Type VectorTensorSrepType;

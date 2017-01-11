@@ -24,7 +24,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorEvalNew.h"
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
-#include "ParametersForSolver.h"
+#include "ParametersForMera.h"
 
 namespace Mera {
 
@@ -48,7 +48,7 @@ class MeraSolver {
 	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef ParametersForSolver<ComplexOrRealType> ParametersForMeraType;
+	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
