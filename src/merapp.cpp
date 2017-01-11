@@ -45,7 +45,11 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	Mera::DimensionSrep dimSrep(srep,params.h,params.m);
 	PsimagLite::String dsrep = dimSrep();
 	PsimagLite::String hString = ttos(params.h);
-	dsrep += "h0(" + hString + "," + hString + "|" + hString + "," + hString + ")";
+	PsimagLite::String args = "(" + hString + "," + hString + "|" + hString + "," + hString + ")";
+	for (SizeType i = 0; i < params.hamiltonianConnection.size(); ++i) {
+		if (params.hamiltonianConnection[i] == 0.0) continue;
+		dsrep += "h" + ttos(i) + args;
+	}
 
 	Mera::MeraEnviron<ComplexOrRealType> environ(builder,params,dsrep);
 	std::cout<<params;

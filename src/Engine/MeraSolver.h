@@ -120,6 +120,7 @@ public:
 					if (index != PsimagLite::String::npos)
 						srep.replace(index,5,"=");
 					energyTerms_[i] = new SrepEquationType(srep);
+					allTensorsDefinedOrDie(energyTerms_[i]->rhs());
 				}
 
 				continue;
@@ -257,12 +258,16 @@ private:
 	{
 		SizeType n = m.n_row();
 		assert(n == m.n_col());
+
+		assert(site < paramsForMera_.hamiltonianConnection.size());
+		ComplexOrRealType scale = paramsForMera_.hamiltonianConnection[site];
+
 		// Sz Sz
 		for (SizeType i = 0; i < n; ++i)
-			m(i,i) = (i == 0 || i ==3) ? 0.25 : -0.25;
+			m(i,i) = (i == 0 || i ==3) ? 0.25*scale : -0.25*scale;
 
 		// S+S- S-S+
-		m(1,2) = m(2,1) = 0.5;
+		m(1,2) = m(2,1) = 0.5*scale;
 
 		normalizeHam(m);
 	}
@@ -345,6 +350,20 @@ private:
 			SizeType id = t(i).id();
 			PairStringSizeType p(name,id);
 			tensorNameIds_.push_back(p);
+		}
+	}
+
+	void allTensorsDefinedOrDie(const TensorSrep& srep)
+	{
+		SizeType ntensors = srep.size();
+		for (SizeType i = 0; i < ntensors; ++i) {
+			PsimagLite::String name = srep(i).name();
+			SizeType id = srep(i).id();
+			PairStringSizeType p(name,id);
+			SizeType x = nameIdsTensor_[p];
+			if (tensorNameIds_[x] == p) continue;
+			PsimagLite::String msg("Not found tensor "+ name + ttos(id) + "\n");
+			throw PsimagLite::RuntimeError("allTensorsDefinedOrDie: " + msg);
 		}
 	}
 
