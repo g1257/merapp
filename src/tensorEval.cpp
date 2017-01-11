@@ -68,6 +68,8 @@ int main()
 	while (!handle.done());
 
 	tensorEval->printResult(std::cout);
+	delete tensorEval;
+	tensorEval = 0;
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		delete vt[i];
