@@ -83,6 +83,13 @@ sub printArtistic
 			print "$thisRow\n";
 		}
 	}
+
+	# print summary of values
+	foreach my $key (keys %$usedColors) {
+		my $ptr = $usedColors{"$key"};
+		my $counter = $ptr->[0];
+		print STDERR "Values $key appeared $counter times\n";
+	}
 }
 
 sub getArtisticRow
@@ -103,18 +110,20 @@ sub getArtisticValue
 	return "255 255 255" if ($e == 0);
 	my $max = keys %{$usedColors};
 
-	my $color = $usedColors->{"$e"};
-	if (defined($color)) {
+	my $ptr = $usedColors->{"$e"};
+	if (defined($ptr)) {
+		my ($counter, $color) = @$ptr;
+		$ptr->[0] = $counter + 1;
 		$color =~ s/,/ /g;
 		return $color;
 	}
 
 	die "$0: We run out of colors\n" if ($max >= scalar(@$colors));
-	$color = $colors->[$max];
+	my $color = $colors->[$max];
 	print STDERR "New color $color for $e\n";
 	my $colorWithCommas = $color;
 	$colorWithCommas =~ s/ /,/g;
-	$usedColors->{"$e"} = $colorWithCommas;
+	$usedColors->{"$e"} = [1, $colorWithCommas];
 	return $color;
 }
 
