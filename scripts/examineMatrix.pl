@@ -14,6 +14,8 @@ while (<STDIN>) {
 }
 
 $_ = <STDIN>;
+defined($_) or die "$0: Could not find $label in STDIN\n";
+
 chomp;
 my @temp = split;
 if (scalar(@temp) != 2) {
@@ -201,37 +203,63 @@ sub findConnected
     my ($m) = @_;
     my ($rows, $cols) = $m->dim();
     my @visited;
+
     for (my $i = 0; $i < $rows; ++$i) {
         $visited[$i] = 0;
     }
 
+    my @permutation;
     my $counter = 0;
+    my $x = 0;
     for (my $i = 0; $i < $rows; ++$i) {
         next if ($visited[$i]);
         my @copy = @visited;
         $visited[$i] = 1;
         depthFirstSearch(\@visited, $m, $i);
-        printDiffs(\@copy, \@visited);
+        $x = evalDiffs(\@copy, \@visited, $x, \@permutation);
         ++$counter;
     }
 
     print STDERR "$0: Found $counter connected sub-graphs\n";
+	$counter = scalar(@permutation);
+	my $sum = 0;
+	open(FOUT, "> permutation.txt") or die "$0: writing to permutation.txt : $!\n";
+	print FOUT "PERMUTATION\n";
+	print FOUT "$counter $counter\n";
+	for (my $i = 0; $i < $counter; ++$i) {
+		$sum += $permutation[$i];
+		for (my $j = 0; $j < $counter; ++$j) {
+			my $val = ($permutation[$i] == $j) ? 1.0 : 0.0;
+			print FOUT "$val ";
+		}
+
+		print FOUT "\n";
+	}
+
+	close(FOUT);
+
+	my $expectedSum = $counter*($counter - 1)/2;
+	($sum == $expectedSum) or die "$0: Permutation check failed\n";
+
+
 }
 
-sub printDiffs
+sub evalDiffs
 {
-    my ($a,$b) = @_;
+    my ($a,$b, $x, $permutation) = @_;
     my $n = scalar(@$a);
     ($n == scalar(@$b)) or die "$0: printDiffs: vectors of different sizes\n";
-    print STDERR "$0: Subgraph: ";
+    #print STDERR "$0: Subgraph: ";
     my $c = 0;
     for (my $i = 0; $i < $n; ++$i) {
         next if ($a->[$i] == $b->[$i]);
-        print STDERR "$i ";
+	#print STDERR "$i ";
+	$permutation->[$x++] = $i;
         ++$c;
     }
 
-    print STDERR " [$c]\n";
+    #print STDERR " [$c]\n";
+    return $x;
 }
 
 

@@ -674,7 +674,7 @@ private:
 				PsimagLite::String str("Index " + c + ttos(i));
 				str += " should appear " + ttos(times) + " times, not ";
 				str += ttos(indices[i]) + " times\n";
-				std::cerr<<str;
+				throw PsimagLite::RuntimeError(str);
 				flag = false;
 			} else {
 				return false;

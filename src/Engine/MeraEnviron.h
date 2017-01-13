@@ -84,6 +84,8 @@ private:
 			if (vstr[site] != "") ++terms;
 		}
 
+		if (terms == 0) return terms;
+
 		PsimagLite::String thisEnv("TensorId=" + name + "," + ttos(id) + "\n");
 		thisEnv += "Terms=" + ttos(terms) + "\n";
 		thisEnv += "IgnoreTerm=" + ttos(2*sites+1) + "\n";
