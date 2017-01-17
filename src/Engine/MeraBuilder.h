@@ -218,7 +218,7 @@ private:
 		}
 
 		t.refresh();
-		assert(t.isValid(true));
+		t.isValid(true);
 	}
 
 	PsimagLite::String srep_;
