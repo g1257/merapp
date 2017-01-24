@@ -51,20 +51,35 @@ public:
 
 	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY, INDEX_TYPE_DIM};
 
+	struct NonPointerOpaque {
+		NonPointerOpaque(PsimagLite::String srep)
+		    : id_(0),
+		      conjugate_(false),
+		      srep_(srep),
+		      name_(""),
+		      type_(TENSOR_TYPE_GP),
+		      maxSummed_(0),
+		      maxFree_(0)
+		{}
+
+		SizeType id_;
+		bool conjugate_;
+		PsimagLite::String srep_;
+		PsimagLite::String name_;
+		TensorTypeEnum type_;
+		SizeType maxSummed_;
+		SizeType maxFree_;
+	};
+
 	explicit TensorStanza(PsimagLite::String srep)
-	    : conjugate_(false),
-	      srep_(srep),
-	      name_(""),
-	      type_(TENSOR_TYPE_GP),
-	      maxSummed_(0),
-	      maxFree_(0)
+	    : opaque_(srep)
 	{
 		VectorStringType tokens;
-		PsimagLite::tokenizer(srep_,tokens,"|");
+		PsimagLite::tokenizer(opaque_.srep_,tokens,"|");
 		SizeType ts = tokens.size();
 		if (ts == 0 || ts > 2) {
 			PsimagLite::String str("TensorStanza: malformed stanza ");
-			throw PsimagLite::RuntimeError(str + srep_ + "\n");
+			throw PsimagLite::RuntimeError(str + opaque_.srep_ + "\n");
 		}
 
 		PsimagLite::String nameAndId = getNameFromToken(tokens[0]);
@@ -79,16 +94,16 @@ public:
 		SizeType l = nameAndId.length();
 		if (l == 0) {
 			PsimagLite::String str("TensorStanza: malformed partial srep, empty name/id ");
-			throw PsimagLite::RuntimeError(str + srep_ + "\n");
+			throw PsimagLite::RuntimeError(str + opaque_.srep_ + "\n");
 		}
 
 		SizeType tmp = std::count(nameAndId.begin(),nameAndId.end(),'*');
 		if (tmp > 1) {
 			PsimagLite::String str("TensorStanza: too many * in stanza ");
-			throw PsimagLite::RuntimeError(str + srep_ + "\n");
+			throw PsimagLite::RuntimeError(str + opaque_.srep_ + "\n");
 		}
 
-		conjugate_ = (tmp == 1);
+		opaque_.conjugate_ = (tmp == 1);
 
 		std::size_t index = nameAndId.find("*");
 		if (index != PsimagLite::String::npos) nameAndId.erase(index,1);
@@ -97,31 +112,68 @@ public:
 		assert(l > 0);
 		index = nameAndId.find_first_of("0123456789");
 
-		name_ = nameAndId.substr(0,index);
+		opaque_.name_ = nameAndId.substr(0,index);
 
 		if (index == PsimagLite::String::npos)
-			id_ = 0;
+			opaque_.id_ = 0;
 		else
-			id_ = atoi(nameAndId.substr(index,l-index).c_str());
+			opaque_.id_ = atoi(nameAndId.substr(index,l-index).c_str());
 
 		if (index == PsimagLite::String::npos) {
 			PsimagLite::String str("TensorStanza: no digit for token ");
 			throw PsimagLite::RuntimeError(str + nameAndId + "\n");
 		}
 
-		if (type_ == TENSOR_TYPE_UNKNOWN) {
+		if (opaque_.type_ == TENSOR_TYPE_UNKNOWN) {
 			PsimagLite::String str("TensorStanza: unknown tensor type ");
-			throw PsimagLite::RuntimeError(str + srep_ + "\n");
+			throw PsimagLite::RuntimeError(str + opaque_.srep_ + "\n");
 		}
 
-		maxSummed_ = maxIndex('s');
-		maxFree_ = maxIndex('f');
+		opaque_.maxSummed_ = maxIndex('s');
+		opaque_.maxFree_ = maxIndex('f');
+	}
+
+	TensorStanza(const TensorStanza& other)
+	    : opaque_(other.opaque_),legs_(other.legs_.size(), 0)
+	{
+		for (SizeType i = 0; i < other.legs_.size(); ++i)
+			legs_[i] = new TensorLegType(*(other.legs_[i]));
+	}
+
+	TensorStanza& operator=(const TensorStanza& other)
+	{
+		if (this == &other) return *this;
+
+		opaque_ = other.opaque_;
+
+		for (SizeType i = 0; i < legs_.size(); ++i) {
+			delete legs_[i];
+			legs_[i] = 0;
+		}
+
+		legs_.clear();
+		legs_.resize(other.legs_.size(), 0);
+
+		for (SizeType i = 0; i < other.legs_.size(); ++i)
+			legs_[i] = new TensorLegType(*(other.legs_[i]));
+
+		return *this;
+	}
+
+	~TensorStanza()
+	{
+		for (SizeType i = 0;i < legs_.size(); ++i) {
+			delete legs_[i];
+			legs_[i] = 0;
+		}
+
+		legs_.clear();
 	}
 
 	void conjugate()
 	{
-		conjugate_ = (!conjugate_);
-		srep_ = srepFromObject();
+		opaque_.conjugate_ = (!opaque_.conjugate_);
+		opaque_.srep_ = srepFromObject();
 	}
 
 	void shiftSummedBy(SizeType ms)
@@ -133,14 +185,14 @@ public:
 			legs_[i]->numericTag() += ms;
 		}
 
-		maxSummed_ += ms;
-		srep_ = srepFromObject();
+		opaque_.maxSummed_ += ms;
+		opaque_.srep_ = srepFromObject();
 	}
 
 	bool replaceSummedOrFrees(const VectorPairSizeType& replacements,
 	                          char type)
 	{
-		if (type_ == TENSOR_TYPE_ERASED) return false;
+		if (opaque_.type_ == TENSOR_TYPE_ERASED) return false;
 
 		bool simplificationHappended = false;
 		SizeType r = replacements.size();
@@ -185,9 +237,9 @@ public:
 			legs_[i]->name() = 's';
 		}
 
-		maxSummed_ = maxIndex('s');
-		maxFree_ = maxIndex('f');
-		srep_ = srepFromObject();
+		opaque_.maxSummed_ = maxIndex('s');
+		opaque_.maxFree_ = maxIndex('f');
+		opaque_.srep_ = srepFromObject();
 	}
 
 	void eraseTensor(VectorSizeType& s)
@@ -203,9 +255,9 @@ public:
 
 	void setAsErased()
 	{
-		type_ = TENSOR_TYPE_ERASED;
-		maxSummed_ = 0;
-		maxFree_ = 0;
+		opaque_.type_ = TENSOR_TYPE_ERASED;
+		opaque_.maxSummed_ = 0;
+		opaque_.maxFree_ = 0;
 
 		for (SizeType i = 0; i < legs_.size(); ++i) {
 			delete legs_[i];
@@ -214,14 +266,14 @@ public:
 
 		legs_.clear();
 
-		srep_ = "";
+		opaque_.srep_ = "";
 	}
 
 	SizeType uncontract(const VectorSizeType& erased,
 	                    SizeType count,
 	                    VectorSizeType* mapping = 0)
 	{
-		if (type_ == TENSOR_TYPE_ERASED) return count;
+		if (opaque_.type_ == TENSOR_TYPE_ERASED) return count;
 
 		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
@@ -234,9 +286,9 @@ public:
 				mapping->operator[](legs_[i]->numericTag()) = legs_[i]->numericTag();
 		}
 
-		maxSummed_ = maxIndex('s');
-		maxFree_ = maxIndex('f');
-		srep_ = srepFromObject();
+		opaque_.maxSummed_ = maxIndex('s');
+		opaque_.maxFree_ = maxIndex('f');
+		opaque_.srep_ = srepFromObject();
 		return count;
 	}
 
@@ -248,14 +300,14 @@ public:
 			legs_[i]->numericTag() = count++;
 		}
 
-		maxFree_ = maxIndex('f');
-		srep_ = srepFromObject();
+		opaque_.maxFree_ = maxIndex('f');
+		opaque_.srep_ = srepFromObject();
 		return count;
 	}
 
 	void setIndices(const VectorSizeType& summed, char c)
 	{
-		if (type_ == TENSOR_TYPE_ERASED) return;
+		if (opaque_.type_ == TENSOR_TYPE_ERASED) return;
 
 		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
@@ -265,15 +317,15 @@ public:
 			legs_[i]->numericTag() = summed[ind];
 		}
 
-		maxFree_ = maxIndex('f');
-		maxSummed_ = maxIndex('s');
-		srep_ = srepFromObject();
+		opaque_.maxFree_ = maxIndex('f');
+		opaque_.maxSummed_ = maxIndex('s');
+		opaque_.srep_ = srepFromObject();
 	}
 
 	void loadSummedOrFree(VectorSizeType& summed,
 	                      char c) const
 	{
-		if (type_ == TENSOR_TYPE_ERASED) return;
+		if (opaque_.type_ == TENSOR_TYPE_ERASED) return;
 
 		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
@@ -282,13 +334,13 @@ public:
 		}
 	}
 
-	bool isConjugate() const { return conjugate_; }
+	bool isConjugate() const { return opaque_.conjugate_; }
 
-	const PsimagLite::String& sRep() const { return srep_; }
+	const PsimagLite::String& sRep() const { return opaque_.srep_; }
 
-	const PsimagLite::String& name() const { return name_; }
+	const PsimagLite::String& name() const { return opaque_.name_; }
 
-	SizeType id() const { return id_; }
+	SizeType id() const { return opaque_.id_; }
 
 	SizeType legs() const { return legs_.size(); }
 
@@ -329,11 +381,11 @@ public:
 		return legs_[ind]->numericTag();
 	}
 
-	TensorTypeEnum type() const { return type_; }
+	TensorTypeEnum type() const { return opaque_.type_; }
 
 	const SizeType& maxTag(char c) const
 	{
-		return (c == 's') ? maxSummed_ : maxFree_;
+		return (c == 's') ? opaque_.maxSummed_ : opaque_.maxFree_;
 	}
 
 	static PsimagLite::String indexTypeToString(IndexTypeEnum t)
@@ -346,9 +398,9 @@ public:
 
 	void refresh()
 	{
-		srep_ = srepFromObject();
-		maxFree_ = maxIndex('f');
-		maxSummed_ = maxIndex('s');
+		opaque_.srep_ = srepFromObject();
+		opaque_.maxFree_ = maxIndex('f');
+		opaque_.maxSummed_ = maxIndex('s');
 	}
 
 	bool hasLegType(char c) const
@@ -360,6 +412,12 @@ public:
 		}
 
 		return false;
+	}
+
+	static TensorStanza* newStanza(const TensorStanza& other)
+	{
+		TensorStanza* intercept = new TensorStanza(other);
+		return intercept;
 	}
 
 private:
@@ -376,9 +434,9 @@ private:
 
 	PsimagLite::String srepFromObject() const
 	{
-		PsimagLite::String srep = name_;
-		srep += ttos(id_);
-		if (conjugate_) srep += "*";
+		PsimagLite::String srep = opaque_.name_;
+		srep += ttos(opaque_.id_);
+		if (opaque_.conjugate_) srep += "*";
 		srep += "(";
 		for (SizeType i = 0; i < legs_.size(); ++i) {
 			if (legs_[i]->dir() != INDEX_DIR_IN) continue;
@@ -448,13 +506,7 @@ private:
 		return max;
 	}
 
-	SizeType id_;
-	bool conjugate_;
-	PsimagLite::String srep_;
-	PsimagLite::String name_;
-	TensorTypeEnum type_;
-	SizeType maxSummed_;
-	SizeType maxFree_;
+	NonPointerOpaque opaque_;
 	VectorTensorLegType legs_;
 };
 

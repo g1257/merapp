@@ -47,7 +47,7 @@ public:
 	    : srep_(other.srep_),data_(other.data_.size())
 	{
 		for (SizeType i = 0; i < data_.size(); ++i)
-			data_[i] = new TensorStanzaType(*(other.data_[i]));
+			data_[i] = TensorStanzaType::newStanza(*(other.data_[i]));
 	}
 
 	TensorSrep& operator=(const TensorSrep& other)
