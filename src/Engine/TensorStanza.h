@@ -438,23 +438,27 @@ private:
 		srep += ttos(opaque_.id_);
 		if (opaque_.conjugate_) srep += "*";
 		srep += "(";
-		for (SizeType i = 0; i < legs_.size(); ++i) {
-			if (legs_[i]->dir() != INDEX_DIR_IN) continue;
+		SizeType nins = countLegsWithDir(INDEX_DIR_IN);
+		SizeType nouts = countLegsWithDir(INDEX_DIR_OUT);
+
+		for (SizeType i = 0; i < nins; ++i) {
+			assert(legs_[i]->dir() == INDEX_DIR_IN);
 			srep += legs_[i]->name() + ttos(legs_[i]->numericTag());
-			if (i == ins() - 1) continue;
+			if (i == nins - 1) continue;
 			srep += ",";
 		}
 
-		if (outs() == 0) {
+		if (nouts == 0) {
 			srep += ")";
 			return srep;
 		}
 
 		srep += "|";
-		for (SizeType i = 0; i < legs_.size(); ++i) {
-			if (legs_[i]->dir() != INDEX_DIR_OUT) continue;
-			srep += legs_[i]->name() + ttos(legs_[i]->numericTag());
-			if (i == outs() - 1) continue;
+		for (SizeType i = 0; i < nouts; ++i) {
+			assert(i + nins < legs_.size());
+			if (legs_[i+nins]->dir() != INDEX_DIR_OUT) continue;
+			srep += legs_[i+nins]->name() + ttos(legs_[i+nins]->numericTag());
+			if (i == nouts - 1) continue;
 			srep += ",";
 		}
 
