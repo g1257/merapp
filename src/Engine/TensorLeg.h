@@ -41,7 +41,7 @@ public:
 
 	char& name() { return tag_.first; }
 
-	SizeType numericTag() const { return tag_.second; }
+	const SizeType& numericTag() const { return tag_.second; }
 
 	SizeType& numericTag() { return tag_.second; }
 
@@ -76,8 +76,6 @@ private:
 
 	PairCharSizeType tag_;
 	IndexDirectionEnum inOrOut_;
-	VectorVectorSizeType q_;
-
 }; // class TensorLeg
 } // namespace Mera
 #endif // TENSORLEG_H
