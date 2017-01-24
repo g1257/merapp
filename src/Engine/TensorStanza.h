@@ -20,6 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include "Tokenizer.h"
 #include "TypeToString.h"
+#include "TensorLeg.h"
 #include <cassert>
 #include <iostream>
 #include <algorithm>
@@ -35,14 +36,18 @@ class TensorStanza {
 
 public:
 
+	typedef TensorLeg TensorLegType;
+	typedef PsimagLite::Vector<TensorLegType*>::Type VectorTensorLegType;
+	typedef TensorLegType::IndexDirectionEnum IndexDirectionEnum;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
+
+	static const IndexDirectionEnum INDEX_DIR_IN = TensorLegType::INDEX_DIR_IN;
+	static const IndexDirectionEnum INDEX_DIR_OUT = TensorLegType::INDEX_DIR_OUT;
 
 	enum TensorTypeEnum {TENSOR_TYPE_UNKNOWN,
 		                 TENSOR_TYPE_ERASED,
 		                 TENSOR_TYPE_GP};
-
-	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
 	enum IndexTypeEnum {INDEX_TYPE_SUMMED, INDEX_TYPE_FREE, INDEX_TYPE_DUMMY, INDEX_TYPE_DIM};
 
@@ -64,11 +69,11 @@ public:
 
 		PsimagLite::String nameAndId = getNameFromToken(tokens[0]);
 		cleanToken(tokens[0]);
-		setArgVector(insSi_,tokens[0]);
+		setArgVector(legs_, tokens[0], INDEX_DIR_IN);
 
 		if (ts == 2) {
 			cleanToken(tokens[1]);
-			setArgVector(outsSi_,tokens[1]);
+			setArgVector(legs_,tokens[1], INDEX_DIR_OUT);
 		}
 
 		SizeType l = nameAndId.length();
@@ -122,16 +127,10 @@ public:
 	void shiftSummedBy(SizeType ms)
 	{
 		if (ms == 0) return;
-		SizeType ins = insSi_.size();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != 's') continue;
-			insSi_[i].second += ms;
-		}
-
-		SizeType outs = outsSi_.size();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != 's') continue;
-			outsSi_[i].second += ms;
+		SizeType legs = legs_.size();
+		for (SizeType i = 0; i < legs; ++i) {
+			if (legs_[i]->name() != 's') continue;
+			legs_[i]->numericTag() += ms;
 		}
 
 		maxSummed_ += ms;
@@ -145,12 +144,12 @@ public:
 
 		bool simplificationHappended = false;
 		SizeType r = replacements.size();
-		SizeType ins = insSi_.size();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != type)
+		SizeType legs = legs_.size();
+		for (SizeType i = 0; i < legs; ++i) {
+			if (legs_[i]->name() != type)
 				continue;
 
-			SizeType s1 = insSi_[i].second;
+			SizeType s1 = legs_[i]->numericTag();
 			bool replace = false;
 			for (SizeType j = 0; j < r; ++j) {
 				if (s1 != replacements[j].first) continue;
@@ -162,27 +161,7 @@ public:
 			if (!replace) continue;
 
 			simplificationHappended = true;
-			insSi_[i].second = s1;
-		}
-
-		SizeType outs = outsSi_.size();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != type)
-				continue;
-
-			SizeType s1 = outsSi_[i].second;
-			bool replace = false;
-			for (SizeType j = 0; j < r; ++j) {
-				if (s1 != replacements[j].first) continue;
-				s1 = replacements[j].second;
-				replace = true;
-				break;
-			}
-
-			if (!replace) continue;
-
-			simplificationHappended = true;
-			outsSi_[i].second = s1;
+			legs_[i]->numericTag() = s1;
 		}
 
 		refresh();
@@ -194,27 +173,16 @@ public:
 		if (indicesToContract && indicesToContract->size() == 0)
 			return;
 
-		SizeType ins = insSi_.size();
+		SizeType legs = legs_.size();
 
-		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != 'f') continue;
+		for (SizeType i = 0; i < legs; ++i) {
+			if (legs_[i]->name() != 'f') continue;
 			if (indicesToContract && std::find(indicesToContract->begin(),
 			                                   indicesToContract->end(),
-			                                   insSi_[i].second) == indicesToContract->end())
+			                                   legs_[i]->numericTag()) == indicesToContract->end())
 				continue;
 
-			insSi_[i].first = 's';
-		}
-
-		SizeType outs = outsSi_.size();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != 'f') continue;
-			if (indicesToContract && std::find(indicesToContract->begin(),
-			                                   indicesToContract->end(),
-			                                   outsSi_[i].second) == indicesToContract->end())
-				continue;
-
-			outsSi_[i].first = 's';
+			legs_[i]->name() = 's';
 		}
 
 		maxSummed_ = maxIndex('s');
@@ -224,16 +192,10 @@ public:
 
 	void eraseTensor(VectorSizeType& s)
 	{
-		SizeType total = insSi_.size();
+		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != 's') continue;
-			s.push_back(insSi_[i].second);
-		}
-
-		total = outsSi_.size();
-		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != 's') continue;
-			s.push_back(outsSi_[i].second);
+			if (legs_[i]->name() != 's') continue;
+			s.push_back(legs_[i]->numericTag());
 		}
 
 		setAsErased();
@@ -244,8 +206,14 @@ public:
 		type_ = TENSOR_TYPE_ERASED;
 		maxSummed_ = 0;
 		maxFree_ = 0;
-		insSi_.clear();
-		outsSi_.clear();
+
+		for (SizeType i = 0; i < legs_.size(); ++i) {
+			delete legs_[i];
+			legs_[i] = 0;
+		}
+
+		legs_.clear();
+
 		srep_ = "";
 	}
 
@@ -255,26 +223,15 @@ public:
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return count;
 
-		SizeType total = insSi_.size();
+		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != 's') continue;
-			if (std::find(erased.begin(),erased.end(),insSi_[i].second) ==
+			if (legs_[i]->name() != 's') continue;
+			if (std::find(erased.begin(),erased.end(),legs_[i]->numericTag()) ==
 			        erased.end()) continue;
-			insSi_[i].first = 'f';
-			insSi_[i].second = count++;
+			legs_[i]->name() = 'f';
+			legs_[i]->numericTag() = count++;
 			if (mapping)
-				mapping->operator[](insSi_[i].second) = insSi_[i].second;
-		}
-
-		total = outsSi_.size();
-		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != 's') continue;
-			if (std::find(erased.begin(),erased.end(),outsSi_[i].second) ==
-			        erased.end()) continue;
-			outsSi_[i].first = 'f';
-			outsSi_[i].second = count++;
-			if (mapping)
-				mapping->operator[](outsSi_[i].second) = outsSi_[i].second;
+				mapping->operator[](legs_[i]->numericTag()) = legs_[i]->numericTag();
 		}
 
 		maxSummed_ = maxIndex('s');
@@ -285,16 +242,10 @@ public:
 
 	SizeType relabelFrees(SizeType count)
 	{
-		SizeType total = insSi_.size();
+		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != 'f') continue;
-			insSi_[i].second = count++;
-		}
-
-		total = outsSi_.size();
-		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != 'f') continue;
-			outsSi_[i].second = count++;
+			if (legs_[i]->name() != 'f') continue;
+			legs_[i]->numericTag() = count++;
 		}
 
 		maxFree_ = maxIndex('f');
@@ -306,20 +257,12 @@ public:
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return;
 
-		SizeType total = insSi_.size();
+		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != c) continue;
-			SizeType ind = insSi_[i].second;
+			if (legs_[i]->name() != c) continue;
+			SizeType ind = legs_[i]->numericTag();
 			assert(ind < summed.size());
-			insSi_[i].second = summed[ind];
-		}
-
-		total = outsSi_.size();
-		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != c) continue;
-			SizeType ind = outsSi_[i].second;
-			assert(ind < summed.size());
-			outsSi_[i].second = summed[ind];
+			legs_[i]->numericTag() = summed[ind];
 		}
 
 		maxFree_ = maxIndex('f');
@@ -332,16 +275,10 @@ public:
 	{
 		if (type_ == TENSOR_TYPE_ERASED) return;
 
-		SizeType total = insSi_.size();
+		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
-			if (insSi_[i].first != c) continue;
-			summed.push_back(insSi_[i].second);
-		}
-
-		total = outsSi_.size();
-		for (SizeType i = 0; i < total; ++i) {
-			if (outsSi_[i].first != c) continue;
-			summed.push_back(outsSi_[i].second);
+			if (legs_[i]->name() != c) continue;
+			summed.push_back(legs_[i]->numericTag());
 		}
 	}
 
@@ -353,23 +290,17 @@ public:
 
 	SizeType id() const { return id_; }
 
-	SizeType legs() const { return insSi_.size() + outsSi_.size(); }
+	SizeType legs() const { return legs_.size(); }
 
-	SizeType ins() const { return insSi_.size(); }
+	SizeType ins() const { return countLegsWithDir(INDEX_DIR_IN); }
 
-	SizeType outs() const { return outsSi_.size(); }
+	SizeType outs() const { return countLegsWithDir(INDEX_DIR_OUT); }
 
 	IndexTypeEnum legType(SizeType ind) const
 	{
-		char c = '\0';
-		SizeType ins = insSi_.size();
-		if (ind < ins) {
-			assert(ind < ins);
-			c = insSi_[ind].first;
-		}  else {
-			assert(ind - ins < outsSi_.size());
-			c = outsSi_[ind - ins].first;
-		}
+		SizeType total = legs_.size();
+		assert(ind < total);
+		char c = legs_[ind]->name();
 
 		if (c == 's') return INDEX_TYPE_SUMMED;
 		if (c == 'f') return INDEX_TYPE_FREE;
@@ -379,38 +310,23 @@ public:
 
 	char& legTypeChar(SizeType ind)
 	{
-		SizeType ins = insSi_.size();
-		if (ind < ins) {
-			assert(ind < insSi_.size());
-			return insSi_[ind].first;
-		}
-
-		assert(ind - ins < outsSi_.size());
-		return outsSi_[ind - ins].first;
+		SizeType total = legs_.size();
+		assert(ind < total);
+		return legs_[ind]->name();
 	}
 
 	const SizeType& legTag(SizeType ind) const
 	{
-		SizeType ins = insSi_.size();
-		if (ind < ins) {
-			assert(ind < insSi_.size());
-			return insSi_[ind].second;
-		}
-
-		assert(ind - ins < outsSi_.size());
-		return outsSi_[ind - ins].second;
+		SizeType total = legs_.size();
+		assert(ind < total);
+		return legs_[ind]->numericTag();
 	}
 
 	SizeType& legTag(SizeType ind)
 	{
-		SizeType ins = insSi_.size();
-		if (ind < ins) {
-			assert(ind < insSi_.size());
-			return insSi_[ind].second;
-		}
-
-		assert(ind - ins < outsSi_.size());
-		return outsSi_[ind - ins].second;
+		SizeType total = legs_.size();
+		assert(ind < total);
+		return legs_[ind]->numericTag();
 	}
 
 	TensorTypeEnum type() const { return type_; }
@@ -437,33 +353,26 @@ public:
 
 	bool hasLegType(char c) const
 	{
-		SizeType ins = insSi_.size();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != c) continue;
-			return true;
-		}
-
-		SizeType outs = outsSi_.size();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != c) continue;
+		SizeType total = legs_.size();
+		for (SizeType i = 0; i < total; ++i) {
+			if (legs_[i]->name() != c) continue;
 			return true;
 		}
 
 		return false;
 	}
 
-//	friend std::ostream& operator<<(std::ostream& os, const TensorStanza& ts)
-//	{
-//		os<<"id= "<<ts.id_<<"\n";
-//		os<<"conjugate= "<<ts.conjugate_<<"\n";
-//		os<<"stanza= "<<ts.srep_<<"\n";
-//		os<<"name= "<<ts.name_<<"\n";
-//		os<<"type= "<<ts.type_<<"\n";
-//		os<<"needs ins and outs FIXME\n";
-//		return os;
-//	}
-
 private:
+
+	SizeType countLegsWithDir(IndexDirectionEnum dir) const
+	{
+		SizeType count = 0;
+		for (SizeType i = 0; i < legs_.size(); ++i) {
+			if (legs_[i]->dir() == dir) ++count;
+		}
+
+		return count;
+	}
 
 	PsimagLite::String srepFromObject() const
 	{
@@ -471,21 +380,23 @@ private:
 		srep += ttos(id_);
 		if (conjugate_) srep += "*";
 		srep += "(";
-		for (SizeType i = 0; i < insSi_.size(); ++i) {
-			srep += insSi_[i].first + ttos(insSi_[i].second);
-			if (i == insSi_.size() - 1) continue;
+		for (SizeType i = 0; i < legs_.size(); ++i) {
+			if (legs_[i]->dir() != INDEX_DIR_IN) continue;
+			srep += legs_[i]->name() + ttos(legs_[i]->numericTag());
+			if (i == ins() - 1) continue;
 			srep += ",";
 		}
 
-		if (outsSi_.size() == 0) {
+		if (outs() == 0) {
 			srep += ")";
 			return srep;
 		}
 
 		srep += "|";
-		for (SizeType i = 0; i < outsSi_.size(); ++i) {
-			srep += outsSi_[i].first + ttos(outsSi_[i].second);
-			if (i == outsSi_.size() - 1) continue;
+		for (SizeType i = 0; i < legs_.size(); ++i) {
+			if (legs_[i]->dir() != INDEX_DIR_OUT) continue;
+			srep += legs_[i]->name() + ttos(legs_[i]->numericTag());
+			if (i == outs() - 1) continue;
 			srep += ",";
 		}
 
@@ -493,39 +404,16 @@ private:
 		return srep;
 	}
 
-	void setArgVector(VectorPairCharSizeType& si, PsimagLite::String part) const
+	void setArgVector(VectorTensorLegType& si,
+	                  PsimagLite::String part,
+	                  IndexDirectionEnum inOrOut) const
 	{
 		if (part.length() == 0 || part == ")") return;
 		VectorStringType tokens;
 		PsimagLite::tokenizer(part,tokens,",");
 		SizeType total = tokens.size();
 		for (SizeType i = 0; i < total; ++i)
-			si.push_back(getPairCharInt(tokens[i]));
-	}
-
-	PairCharSizeType getPairCharInt(PsimagLite::String token) const
-	{
-		SizeType l = token.length();
-
-		if (l == 0) {
-			PsimagLite::String str("TensorStanza: malformed stanza, ");
-			throw PsimagLite::RuntimeError(str + token + "\n");
-		}
-
-		std::size_t index = token.find_first_of("0123456789");
-
-		if (index == 0) {
-			// all numeric
-			return PairCharSizeType('d',atoi(token.c_str()));
-		}
-
-		if (l == 1 && token != "d") {
-			PsimagLite::String str("TensorStanza: malformed stanza, expecting a dummy, got ");
-			throw PsimagLite::RuntimeError(str + token + "\n");
-		}
-
-		PsimagLite::String tmp = (l == 1) ? "0" : token.substr(1,l-1);
-		return PairCharSizeType(token[0],atoi(tmp.c_str()));
+			si.push_back(new TensorLegType(tokens[i],inOrOut));
 	}
 
 	PsimagLite::String getNameFromToken(PsimagLite::String token) const
@@ -551,16 +439,10 @@ private:
 	SizeType maxIndex(char c) const
 	{
 		SizeType max = 0;
-		SizeType ins = insSi_.size();
-		for (SizeType i = 0; i < ins; ++i) {
-			if (insSi_[i].first != c) continue;
-			if (max < insSi_[i].second) max = insSi_[i].second;
-		}
-
-		SizeType outs = outsSi_.size();
-		for (SizeType i = 0; i < outs; ++i) {
-			if (outsSi_[i].first != c) continue;
-			if (max < outsSi_[i].second) max = outsSi_[i].second;
+		SizeType legs = legs_.size();
+		for (SizeType i = 0; i < legs; ++i) {
+			if (legs_[i]->name() != c) continue;
+			if (max < legs_[i]->numericTag()) max = legs_[i]->numericTag();
 		}
 
 		return max;
@@ -573,8 +455,7 @@ private:
 	TensorTypeEnum type_;
 	SizeType maxSummed_;
 	SizeType maxFree_;
-	VectorPairCharSizeType insSi_;
-	VectorPairCharSizeType outsSi_;
+	VectorTensorLegType legs_;
 };
 
 } // namespace Mera

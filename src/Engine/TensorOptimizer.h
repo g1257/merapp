@@ -368,7 +368,7 @@ private:
 	{
 		SizeType total = eq.rhs().maxTag('f') + 1;
 		VectorSizeType freeIndices(total,0);
-		VectorDirType directions(total,TensorStanza::INDEX_DIR_IN);
+		VectorDirType directions(total,TensorStanza::TensorLegType::INDEX_DIR_IN);
 		VectorSizeType dimensions(total,0);
 		VectorBoolType conjugate(total,false);
 		prepareFreeIndices(directions,conjugate,dimensions,eq.rhs());
