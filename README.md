@@ -27,6 +27,14 @@ You are welcomed to use it and publish data
 obtained with MERA++. If you do, please cite this
 work. Explain How To Cite This Work. FIXME. TBW.
 
+## Mission Statement
+
+MERA++ is a C++ native application implementing the MERA algorithm for strongly correlated electron models. MERA++ is composed of two parts:
+a generic engine that can handle multiple dimensions, arities, models, and geometries; and built-in models, MERA builders for different
+dimensions and arities, and geometries. Features and options are chosen from a user-friendly input file.
+The implementation aims to be as fast as possible, so that it compiles natively, uses optimized tensor contractions, symmetries,
+layering or caching acceleration techniques, and parallelization.
+
 ## Papers used
 
 TBW
