@@ -22,7 +22,7 @@ public:
 	{
 		alterFrees(d);
 		alterSummed();
-		symmLocal_.print(std::cout);
+		symmLocal_.print(std::cerr);
 	}
 
 	const PsimagLite::String& operator()() const

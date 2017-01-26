@@ -67,8 +67,10 @@ public:
 			PsimagLite::String str("");
 			for (SizeType j = 0; j < m; ++j) {
 				if (matrix_(i,j) == 0) continue;
+				const VectorSizeType& v = *(matrix_(i,j));
+				if (v.size() == 0) continue;
 				str += "\tLeg " + ttos(j) + " indices ";
-				str += vectorToString(*(matrix_(i,j)));
+				str += vectorToString(v);
 				str += "\n";
 			}
 
@@ -154,6 +156,7 @@ private:
 
 	void truncateVector(VectorSizeType& qq, SizeType m) const
 	{
+		if (m == 0) return;
 		SizeType n = qq.size();
 		if (n <= m) return;
 		SizeType discarded = n - m;
