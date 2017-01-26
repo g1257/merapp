@@ -2,6 +2,7 @@
 #define MERA_SREP_DIMENSION_H
 #include "TensorSrep.h"
 #include "Vector.h"
+#include "SymmetryLocal.h"
 
 namespace  Mera {
 
@@ -10,14 +11,18 @@ class DimensionSrep {
 	typedef TensorSrep TensorSrepType;
 	typedef TensorSrepType::TensorStanzaType TensorStanzaType;
 	typedef TensorSrepType::VectorSizeType VectorSizeType;
+	typedef PsimagLite::Vector<const VectorSizeType*>::Type VectorVectorSizeType;
 
 public:
 
+	typedef SymmetryLocal SymmetryLocalType;
+
 	DimensionSrep(PsimagLite::String srep, SizeType d, SizeType m)
-	    :srep_(srep),m_(m),dsrep_(srep)
+	    :srep_(srep),m_(m),dsrep_(srep),symmLocal_(srep.size())
 	{
 		alterFrees(d);
 		alterSummed();
+		symmLocal_.print(std::cout);
 	}
 
 	const PsimagLite::String& operator()() const
@@ -40,6 +45,7 @@ private:
 				if (t == TensorStanzaType::INDEX_TYPE_FREE) {
 					dsrep_.legTypeChar(i,j) = 'D';
 					dsrep_.legTag(i,j) = d;
+					symmLocal_.setQ(i,j);
 				}
 			}
 		}
@@ -56,49 +62,45 @@ private:
 
 			SizeType ins = ts.ins();
 			VectorSizeType dim(ins,0);
+			VectorVectorSizeType q(ins,0);
 			SizeType counter = 0;
+
 			for (SizeType j = 0; j < ins; ++j) {
 				TensorStanzaType::IndexTypeEnum t = ts.legType(j);
 				if (t != TensorStanzaType::INDEX_TYPE_DIM) continue;
 				dim[j] = ts.legTag(j);
+				q[j] = symmLocal_.q(i,j);
+
 				counter++;
 			}
 
 			if (counter != ins) continue;
 
 			SizeType outs = ts.outs();
+			SizeType prodDim = SymmetryLocalType::truncateDimension(dim, m_);
 			for (SizeType j = 0; j < outs; ++j) {
 				TensorStanzaType::IndexTypeEnum t = ts.legType(j + ins);
 				if (t != TensorStanzaType::INDEX_TYPE_SUMMED) continue;
 				dsrep_.legTypeChar(i,j + ins) = 'D';
 				SizeType s = dsrep_.legTag(i,j + ins);
 				if (outs == 1) {
-					dsrep_.legTag(i,j + ins) = truncateDimension(productOf(dim));
+					dsrep_.legTag(i,j + ins) = prodDim;
+					symmLocal_.setQ(i,j + ins, q, dim, m_);
 				} else if (outs == dim.size()) {
 					dsrep_.legTag(i,j + ins) = dim[j];
+					symmLocal_.setQ(i,j + ins, q[j]);
 				} else {
 					throw PsimagLite::RuntimeError("DimensionSrep: outs > ins not supported\n");
 				}
 
-				replaceSummed(s,dsrep_.legTag(i,j + ins));
+				replaceSummed(s,dsrep_.legTag(i,j + ins), symmLocal_.q(i,j + ins));
 			}
 		}
 
 		dsrep_.refresh();
 	}
 
-	SizeType productOf(const VectorSizeType& dim) const
-	{
-		SizeType n = dim.size();
-		if (n == 0) return 0;
-		SizeType ret = dim[0];
-		for (SizeType i = 1; i < n; ++i)
-			ret *= dim[i];
-
-		return ret;
-	}
-
-	void replaceSummed(SizeType s, SizeType val)
+	void replaceSummed(SizeType s, SizeType val, const VectorSizeType* q)
 	{
 		for (SizeType i = 0; i < dsrep_.size(); ++i) {
 			TensorStanzaType ts = dsrep_(i);
@@ -112,19 +114,15 @@ private:
 				if (ts.legTag(j) != s) continue;
 				dsrep_.legTypeChar(i,j) = 'D';
 				dsrep_.legTag(i,j) = val;
+				symmLocal_.setQ(i,j, q);
 			}
 		}
-	}
-
-	SizeType truncateDimension(SizeType x) const
-	{
-		if (m_ == 0) return x;
-		return std::min(m_,x);
 	}
 
 	TensorSrepType srep_;
 	SizeType m_;
 	TensorSrepType dsrep_;
+	SymmetryLocalType symmLocal_;
 }; //
 
 } // namespace  Mera
