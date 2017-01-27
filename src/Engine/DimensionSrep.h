@@ -17,10 +17,12 @@ public:
 
 	typedef SymmetryLocal SymmetryLocalType;
 
-	DimensionSrep(PsimagLite::String srep, SizeType d, SizeType m)
-	    :srep_(srep),m_(m),dsrep_(srep),symmLocal_(srep.size())
+	DimensionSrep(PsimagLite::String srep,
+	              const VectorSizeType& qOne,
+	              SizeType m)
+	    :srep_(srep),m_(m),dsrep_(srep),symmLocal_(srep.size(), qOne)
 	{
-		alterFrees(d);
+		alterFrees(qOne.size());
 		alterSummed();
 		symmLocal_.print(std::cerr);
 	}

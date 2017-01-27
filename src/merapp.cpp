@@ -42,9 +42,9 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
            const Mera::ParametersForMera<ComplexOrRealType>& params)
 {
 	PsimagLite::String srep = builder();
-	Mera::DimensionSrep dimSrep(srep,params.h,params.m);
+	Mera::DimensionSrep dimSrep(srep,params.qOne,params.m);
 	PsimagLite::String dsrep = dimSrep();
-	PsimagLite::String hString = ttos(params.h);
+	PsimagLite::String hString = ttos(params.qOne.size());
 	PsimagLite::String args = "(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	for (SizeType i = 0; i < params.hamiltonianConnection.size(); ++i) {
 		if (params.hamiltonianConnection[i] == 0.0) continue;
@@ -96,15 +96,15 @@ int main(int argc, char **argv)
 	SizeType arity = 2;
 	SizeType dimension = 1;
 	MeraParametersType::VectorType hamTerms;
-	SizeType h = 0;
 	SizeType m = 0;
 	PsimagLite::String evaluator("slow");
 	PsimagLite::String strUsage(argv[0]);
+	PsimagLite::String model("Heisenberg");
 	strUsage += " -n sites -a arity -d dimension -h hilbertSize [-m m] ";
 	strUsage += "| -S srep | -V\n";
 	strUsage += "-h hilbertSize is always mandatory\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:h:m:s:e:bV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:m:s:e:bV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
@@ -116,9 +116,6 @@ int main(int argc, char **argv)
 			break;
 		case 'd':
 			dimension = atoi(optarg);
-			break;
-		case 'h':
-			h = atoi(optarg);
 			break;
 		case 'm':
 			m = atoi(optarg);
@@ -152,8 +149,13 @@ int main(int argc, char **argv)
 	if (versionOnly)
 		return 0;
 
+	MeraParametersType::VectorSizeType qOne(2,0);
+	qOne[1] = 1;
+
+	if (model != "Heisenberg") qOne.clear();
+
 	// sanity checks here
-	if (h == 0 || sites*arity*dimension == 0)
+	if (qOne.size() == 0 || sites*arity*dimension == 0)
 		usageMain(strUsage);
 
 	// here build srep
@@ -170,6 +172,6 @@ int main(int argc, char **argv)
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
-	MeraParametersType params(hamTerms,h,m,evaluator);
+	MeraParametersType params(hamTerms,qOne,m,evaluator);
 	main1(meraBuilder,params);
 }

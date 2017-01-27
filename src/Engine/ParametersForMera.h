@@ -9,20 +9,21 @@ template<typename ComplexOrRealType_>
 struct ParametersForMera {
 
 	typedef ComplexOrRealType_ ComplexOrRealType;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 
-	ParametersForMera(VectorType& hTerms,
-	                  SizeType h1,
+	ParametersForMera(const VectorType& hTerms,
+	                  const VectorSizeType& qOne1,
 	                  SizeType m1,
 	                  PsimagLite::String eval)
-	    : hamiltonianConnection(hTerms),h(h1),m(m1),verbose(false),evaluator(eval)
+	    : hamiltonianConnection(hTerms),qOne(qOne1),m(m1),verbose(false),evaluator(eval)
 	{}
 
 	ParametersForMera(PsimagLite::String filename)
 	{
 		PsimagLite::IoSimple::In io(filename);
 		io.read(hamiltonianConnection, "hamiltonianConnection");
-		io.readline(h, "h=");
+		io.read(qOne, "qOne");
 		io.readline(m, "m=");
 		int x = 0;
 		io.readline(x, "verbose=");
@@ -31,7 +32,7 @@ struct ParametersForMera {
 	}
 
 	VectorType hamiltonianConnection;
-	SizeType h;
+	VectorSizeType qOne;
 	SizeType m;
 	bool verbose;
 	PsimagLite::String evaluator;
@@ -42,7 +43,8 @@ std::ostream& operator<<(std::ostream& os, const ParametersForMera<T>& p)
 {
 	os<<"hamiltonianConnection ";
 	os<<p.hamiltonianConnection;
-	os<<"h="<<p.h<<"\n";
+	os<<"qOne\n";
+	os<<p.qOne<<"\n";
 	os<<"m="<<p.m<<"\n";
 	os<<"verbose="<<((p.verbose) ? 1 : 0)<<"\n";
 	os<<"evaluator="<<p.evaluator<<"\n";

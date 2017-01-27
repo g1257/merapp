@@ -14,11 +14,9 @@ public:
 	typedef PsimagLite::Vector<const VectorSizeType*>::Type VectorVectorSizeType;
 	typedef PsimagLite::Matrix<const VectorSizeType*> MatrixOfQnsType;
 
-	SymmetryLocal(SizeType ntensors)
-	    : qOne_(2,0), matrix_(ntensors, MAX_LEGS)
-	{
-		qOne_[1] = 1; // FIXME: PICKUP MODEL DEPENCY HERE
- 	}
+	SymmetryLocal(SizeType ntensors, const VectorSizeType& qOne)
+	    : qOne_(qOne), matrix_(ntensors, MAX_LEGS)
+	{}
 
 	~SymmetryLocal()
 	{

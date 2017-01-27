@@ -26,7 +26,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "InputCheck.h"
 #include "ParametersForMera.h"
 #include "SymmetryLocal.h"
-#include "Heisenberg.h"
+#include "../Models/Heisenberg/Heisenberg.h"
 
 namespace Mera {
 
