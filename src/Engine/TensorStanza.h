@@ -306,8 +306,7 @@ public:
 
 	IndexTypeEnum legType(SizeType ind) const
 	{
-		SizeType total = legs_.size();
-		assert(ind < total);
+		assert(ind < legs_.size());
 		char c = legs_[ind].name();
 
 		if (c == 's') return INDEX_TYPE_SUMMED;
@@ -318,22 +317,19 @@ public:
 
 	char& legTypeChar(SizeType ind)
 	{
-		SizeType total = legs_.size();
-		assert(ind < total);
+		assert(ind < legs_.size());
 		return legs_[ind].name();
 	}
 
 	const SizeType& legTag(SizeType ind) const
 	{
-		SizeType total = legs_.size();
-		assert(ind < total);
+		assert(ind < legs_.size());
 		return legs_[ind].numericTag();
 	}
 
 	SizeType& legTag(SizeType ind)
 	{
-		SizeType total = legs_.size();
-		assert(ind < total);
+		assert(ind < legs_.size());
 		return legs_[ind].numericTag();
 	}
 

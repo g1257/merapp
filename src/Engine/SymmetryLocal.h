@@ -174,7 +174,7 @@ private:
 			if (std::find(r.begin(), r.end(), i) != r.end())
 				continue;
 			assert(counter < qqq.size());
-			qqq[counter++] = i;
+			qqq[counter++] = qq[i];
 		}
 
 		qq = qqq;

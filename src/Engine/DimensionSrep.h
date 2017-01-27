@@ -30,6 +30,8 @@ public:
 		return dsrep_.sRep();
 	}
 
+	const SymmetryLocalType& symmLocal() const { return symmLocal_; }
+
 private:
 
 	void alterFrees(SizeType d)
