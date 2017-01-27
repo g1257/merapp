@@ -42,14 +42,15 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
            const Mera::ParametersForMera<ComplexOrRealType>& params)
 {
 	PsimagLite::String srep = builder();
-	Mera::DimensionSrep dimSrep(srep,params.qOne,params.m);
-	PsimagLite::String dsrep = dimSrep();
-	PsimagLite::String hString = ttos(params.qOne.size());
+	PsimagLite::String hString = "D" + ttos(params.qOne.size());
 	PsimagLite::String args = "(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	for (SizeType i = 0; i < params.hamiltonianConnection.size(); ++i) {
 		if (params.hamiltonianConnection[i] == 0.0) continue;
-		dsrep += "h" + ttos(i) + args;
+		srep += "h" + ttos(i) + args;
 	}
+
+	Mera::DimensionSrep dimSrep(srep,params.qOne,params.m);
+	PsimagLite::String dsrep = dimSrep();
 
 	Mera::MeraEnviron<ComplexOrRealType> environ(builder,params,dsrep);
 	std::cout<<params;
@@ -100,11 +101,10 @@ int main(int argc, char **argv)
 	PsimagLite::String evaluator("slow");
 	PsimagLite::String strUsage(argv[0]);
 	PsimagLite::String model("Heisenberg");
-	strUsage += " -n sites -a arity -d dimension -h hilbertSize [-m m] ";
+	strUsage += " -n sites -a arity -d dimension [-M model] [-m m] ";
 	strUsage += "| -S srep | -V\n";
-	strUsage += "-h hilbertSize is always mandatory\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:m:s:e:bV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:m:M:s:e:bV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
@@ -119,6 +119,9 @@ int main(int argc, char **argv)
 			break;
 		case 'm':
 			m = atoi(optarg);
+			break;
+		case 'M':
+			model = optarg;
 			break;
 		case 's':
 			if (hamTerms.size() == 0) {

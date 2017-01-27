@@ -57,7 +57,8 @@ public:
 		return matrix_(tensorIndex,legTag);
 	}
 
-	void print(std::ostream& os) const
+	template<typename SomeTensorSrepType>
+	void print(std::ostream& os, SomeTensorSrepType& srep) const
 	{
 		SizeType n = matrix_.n_row();
 		SizeType m = matrix_.n_col();
@@ -73,7 +74,7 @@ public:
 			}
 
 			if (str == "") continue;
-			os<<"Tensor "<<i<<"\n";
+			os<<"Tensor "<<srep(i).name()<<srep(i).id()<<"\n";
 			os<<str;
 		}
 	}

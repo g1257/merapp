@@ -22,9 +22,10 @@ public:
 	              SizeType m)
 	    :srep_(srep),m_(m),dsrep_(srep),symmLocal_(srep.size(), qOne)
 	{
+		dStoSymm(qOne.size());
 		alterFrees(qOne.size());
 		alterSummed();
-		symmLocal_.print(std::cerr);
+		symmLocal_.print(std::cout, dsrep_);
 	}
 
 	const PsimagLite::String& operator()() const
@@ -119,6 +120,23 @@ private:
 				dsrep_.legTypeChar(i,j) = 'D';
 				dsrep_.legTag(i,j) = val;
 				symmLocal_.setQ(i,j, q);
+			}
+		}
+	}
+
+	void dStoSymm(SizeType d)
+	{
+		for (SizeType i = 0; i < srep_.size(); ++i) {
+			TensorStanzaType ts = srep_(i);
+			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
+				continue;
+
+			SizeType legs = ts.legs();
+			for (SizeType j = 0; j < legs; ++j) {
+				TensorStanzaType::IndexTypeEnum t = ts.legType(j);
+				if (t != TensorStanzaType::INDEX_TYPE_DIM) continue;
+				if (ts.legTag(j) != d) continue;
+				symmLocal_.setQ(i,j);
 			}
 		}
 	}
