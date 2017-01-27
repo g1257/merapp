@@ -29,8 +29,6 @@ namespace Mera {
 
 class TensorStanza {
 
-	typedef std::pair<char,SizeType> PairCharSizeType;
-	typedef PsimagLite::Vector<PairCharSizeType>::Type VectorPairCharSizeType;
 	typedef std::pair<SizeType, SizeType> PairSizeType;
 	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 

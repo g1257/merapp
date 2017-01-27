@@ -85,7 +85,7 @@ public:
 
 		initTensorNameIds();
 
-		//SymmetryLocalType symmLocal(io);
+		SymmetryLocalType symmLocal(io);
 
 		initTensors(tdstr);
 

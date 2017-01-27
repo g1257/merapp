@@ -25,7 +25,7 @@ public:
 		dStoSymm(qOne.size());
 		alterFrees(qOne.size());
 		alterSummed();
-		symmLocal_.print(std::cout, dsrep_);
+		symmLocal_.save(std::cout);
 	}
 
 	const PsimagLite::String& operator()() const
@@ -40,9 +40,12 @@ private:
 	void alterFrees(SizeType d)
 	{
 		for (SizeType i = 0; i < dsrep_.size(); ++i) {
+
 			TensorStanzaType ts = dsrep_(i);
 			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
+
+			symmLocal_.setNameId(i, ts.name() + ttos(ts.id()));
 
 			SizeType legs = ts.legs();
 			for (SizeType j = 0; j < legs; ++j) {
@@ -126,8 +129,8 @@ private:
 
 	void dStoSymm(SizeType d)
 	{
-		for (SizeType i = 0; i < srep_.size(); ++i) {
-			TensorStanzaType ts = srep_(i);
+		for (SizeType i = 0; i < dsrep_.size(); ++i) {
+			TensorStanzaType ts = dsrep_(i);
 			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
 

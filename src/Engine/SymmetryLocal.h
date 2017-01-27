@@ -1,6 +1,7 @@
 #ifndef SYMMETRYLOCAL_H
 #define SYMMETRYLOCAL_H
 #include "Matrix.h"
+#include "Vector.h"
 
 namespace Mera {
 
@@ -13,10 +14,40 @@ public:
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<const VectorSizeType*>::Type VectorVectorSizeType;
 	typedef PsimagLite::Matrix<const VectorSizeType*> MatrixOfQnsType;
+	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	SymmetryLocal(SizeType ntensors, const VectorSizeType& qOne)
-	    : qOne_(qOne), matrix_(ntensors, MAX_LEGS)
+	    : qOne_(qOne), matrix_(ntensors, MAX_LEGS), nameId_(ntensors,"")
 	{}
+
+	template<typename SomeInputType>
+	SymmetryLocal(SomeInputType& io)
+	{
+		io.read(qOne_,"qOne");
+
+		int x = 0;
+		io.readline(x, "SymmTensors=");
+		if (x < 1)
+			throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
+
+		nameId_.resize(x);
+		matrix_.resize(x, MAX_LEGS);
+		for (int i = 0; i < x; ++i) {
+			PsimagLite::String tmp;
+			io.readline(tmp, "SymmForTensor=");
+			nameId_.push_back(tmp);
+
+			io.readline(x, "Total=");
+			if (x < 1)
+				throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
+			for (int j = 0; j < x; ++j) {
+				VectorSizeType* v = new VectorSizeType;
+				io.read(*v, "Leg" + ttos(j));
+				matrix_(i,j) = v;
+				garbage_.push_back(v);
+			}
+		}
+	}
 
 	~SymmetryLocal()
 	{
@@ -24,6 +55,38 @@ public:
 			delete garbage_[i];
 			garbage_[i] = 0;
 		}
+	}
+
+	void save(std::ostream& os) const
+	{
+		os<<"qOne "<<vectorToString(qOne_);
+		SizeType n = matrix_.n_row();
+		SizeType m = matrix_.n_col();
+		os<<"SymmTensors="<<effectiveTensors()<<"\n";
+		for (SizeType i = 0; i < n; ++i) {
+			PsimagLite::String str("");
+			SizeType count = 0;
+			for (SizeType j = 0; j < m; ++j) {
+				if (matrix_(i,j) == 0) continue;
+				const VectorSizeType& v = *(matrix_(i,j));
+				if (v.size() == 0) continue;
+				str += "Leg" + ttos(j) + " ";
+				str += vectorToString(v);
+				str += "\n";
+				++count;
+			}
+
+			if (count == 0) continue;
+			os<<"SymmForTensor="<<nameId_[i]<<"\n";
+			os<<"Total="<<ttos(count)<<"\n";
+			os<<str;
+		}
+	}
+
+	void setNameId(SizeType i, PsimagLite::String str)
+	{
+		assert(i < nameId_.size());
+		nameId_[i] = str;
 	}
 
 	void setQ(SizeType tensorIndex, SizeType legTag)
@@ -57,28 +120,6 @@ public:
 		return matrix_(tensorIndex,legTag);
 	}
 
-	template<typename SomeTensorSrepType>
-	void print(std::ostream& os, SomeTensorSrepType& srep) const
-	{
-		SizeType n = matrix_.n_row();
-		SizeType m = matrix_.n_col();
-		for (SizeType i = 0; i < n; ++i) {
-			PsimagLite::String str("");
-			for (SizeType j = 0; j < m; ++j) {
-				if (matrix_(i,j) == 0) continue;
-				const VectorSizeType& v = *(matrix_(i,j));
-				if (v.size() == 0) continue;
-				str += "\tLeg " + ttos(j) + " indices ";
-				str += vectorToString(v);
-				str += "\n";
-			}
-
-			if (str == "") continue;
-			os<<"Tensor "<<srep(i).name()<<srep(i).id()<<"\n";
-			os<<str;
-		}
-	}
-
 	static SizeType truncateDimension(const VectorSizeType& dim, SizeType m)
 	{
 		SizeType x = productOf(dim);
@@ -88,10 +129,31 @@ public:
 
 private:
 
+	SizeType effectiveTensors() const
+	{
+		SizeType n = matrix_.n_row();
+		SizeType m = matrix_.n_col();
+		SizeType counter = 0;
+		for (SizeType i = 0; i < n; ++i) {
+			SizeType count = 0;
+			for (SizeType j = 0; j < m; ++j) {
+				if (matrix_(i,j) == 0) continue;
+				const VectorSizeType& v = *(matrix_(i,j));
+				if (v.size() == 0) continue;
+				++count;
+			}
+
+			if (count == 0) continue;
+			++counter;
+		}
+
+		return counter;
+	}
+
 	PsimagLite::String vectorToString(const VectorSizeType& v) const
 	{
 		SizeType n = v.size();
-		PsimagLite::String str("");
+		PsimagLite::String str(ttos(n) + "   ");
 		for (SizeType i = 0; i < n; ++i) {
 			str += ttos(v[i]) + " ";
 		}
@@ -181,6 +243,7 @@ private:
 
 	VectorSizeType qOne_;
 	MatrixOfQnsType matrix_;
+	VectorStringType nameId_;
 	PsimagLite::Vector<VectorSizeType*>::Type garbage_;
 }; // class SymmetryLocal
 } // namespace Mera
