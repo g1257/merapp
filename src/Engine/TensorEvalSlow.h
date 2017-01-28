@@ -254,6 +254,9 @@ private:
 	                               const VectorSizeType& free,
 	                               const TensorSrepType& tensorSrep)
 	{
+		if (symmLocal_ && !symmetriesPass(summed, free, tensorSrep))
+			return 0.0;
+
 		ComplexOrRealType prod = 1.0;
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
@@ -302,6 +305,63 @@ private:
 		}
 
 		return data_[mid]->operator()(args);
+	}
+
+	bool symmetriesPass(const VectorSizeType& summed,
+	                    const VectorSizeType& free,
+	                    const TensorSrepType& tensorSrep) const
+	{
+		assert(symmLocal_);
+		SizeType ntensors = tensorSrep.size();
+		for (SizeType i = 0; i < ntensors; ++i)
+			if (!symmetriesPass(tensorSrep(i),summed,free))
+				return false;
+
+		return true;
+	}
+
+	bool symmetriesPass(const TensorStanza& ts,
+	                    const VectorSizeType& summed,
+	                    const VectorSizeType& free) const
+	{
+		assert(symmLocal_);
+		PsimagLite::String tensorNameId = ts.name() + ttos(ts.id());
+		SizeType tensorIndex = symmLocal_->nameIdToIndex(tensorNameId);
+		SizeType legs = ts.legs();
+		SizeType ins = ts.ins();
+		SizeType qin = 0;
+		SizeType qout = 0;
+
+		for (SizeType j = 0; j < legs; ++j) {
+			SizeType index = ts.legTag(j);
+			SizeType tmp = 0;
+
+			switch (ts.legType(j)) {
+
+			case TensorStanza::INDEX_TYPE_SUMMED:
+				assert(index < summed.size());
+				tmp = symmLocal_->q(tensorIndex,j)->operator[](summed[index]);
+				break;
+
+			case TensorStanza::INDEX_TYPE_FREE:
+				assert(index < free.size());
+				tmp = symmLocal_->q(tensorIndex,j)->operator[](free[index]);
+				break;
+
+			case  TensorStanza::INDEX_TYPE_DUMMY:
+				break;
+
+			default:
+				PsimagLite::RuntimeError("symmetriesPass: Wrong index type\n");
+			}
+
+			if (j < ins)
+				qin += tmp;
+			else
+				qout += tmp;
+		}
+
+		return (qin == qout);
 	}
 
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const

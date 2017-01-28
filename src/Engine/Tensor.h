@@ -179,8 +179,6 @@ public:
 		return data_[index];
 	}
 
-private:
-
 	SizeType pack(const VectorSizeType& args) const
 	{
 		assert(args.size() > 0);
@@ -197,6 +195,8 @@ private:
 
 		return index;
 	}
+
+private:
 
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
 	VectorSizeType dimensions_;
