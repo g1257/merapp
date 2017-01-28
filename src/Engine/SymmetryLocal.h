@@ -27,18 +27,19 @@ public:
 
 		io.read(qOne_,"qOne");
 
-		int x = 0;
-		io.readline(x, "SymmTensors=");
-		if (x < 1)
+		int total = 0;
+		io.readline(total, "SymmTensors=");
+		if (total < 1)
 			throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
 
-		nameId_.resize(x);
-		matrix_.resize(x, MAX_LEGS);
-		for (int i = 0; i < x; ++i) {
+		nameId_.resize(total);
+		matrix_.resize(total, MAX_LEGS);
+		for (int i = 0; i < total; ++i) {
 			PsimagLite::String tmp;
 			io.readline(tmp, "SymmForTensor=");
-			nameId_.push_back(tmp);
+			nameId_[i] = tmp;
 
+			int x = 0;
 			io.readline(x, "Total=");
 			if (x < 1)
 				throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
@@ -61,7 +62,9 @@ public:
 
 	void save(std::ostream& os) const
 	{
-		os<<"qOne "<<vectorToString(qOne_);
+		os<<"qOne\n";
+		os<<vectorToString(qOne_);
+		os<<"\n";
 		SizeType n = matrix_.n_row();
 		SizeType m = matrix_.n_col();
 		os<<"SymmTensors="<<effectiveTensors()<<"\n";
@@ -116,10 +119,25 @@ public:
 		matrix_(tensorIndex,legTag) = qq;
 	}
 
+	SizeType size() const { return nameId_.size(); }
+
 	const VectorSizeType* q(SizeType tensorIndex, SizeType legTag) const
 	{
 		assert(matrix_(tensorIndex,legTag));
 		return matrix_(tensorIndex,legTag);
+	}
+
+	SizeType nameIdToIndex(PsimagLite::String str) const
+	{
+		if (indexOfNameId_.size() == 0)
+			nameIdToIndex();
+
+		if (indexOfNameId_.count(str) == 0)
+			return nameId_.size();
+
+		SizeType ind = indexOfNameId_[str];
+		assert(ind < nameId_.size() && nameId_[ind] == str);
+		return ind;
 	}
 
 	static SizeType truncateDimension(const VectorSizeType& dim, SizeType m)
@@ -130,6 +148,13 @@ public:
 	}
 
 private:
+
+	void nameIdToIndex() const
+	{
+		SizeType n = nameId_.size();
+		for (SizeType i = 0; i < n; ++i)
+			indexOfNameId_[nameId_[i]] = i;
+	}
 
 	SizeType effectiveTensors() const
 	{
@@ -247,6 +272,7 @@ private:
 	MatrixOfQnsType matrix_;
 	VectorStringType nameId_;
 	PsimagLite::Vector<VectorSizeType*>::Type garbage_;
+	mutable std::map<PsimagLite::String, SizeType> indexOfNameId_;
 }; // class SymmetryLocal
 } // namespace Mera
 #endif // SYMMETRYLOCAL_H

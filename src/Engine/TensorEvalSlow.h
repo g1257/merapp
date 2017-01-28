@@ -327,6 +327,9 @@ private:
 		assert(symmLocal_);
 		PsimagLite::String tensorNameId = ts.name() + ttos(ts.id());
 		SizeType tensorIndex = symmLocal_->nameIdToIndex(tensorNameId);
+		if (tensorIndex >= symmLocal_->size())
+			return true;
+
 		SizeType legs = ts.legs();
 		SizeType ins = ts.ins();
 		SizeType qin = 0;
