@@ -23,6 +23,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Tokenizer.h"
 #include "TensorBreakup.h"
 #include "TensorEvalBase.h"
+#include "SymmetryLocal.h"
 
 namespace Mera {
 
@@ -44,7 +45,7 @@ public:
 	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
-
+	typedef SymmetryLocal SymmetryLocalType;
 
 	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
 
@@ -52,11 +53,13 @@ public:
 	               const VectorTensorType& vt,
 	               const VectorPairStringSizeType& tensorNameIds,
 	               MapPairStringSizeType& nameIdsTensor,
+	               const SymmetryLocalType* symmLocal,
 	               bool modify = EVAL_BREAKUP)
 	    : srepEq_(tSrep),
 	      data_(vt), // deep copy
 	      tensorNameIds_(tensorNameIds), // deep copy
 	      nameIdsTensor_(nameIdsTensor), // deep copy
+	      symmLocal_(symmLocal),
 	      modify_(modify)
 	{
 		indexOfOutputTensor_ = TensorEvalBaseType::indexOfOutputTensor(tSrep,
@@ -109,7 +112,12 @@ public:
 				veqs[j]->canonicalize();
 			veqs[j]->rhs().simplify(empty);
 
-			TensorEvalSlow tEval(*(veqs[j]),data_,tensorNameIds_,nameIdsTensor_,false);
+			TensorEvalSlow tEval(*(veqs[j]),
+			                     data_,
+			                     tensorNameIds_,
+			                     nameIdsTensor_,
+			                     symmLocal_,
+			                     false);
 
 			std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
 			tEval(); //handle the handle here
@@ -325,6 +333,7 @@ private:
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
 	mutable MapPairStringSizeType nameIdsTensor_;
+	const SymmetryLocalType* symmLocal_;
 	bool modify_;
 	SizeType indexOfOutputTensor_;
 	VectorTensorType garbage_;

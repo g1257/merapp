@@ -2,6 +2,7 @@
 #define SYMMETRYLOCAL_H
 #include "Matrix.h"
 #include "Vector.h"
+#include "IoSimple.h"
 
 namespace Mera {
 
@@ -20,9 +21,10 @@ public:
 	    : qOne_(qOne), matrix_(ntensors, MAX_LEGS), nameId_(ntensors,"")
 	{}
 
-	template<typename SomeInputType>
-	SymmetryLocal(SomeInputType& io)
+	SymmetryLocal(PsimagLite::String filename)
 	{
+		PsimagLite::IoSimple::In io(filename);
+
 		io.read(qOne_,"qOne");
 
 		int x = 0;

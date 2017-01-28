@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	Mera::SrepEquation<double> srepEq(str);
 	TensorEvalBaseType* tensorEval = 0;
 	if (evaluator == "slow") {
-		tensorEval = new TensorEvalSlowType(srepEq,vt,idNames,nameIdTensor,false);
+		tensorEval = new TensorEvalSlowType(srepEq,vt,idNames,nameIdTensor,0,false);
 	} else if(evaluator == "new") {
 		tensorEval = new TensorEvalNewType(srepEq,vt,idNames,nameIdTensor);
 	} else {

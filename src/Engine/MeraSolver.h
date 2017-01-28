@@ -25,7 +25,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
 #include "ParametersForMera.h"
-#include "SymmetryLocal.h"
 #include "../Models/Heisenberg/Heisenberg.h"
 
 namespace Mera {
@@ -50,7 +49,7 @@ class MeraSolver {
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
 	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 	typedef Heisenberg<ComplexOrRealType> ModelType; // Model Dependency choice here FIXME
-	typedef SymmetryLocal SymmetryLocalType;
+	typedef typename TensorOptimizerType::SymmetryLocalType SymmetryLocalType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
@@ -58,6 +57,7 @@ public:
 
 	MeraSolver(PsimagLite::String filename)
 	    : paramsForMera_(filename),
+	      symmLocal_(filename),
 	      iterMera_(1),
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
@@ -84,8 +84,6 @@ public:
 		findTensors(tdstr);
 
 		initTensorNameIds();
-
-		SymmetryLocalType symmLocal(io);
 
 		initTensors(tdstr);
 
@@ -139,7 +137,8 @@ public:
 			                                                   tensorNameIds_,
 			                                                   nameIdsTensor_,
 			                                                   tensors_,
-			                                                   *paramsForLanczos_));
+			                                                   *paramsForLanczos_,
+			                                                   symmLocal_));
 
 			if (name == "r") {
 				if (rootTensorFound) {
@@ -229,12 +228,13 @@ private:
 		assert(ind < energyTerms_.size());
 		SrepEquationType* ptr = energyTerms_[ind];
 		if (!ptr) return 0.0;
-		TensorEvalBaseType* tensorEval = TensorOptimizerType::
-		        getTensorEvalPtr(paramsForMera_.evaluator,
-		                         *ptr,
-		                         tensors_,
-		                         tensorNameIds_,
-		                         nameIdsTensor_);
+		TensorEvalBaseType* tensorEval =
+		        TensorOptimizerType::getTensorEvalPtr(paramsForMera_.evaluator,
+		                                              *ptr,
+		                                              tensors_,
+		                                              tensorNameIds_,
+		                                              nameIdsTensor_,
+		                                              symmLocal_);
 
 		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
@@ -331,6 +331,7 @@ private:
 	MeraSolver& operator=(const MeraSolver&);
 
 	const ParametersForMeraType paramsForMera_;
+	SymmetryLocalType symmLocal_;
 	SizeType iterMera_;
 	SizeType iterTensor_;
 	SizeType indexOfRootTensor_;

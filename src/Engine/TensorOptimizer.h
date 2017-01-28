@@ -27,6 +27,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "LanczosSolver.h"
 #include "CrsMatrix.h"
 #include "BLAS.h"
+#include "SymmetryLocal.h"
 
 namespace Mera {
 
@@ -58,6 +59,7 @@ public:
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
 	LanczosSolverType;
+	typedef typename TensorEvalSlowType::SymmetryLocalType SymmetryLocalType;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
@@ -65,7 +67,8 @@ public:
 	                const VectorPairStringSizeType& tensorNameAndIds,
 	                MapPairStringSizeType& nameIdsTensor,
 	                VectorTensorType& tensors,
-	                const ParametersForSolverType& params)
+	                const ParametersForSolverType& params,
+	                const SymmetryLocalType& symmLocal)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
 	      tensorNameIds_(tensorNameAndIds),
 	      nameIdsTensor_(nameIdsTensor),
@@ -74,6 +77,7 @@ public:
 	      layer_(0),
 	      indexOfRootTensor_(0),
 	      params_(params),
+	      symmLocal_(symmLocal),
 	      verbose_(false)
 	{
 		io.readline(layer_,"Layer=");
@@ -166,14 +170,16 @@ public:
 	                                            const SrepEquationType& srep,
 	                                            VectorTensorType& tensors,
 	                                            const VectorPairStringSizeType& tensorNameIds,
-	                                            MapPairStringSizeType& nameIdsTensor)
+	                                            MapPairStringSizeType& nameIdsTensor,
+	                                            const SymmetryLocalType& symmLocal)
 	{
 		TensorEvalBaseType* tensorEval = 0;
 		if (evaluator == "slow") {
 			tensorEval = new TensorEvalSlowType(srep,
 			                                    tensors,
 			                                    tensorNameIds,
-			                                    nameIdsTensor);
+			                                    nameIdsTensor,
+			                                    &symmLocal);
 		} else if (evaluator == "new") {
 			tensorEval = new TensorEvalNewType(srep,
 			                                   tensors,
@@ -392,7 +398,8 @@ private:
 		                                                  eq,
 		                                                  tensors_,
 		                                                  tensorNameIds_,
-		                                                  nameIdsTensor_);
+		                                                  nameIdsTensor_,
+		                                                  symmLocal_);
 
 		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
@@ -563,6 +570,7 @@ private:
 	SizeType layer_;
 	SizeType indexOfRootTensor_;
 	const ParametersForSolverType& params_;
+	const SymmetryLocalType& symmLocal_;
 	bool verbose_;
 }; // class TensorOptimizer
 } // namespace Mera
