@@ -11,11 +11,11 @@ class DimensionSrep {
 	typedef TensorSrep TensorSrepType;
 	typedef TensorSrepType::TensorStanzaType TensorStanzaType;
 	typedef TensorSrepType::VectorSizeType VectorSizeType;
-	typedef PsimagLite::Vector<const VectorSizeType*>::Type VectorVectorSizeType;
 
 public:
 
 	typedef SymmetryLocal SymmetryLocalType;
+	typedef SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
 
 	DimensionSrep(PsimagLite::String srep,
 	              const VectorSizeType& qOne,
@@ -108,7 +108,7 @@ private:
 		dsrep_.refresh();
 	}
 
-	void replaceSummed(SizeType s, SizeType val, const VectorSizeType* q)
+	void replaceSummed(SizeType s, SizeType val, VectorSizeType* q)
 	{
 		for (SizeType i = 0; i < dsrep_.size(); ++i) {
 			TensorStanzaType ts = dsrep_(i);

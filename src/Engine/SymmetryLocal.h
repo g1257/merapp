@@ -3,18 +3,19 @@
 #include "Matrix.h"
 #include "Vector.h"
 #include "IoSimple.h"
+#include "Sort.h"
 
 namespace Mera {
 
 class SymmetryLocal {
 
-	static const SizeType MAX_LEGS = 4;
+	static const SizeType MAX_LEGS = 8;
 
 public:
 
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
-	typedef PsimagLite::Vector<const VectorSizeType*>::Type VectorVectorSizeType;
-	typedef PsimagLite::Matrix<const VectorSizeType*> MatrixOfQnsType;
+	typedef PsimagLite::Vector<VectorSizeType*>::Type VectorVectorSizeType;
+	typedef PsimagLite::Matrix<VectorSizeType*> MatrixOfQnsType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	SymmetryLocal(SizeType ntensors, const VectorSizeType& qOne)
@@ -88,6 +89,25 @@ public:
 		}
 	}
 
+	void addTensor(PsimagLite::String str,
+	               VectorVectorSizeType& q,
+	               const VectorSizeType& iperm)
+	{
+		nameId_.push_back(str);
+		indexOfNameId_[str] = nameId_.size() - 1;
+		SizeType nrow = matrix_.n_row();
+		SizeType ncol = matrix_.n_col();
+		MatrixOfQnsType m(nrow + 1, ncol);
+		for (SizeType i = 0; i < nrow; ++i)
+			for (SizeType j = 0; j < ncol; ++j)
+				m(i, j) = matrix_(i, j);
+
+		for (SizeType i = 0; i < q.size(); ++i)
+			m(nrow, i) = q[iperm[i]];
+
+		matrix_ = m;
+	}
+
 	void setNameId(SizeType i, PsimagLite::String str)
 	{
 		assert(i < nameId_.size());
@@ -99,7 +119,7 @@ public:
 		matrix_(tensorIndex,legTag) = &qOne_;
 	}
 
-	void setQ(SizeType tensorIndex, SizeType legTag, const VectorSizeType* q)
+	void setQ(SizeType tensorIndex, SizeType legTag, VectorSizeType* q)
 	{
 		matrix_(tensorIndex,legTag) = q;
 	}
@@ -121,7 +141,7 @@ public:
 
 	SizeType size() const { return nameId_.size(); }
 
-	const VectorSizeType* q(SizeType tensorIndex, SizeType legTag) const
+	VectorSizeType* q(SizeType tensorIndex, SizeType legTag)
 	{
 		assert(matrix_(tensorIndex,legTag));
 		return matrix_(tensorIndex,legTag);
@@ -250,11 +270,27 @@ private:
 		SizeType discarded = n - m;
 		assert(discarded > 0);
 		VectorSizeType r(discarded,0);
+
+#if 0
 		for (SizeType i = 0; i < discarded; ++i) {
 			r[i] = static_cast<SizeType>(drand48()*n);
 			while (std::find(r.begin(), r.begin() + i, r[i]) != r.begin() + i)
 				r[i] = static_cast<SizeType>(drand48()*n);
 		}
+#else
+		VectorSizeType sorted = qq;
+		PsimagLite::Sort<VectorSizeType> sort;
+		VectorSizeType iperm(qq.size());
+		sort.sort(sorted,iperm);
+		SizeType low = discarded/2;
+		SizeType high = qq.size() - discarded/2;
+		if (discarded & 1) ++low;
+		for (SizeType i = 0; i < low; ++i)
+			r[i] = iperm[i];
+
+		for (SizeType i = high; i < qq.size(); ++i)
+			r[low++] = iperm[i];
+#endif
 
 		VectorSizeType qqq(m, 0);
 		SizeType counter = 0;

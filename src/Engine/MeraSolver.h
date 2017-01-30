@@ -86,7 +86,7 @@ public:
 
 		noSymmLocal_ = (x == 0) ? false : true;
 
-		const SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
+		SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
 
 		PsimagLite::String dstr("");
 		io.readline(dstr,"DimensionSrep=");
@@ -235,7 +235,7 @@ private:
 
 	RealType energy(SizeType ind)
 	{
-		const SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
+		SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
 		assert(ind < energyTerms_.size());
 		SrepEquationType* ptr = energyTerms_[ind];
 		if (!ptr) return 0.0;

@@ -46,6 +46,7 @@ public:
 	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
 	typedef SymmetryLocal SymmetryLocalType;
+	typedef SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
 
 	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
 
@@ -53,7 +54,7 @@ public:
 	               const VectorTensorType& vt,
 	               const VectorPairStringSizeType& tensorNameIds,
 	               MapPairStringSizeType& nameIdsTensor,
-	               const SymmetryLocalType* symmLocal,
+	               SymmetryLocalType* symmLocal,
 	               bool modify = EVAL_BREAKUP)
 	    : srepEq_(tSrep),
 	      data_(vt), // deep copy
@@ -72,7 +73,7 @@ public:
 		// get t0, t1, etc definitions and result
 		VectorStringType vstr;
 		tensorBreakup(vstr);
-		//		PsimagLite::String brokenResult = tensorBreakup.brokenResult();
+
 		// loop over temporaries definitions
 		assert(!(vstr.size() & 1));
 		SizeType outputLocation = 1 + vstr.size();
@@ -80,7 +81,6 @@ public:
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
 			if (temporaryName == tSrep.lhs().sRep()) {
-				//				vstr[i + 1] = brokenResult;
 				std::cout<<"Definition of "<<srepEq_.rhs().sRep()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
 				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
@@ -136,6 +136,11 @@ public:
 			delete garbage_[i];
 			garbage_[i] = 0;
 		}
+
+		for (SizeType i = 0; i < garbage2_.size(); ++i) {
+			delete garbage2_[i];
+			garbage2_[i] = 0;
+		}
 	}
 
 	HandleType operator()()
@@ -146,12 +151,19 @@ public:
 		SizeType total = srepEq_.lhs().maxTag('f') + 1;
 
 		static VectorSizeType dimensions;
-		if (total != dimensions.size()) dimensions.resize(total,0);
-		else std::fill(dimensions.begin(), dimensions.end(), 0);
+		static VectorVectorSizeType q;
+		if (total != dimensions.size()) {
+			dimensions.resize(total, 0);
+			q.resize(total, 0);
+		} else {
+			std::fill(dimensions.begin(), dimensions.end(), 0);
+			std::fill(q.begin(), q.end(), static_cast<VectorSizeType*>(0));
+		}
 
 		bool hasFree = srepEq_.lhs().hasLegType('f');
 		if (hasFree) {
-			prepare(dimensions,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
+			prepare(dimensions,q,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
+			setQnsForOutput(q);
 		} else {
 			assert(dimensions.size() == 1);
 			dimensions[0] = 1;
@@ -205,9 +217,10 @@ private:
 		if (dimensions.size() != total) dimensions.resize(total,0);
 		else std::fill(dimensions.begin(), dimensions.end(), 0);
 
+		VectorVectorSizeType q;
 		bool hasSummed = srep.hasLegType('s');
 		if (hasSummed) {
-			prepare(dimensions, srep, TensorStanza::INDEX_TYPE_SUMMED);
+			prepare(dimensions, q, srep, TensorStanza::INDEX_TYPE_SUMMED);
 		} else {
 			assert(dimensions.size() == 1);
 			dimensions[0] = 1;
@@ -222,21 +235,27 @@ private:
 	}
 
 	void prepare(VectorSizeType& dimensions,
+	             VectorVectorSizeType& q,
 	             const TensorSrepType& tensorSrep,
 	             TensorStanza::IndexTypeEnum type) const
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			prepareStanza(dimensions, tensorSrep(i), type);
+			prepareStanza(dimensions, q, tensorSrep(i), type);
 		}
 	}
 
 	void prepareStanza(VectorSizeType& dimensions,
+	                   VectorVectorSizeType& q,
 	                   const TensorStanza& stanza,
 	                   TensorStanza::IndexTypeEnum type) const
 	{
 		SizeType id = stanza.id();
 		SizeType mid = idNameToIndex(stanza.name(),id);
+		SizeType tensorIndex = symmLocal_->nameIdToIndex(stanza.name() + ttos(id));
+		if (tensorIndex >= symmLocal_->size())
+			assert(false);
+
 		assert(mid < data_.size());
 		SizeType legs = stanza.legs();
 		for (SizeType j = 0; j < legs; ++j) {
@@ -247,6 +266,15 @@ private:
 			assert(j < data_[mid]->args());
 			assert(sIndex < dimensions.size());
 			dimensions[sIndex] = data_[mid]->argSize(j);
+			if (type == TensorStanza::INDEX_TYPE_FREE) {
+				const VectorSizeType* qSrc = symmLocal_->q(tensorIndex, j);
+				assert(qSrc);
+				assert(sIndex < q.size());
+				VectorSizeType* ptr = new VectorSizeType(qSrc->size());
+				garbage2_.push_back(ptr);
+				*(ptr) = *qSrc;
+				q[sIndex] = ptr;
+			}
 		}
 	}
 
@@ -328,7 +356,7 @@ private:
 		PsimagLite::String tensorNameId = ts.name() + ttos(ts.id());
 		SizeType tensorIndex = symmLocal_->nameIdToIndex(tensorNameId);
 		if (tensorIndex >= symmLocal_->size())
-			return true;
+			assert(false);
 
 		SizeType legs = ts.legs();
 		SizeType ins = ts.ins();
@@ -376,6 +404,27 @@ private:
 		return it->second;
 	}
 
+	void setQnsForOutput(VectorVectorSizeType& q)
+	{
+		// remap tensor indexing into symm local indexing
+		PairStringSizeType p = tensorNameIds_[indexOfOutputTensor_];
+		PsimagLite::String str = p.first + ttos(p.second);
+
+		SizeType legs = srepEq_.lhs().legs();
+		VectorSizeType v(legs, 0);
+		for (SizeType j = 0; j < legs; ++j) {
+			assert(srepEq_.lhs().legType(j) == TensorStanza::INDEX_TYPE_FREE);
+			v[j] = srepEq_.lhs().legTag(j);
+		}
+
+		PsimagLite::Sort<VectorSizeType> sort;
+		VectorSizeType iperm(v.size(), 0);
+		sort.sort(v, iperm);
+
+		// set qs
+		symmLocal_->addTensor(str, q, iperm);
+	}
+
 	TensorType& outputTensor()
 	{
 		assert(indexOfOutputTensor_ < data_.size());
@@ -396,10 +445,11 @@ private:
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
 	mutable MapPairStringSizeType nameIdsTensor_;
-	const SymmetryLocalType* symmLocal_;
+	SymmetryLocalType* symmLocal_;
 	bool modify_;
 	SizeType indexOfOutputTensor_;
 	VectorTensorType garbage_;
+	mutable VectorVectorSizeType garbage2_;
 };
 }
 #endif // MERA_TensorEvalSlow_H

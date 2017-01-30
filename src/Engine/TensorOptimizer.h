@@ -68,7 +68,7 @@ public:
 	                MapPairStringSizeType& nameIdsTensor,
 	                VectorTensorType& tensors,
 	                const ParametersForSolverType& params,
-	                const SymmetryLocalType& symmLocal)
+	                SymmetryLocalType& symmLocal)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
 	      tensorNameIds_(tensorNameAndIds),
 	      nameIdsTensor_(nameIdsTensor),
@@ -171,7 +171,7 @@ public:
 	                                            VectorTensorType& tensors,
 	                                            const VectorPairStringSizeType& tensorNameIds,
 	                                            MapPairStringSizeType& nameIdsTensor,
-	                                            const SymmetryLocalType& symmLocal)
+	                                            SymmetryLocalType& symmLocal)
 	{
 		TensorEvalBaseType* tensorEval = 0;
 		if (evaluator == "slow") {
@@ -570,7 +570,7 @@ private:
 	SizeType layer_;
 	SizeType indexOfRootTensor_;
 	const ParametersForSolverType& params_;
-	const SymmetryLocalType& symmLocal_;
+	SymmetryLocalType& symmLocal_;
 	bool verbose_;
 }; // class TensorOptimizer
 } // namespace Mera
