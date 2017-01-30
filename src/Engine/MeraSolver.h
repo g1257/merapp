@@ -62,7 +62,8 @@ public:
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
 	      model_(paramsForMera_.hamiltonianConnection),
-	      paramsForLanczos_(0)
+	      paramsForLanczos_(0),
+	      noSymmLocal_(false)
 	{
 		InputCheck inputCheck;
 		InputNgType::Writeable ioWriteable(filename,inputCheck);
@@ -77,6 +78,15 @@ public:
 		try {
 			io.readline(iterTensor_,"IterTensor=");
 		} catch (std::exception&) {}
+
+		int x = 0;
+		try {
+			io.readline(x,"NoSymmetryLocal=");
+		} catch (std::exception&) {}
+
+		noSymmLocal_ = (x == 0) ? false : true;
+
+		const SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
 
 		PsimagLite::String dstr("");
 		io.readline(dstr,"DimensionSrep=");
@@ -138,7 +148,7 @@ public:
 			                                                   nameIdsTensor_,
 			                                                   tensors_,
 			                                                   *paramsForLanczos_,
-			                                                   symmLocal_));
+			                                                   *symmLocal));
 
 			if (name == "r") {
 				if (rootTensorFound) {
@@ -225,6 +235,7 @@ private:
 
 	RealType energy(SizeType ind)
 	{
+		const SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
 		assert(ind < energyTerms_.size());
 		SrepEquationType* ptr = energyTerms_[ind];
 		if (!ptr) return 0.0;
@@ -234,7 +245,7 @@ private:
 		                                              tensors_,
 		                                              tensorNameIds_,
 		                                              nameIdsTensor_,
-		                                              symmLocal_);
+		                                              *symmLocal);
 
 		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
@@ -341,6 +352,7 @@ private:
 	ModelType model_;
 	VectorTensorOptimizerType tensorOptimizer_;
 	ParametersForSolverType* paramsForLanczos_;
+	bool noSymmLocal_;
 	VectorSrepEquationType energyTerms_;
 }; // class MeraSolver
 } // namespace Mera

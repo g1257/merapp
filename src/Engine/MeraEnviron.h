@@ -41,7 +41,9 @@ public:
 	    : builder_(builder),
 	      params_(params),
 	      dimensionSrep_(dimensionSrep),
-	      tensorSrep_(builder()), envs_(""), dsrep_("")
+	      tensorSrep_(builder()),
+	      envs_(""),
+	      dsrep_("")
 	{
 		sizeOfRoot_ = findSizeOfRoot();
 		SizeType counterForOutput = 100;
