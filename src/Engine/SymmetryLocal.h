@@ -34,6 +34,7 @@ public:
 			throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
 
 		nameId_.resize(total);
+		matrix_.setTo(0);
 		matrix_.resize(total, MAX_LEGS);
 		for (int i = 0; i < total; ++i) {
 			PsimagLite::String tmp;

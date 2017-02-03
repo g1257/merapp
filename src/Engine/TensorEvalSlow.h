@@ -271,7 +271,7 @@ private:
 				assert(qSrc);
 				assert(sIndex < q.size());
 				VectorSizeType* ptr = new VectorSizeType(qSrc->size());
-				garbage2_.push_back(ptr);
+				//garbage2_.push_back(ptr);
 				*(ptr) = *qSrc;
 				q[sIndex] = ptr;
 			}
