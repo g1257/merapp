@@ -51,7 +51,8 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	}
 
 	Mera::TensorSrep tsrep(srep);
-	Mera::SymmetryLocal symmLocal(tsrep.size(), params.qOne);
+	SizeType maxLegs = 2.0*params.hamiltonianConnection.size();
+	Mera::SymmetryLocal symmLocal(tsrep.size(), params.qOne, maxLegs);
 	Mera::DimensionSrep<Mera::SymmetryLocal> dimSrep(srep, symmLocal, params.m);
 	PsimagLite::String dsrep = dimSrep();
 

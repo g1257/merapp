@@ -17,9 +17,9 @@ DONE    interface of TensorStanza/TensorSrep ==> all legs looping
 DONE    we must have only a few reserved tensor names, and accept
 	    the rest as general purpose tensor names
 DONE	symmetries for temporaries
-	symmetry of scalars must be dealt automatically
-	add symmetries for irreducible identities
-	clean up memory of symmetries of temporaries
+DONE	symmetry of scalars must be dealt automatically
+DONE	add symmetries for irreducible identities
+DONE	clean up memory of symmetries of temporaries
 	move irreducible identity code into its own class if possible
 	tensor in compressed form, modify looping over indices
 	target one sector only in effective H

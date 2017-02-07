@@ -9,8 +9,6 @@ namespace Mera {
 
 class SymmetryLocal {
 
-	static const SizeType MAX_LEGS = 8;
-
 public:
 
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
@@ -18,8 +16,8 @@ public:
 	typedef PsimagLite::Matrix<VectorSizeType*> MatrixOfQnsType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
-	SymmetryLocal(SizeType ntensors, const VectorSizeType& qOne)
-	    : qOne_(qOne), matrix_(ntensors, MAX_LEGS), nameId_(ntensors,"")
+	SymmetryLocal(SizeType ntensors, const VectorSizeType& qOne, SizeType maxLegs)
+	    : qOne_(qOne), matrix_(ntensors, maxLegs), nameId_(ntensors,"")
 	{}
 
 	SymmetryLocal(PsimagLite::String filename)
@@ -31,11 +29,17 @@ public:
 		int total = 0;
 		io.readline(total, "SymmTensors=");
 		if (total < 1)
-			throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
+			throw PsimagLite::RuntimeError("SymmetryLocal: reading SymmTensors failed\n");
 
 		nameId_.resize(total);
+
+		int maxLegs = 0;
+		io.readline(maxLegs, "MaxLegs=");
+		if (maxLegs < 1)
+			throw PsimagLite::RuntimeError("SymmetryLocal: reading maxLegs failed\n");
+
 		matrix_.setTo(0);
-		matrix_.resize(total, MAX_LEGS);
+		matrix_.resize(total, maxLegs);
 		for (int i = 0; i < total; ++i) {
 			PsimagLite::String tmp;
 			io.readline(tmp, "SymmForTensor=");
@@ -70,6 +74,7 @@ public:
 		SizeType n = matrix_.n_row();
 		SizeType m = matrix_.n_col();
 		os<<"SymmTensors="<<effectiveTensors()<<"\n";
+		os<<"MaxLegs="<<m<<"\n";
 		for (SizeType i = 0; i < n; ++i) {
 			PsimagLite::String str("");
 			SizeType count = 0;
