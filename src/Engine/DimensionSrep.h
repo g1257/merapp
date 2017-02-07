@@ -2,10 +2,10 @@
 #define MERA_SREP_DIMENSION_H
 #include "TensorSrep.h"
 #include "Vector.h"
-#include "SymmetryLocal.h"
 
 namespace  Mera {
 
+template<typename SymmetryLocalType>
 class DimensionSrep {
 
 	typedef TensorSrep TensorSrepType;
@@ -14,18 +14,16 @@ class DimensionSrep {
 
 public:
 
-	typedef SymmetryLocal SymmetryLocalType;
-	typedef SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
+	typedef typename SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
 
 	DimensionSrep(PsimagLite::String srep,
-	              const VectorSizeType& qOne,
+	              SymmetryLocalType& symmLocal,
 	              SizeType m)
-	    :srep_(srep),m_(m),dsrep_(srep),symmLocal_(srep.size(), qOne)
+	    : m_(m),dsrep_(srep),symmLocal_(symmLocal)
 	{
-		dStoSymm(qOne.size());
-		alterFrees(qOne.size());
+		dStoSymm(symmLocal_.qOne().size());
+		alterFrees(symmLocal_.qOne().size());
 		alterSummed();
-		symmLocal_.save(std::cout);
 	}
 
 	const PsimagLite::String& operator()() const
@@ -144,10 +142,9 @@ private:
 		}
 	}
 
-	TensorSrepType srep_;
 	SizeType m_;
 	TensorSrepType dsrep_;
-	SymmetryLocalType symmLocal_;
+	SymmetryLocalType& symmLocal_;
 }; //
 
 } // namespace  Mera

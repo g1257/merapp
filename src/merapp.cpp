@@ -31,6 +31,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Version.h"
 #include "DimensionSrep.h"
 #include "MeraBuilder.h"
+#include "SymmetryLocal.h"
 
 void usageMain(const PsimagLite::String& str)
 {
@@ -49,11 +50,17 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 		srep += "h" + ttos(i) + args;
 	}
 
-	Mera::DimensionSrep dimSrep(srep,params.qOne,params.m);
+	Mera::TensorSrep tsrep(srep);
+	Mera::SymmetryLocal symmLocal(tsrep.size(), params.qOne);
+	Mera::DimensionSrep<Mera::SymmetryLocal> dimSrep(srep, symmLocal, params.m);
 	PsimagLite::String dsrep = dimSrep();
 
-	Mera::MeraEnviron<ComplexOrRealType> environ(builder,params,dsrep);
+	Mera::MeraEnviron<ComplexOrRealType, Mera::SymmetryLocal> environ(builder,
+	                                                                  params,
+	                                                                  dsrep,
+	                                                                  symmLocal);
 	std::cout<<params;
+	symmLocal.save(std::cout);
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep();
 	// add output u1000 to be used by unitary condition checking
 	std::cout<<"u1000(1,1)\n";

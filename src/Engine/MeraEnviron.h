@@ -24,7 +24,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 namespace Mera {
 
-template<typename ComplexOrRealType>
+template<typename ComplexOrRealType, typename SymmetryLocalType>
 class MeraEnviron {
 
 	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
@@ -37,10 +37,12 @@ public:
 
 	MeraEnviron(const MeraBuilderType& builder,
 	            const ParametersForMeraType& params,
-	            PsimagLite::String dimensionSrep)
+	            PsimagLite::String dimensionSrep,
+	            SymmetryLocalType& symmLocal)
 	    : builder_(builder),
 	      params_(params),
 	      dimensionSrep_(dimensionSrep),
+	      symmLocal_(symmLocal),
 	      tensorSrep_(builder()),
 	      envs_(""),
 	      dsrep_("")
@@ -243,6 +245,8 @@ private:
 		SizeType tmp = sizeOfRoot_/sizeWithoutIrrIdentity;
 		SizeType id = rightSrep(indexOfIdentity).id();
 		dsrep_ += "i" + ttos(id) + "(D" + ttos(tmp) + "|D" + ttos(tmp) + ")";
+		symmLocal_.addIdentity(id, tmp);
+
 	}
 
 	SizeType findDimension(const TensorSrep& srep, SizeType indexOfFree) const
@@ -325,6 +329,7 @@ private:
 	const MeraBuilderType& builder_;
 	const ParametersForMeraType& params_;
 	TensorSrep dimensionSrep_;
+	SymmetryLocalType& symmLocal_;
 	SizeType sizeOfRoot_;
 	TensorSrep tensorSrep_;
 	PsimagLite::String envs_;

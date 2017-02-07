@@ -140,6 +140,27 @@ public:
 		matrix_(tensorIndex,legTag) = qq;
 	}
 
+	void addIdentity(SizeType id, SizeType dim)
+	{
+		VectorVectorSizeType q(2, static_cast<VectorSizeType*>(0));
+		VectorSizeType* qq = new VectorSizeType(dim, 0);
+		PsimagLite::String str("i");
+		str += ttos(id);
+		for (SizeType i = 0; i < dim; ++i)
+			(*qq)[i] = i;
+
+		q[0] = qq;
+		garbage_.push_back(qq);
+
+		VectorSizeType* qq2 = new VectorSizeType(dim, 0);
+		(*qq2) = (*qq);
+
+		q[1] = qq2;
+		garbage_.push_back(qq2);
+
+        addTensor(str, q, *qq);
+	}
+
 	SizeType size() const { return nameId_.size(); }
 
 	VectorSizeType* q(SizeType tensorIndex, SizeType legTag)
@@ -160,6 +181,8 @@ public:
 		assert(ind < nameId_.size() && nameId_[ind] == str);
 		return ind;
 	}
+
+	const VectorSizeType& qOne() const { return qOne_; }
 
 	static SizeType truncateDimension(const VectorSizeType& dim, SizeType m)
 	{
