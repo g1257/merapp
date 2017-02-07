@@ -103,8 +103,10 @@ public:
 			for (SizeType j = 0; j < ncol; ++j)
 				m(i, j) = matrix_(i, j);
 
-		for (SizeType i = 0; i < q.size(); ++i)
+		for (SizeType i = 0; i < q.size(); ++i) {
 			m(nrow, i) = q[iperm[i]];
+			garbage_.push_back(q[iperm[i]]);
+		}
 
 		matrix_ = m;
 	}
@@ -150,13 +152,11 @@ public:
 			(*qq)[i] = i;
 
 		q[0] = qq;
-		garbage_.push_back(qq);
 
 		VectorSizeType* qq2 = new VectorSizeType(dim, 0);
 		(*qq2) = (*qq);
 
 		q[1] = qq2;
-		garbage_.push_back(qq2);
 
         addTensor(str, q, *qq);
 	}

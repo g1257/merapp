@@ -136,11 +136,6 @@ public:
 			delete garbage_[i];
 			garbage_[i] = 0;
 		}
-
-		for (SizeType i = 0; i < garbage2_.size(); ++i) {
-			delete garbage2_[i];
-			garbage2_[i] = 0;
-		}
 	}
 
 	HandleType operator()()
@@ -271,7 +266,6 @@ private:
 				assert(qSrc);
 				assert(sIndex < q.size());
 				VectorSizeType* ptr = new VectorSizeType(qSrc->size());
-				//garbage2_.push_back(ptr);
 				*(ptr) = *qSrc;
 				q[sIndex] = ptr;
 			}
@@ -450,7 +444,6 @@ private:
 	bool modify_;
 	SizeType indexOfOutputTensor_;
 	VectorTensorType garbage_;
-	mutable VectorVectorSizeType garbage2_;
 };
 }
 #endif // MERA_TensorEvalSlow_H
