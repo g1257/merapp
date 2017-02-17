@@ -247,8 +247,9 @@ private:
 	{
 		SizeType id = stanza.id();
 		SizeType mid = idNameToIndex(stanza.name(),id);
-		SizeType tensorIndex = symmLocal_->nameIdToIndex(stanza.name() + ttos(id));
-		if (tensorIndex >= symmLocal_->size())
+		SizeType tensorIndex = (symmLocal_) ?
+		            symmLocal_->nameIdToIndex(stanza.name() + ttos(id)) : 0;
+		if (symmLocal_ && tensorIndex >= symmLocal_->size())
 			assert(false);
 
 		assert(mid < data_.size());
@@ -261,7 +262,7 @@ private:
 			assert(j < data_[mid]->args());
 			assert(sIndex < dimensions.size());
 			dimensions[sIndex] = data_[mid]->argSize(j);
-			if (type == TensorStanza::INDEX_TYPE_FREE) {
+			if (symmLocal_ && type == TensorStanza::INDEX_TYPE_FREE) {
 				const VectorSizeType* qSrc = symmLocal_->q(tensorIndex, j);
 				assert(qSrc);
 				assert(sIndex < q.size());
@@ -417,7 +418,8 @@ private:
 		sort.sort(v, iperm);
 
 		// set qs
-		symmLocal_->addTensor(str, q, iperm);
+		if (symmLocal_)
+			symmLocal_->addTensor(str, q, iperm);
 	}
 
 	TensorType& outputTensor()

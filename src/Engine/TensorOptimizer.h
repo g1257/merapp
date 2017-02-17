@@ -318,14 +318,7 @@ private:
 		SizeType cols = m.n_col();
 		assert(cols == vt.n_row());
 		MatrixType t(r1,r2);
-		for (SizeType i = 0; i < r1; ++i) {
-			for (SizeType j = 0; j < r2; ++j) {
-				ComplexOrRealType sum = 0.0;
-				for (SizeType k = 0; k < cols; ++k)
-					sum -= vt(k,i)*m(j,k);
-				t(i,j) = PsimagLite::conj(sum);
-			}
-		}
+		psimag::BLAS::GEMM('C','C',r1,cols,cols,-1.0,&(vt(0,0)),cols,&(m(0,0)),r2,0.0,&(t(0,0)),r1);
 
 #ifndef DNDEBUG
 		if (r1 == r2) {
