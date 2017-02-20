@@ -43,6 +43,7 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
            const Mera::ParametersForMera<ComplexOrRealType>& params)
 {
 	PsimagLite::String srep = builder();
+	PsimagLite::String meraString = srep;
 	PsimagLite::String hString = "D" + ttos(params.qOne.size());
 	PsimagLite::String args = "(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	for (SizeType i = 0; i < params.hamiltonianConnection.size(); ++i) {
@@ -68,7 +69,7 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	SizeType iterMera = 5;
 	std::cout<<"MeraOptions=stopearly\n";
 	std::cout<<"IterMera="<<iterMera<<"\n";
-	std::cout<<"MERA="<<srep<<"\n";
+	std::cout<<"MERA="<<meraString<<"\n";
 
 	std::cout<<environ.environs();
 }

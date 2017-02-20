@@ -195,7 +195,8 @@ private:
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
 			PsimagLite::String name = tensorSrep(i).name();
-			assert(tensorSrep(i).id() < unpackTimeAndSpace_.size());
+			if (tensorSrep(i).id() >= unpackTimeAndSpace_.size())
+				continue;
 			PairSizeType tensorXY = unpackTimeAndSpace_[tensorSrep(i).id()];
 			SizeType tensorX = tensorXY.first;
 			SizeType tensorY = tensorXY.second;
