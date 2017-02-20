@@ -143,6 +143,7 @@ public:
 			RealType e = optimizeInternal(iter, upIter, evaluator);
 			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
+				break;
 			}
 
 			if (iter > 0 && fabs(eprev-e)<1e-4)
