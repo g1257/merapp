@@ -19,6 +19,7 @@ public:
 	MeraBuilder(SizeType sites,
 	            SizeType arity,
 	            SizeType dimension,
+	            bool isPeriodic,
 	            const VectorType& hamTerms)
 	    : srep_(""), energy_(sites,0)
 	{
@@ -40,9 +41,20 @@ public:
 		SizeType idsW = 0;
 		while (tensors > 1) {
 			SizeType savedSummedForW = summed;
-			createUlayer(summed,idsU,savedSummedForU,tensors,counter);
+			SizeType pLastIndex = createUlayer(summed,
+			                                   idsU,
+			                                   savedSummedForU,
+			                                   tensors,
+			                                   isPeriodic,
+			                                   counter);
 			savedSummedForU = summed;
-			createWlayer(summed,idsW,savedSummedForW,tensors,counter);
+			createWlayer(summed,
+			             idsW,
+			             savedSummedForW,
+			             tensors,
+			             isPeriodic,
+			             pLastIndex,
+			             counter);
 			tensors /= 2;
 			counter++;
 		}
@@ -76,18 +88,22 @@ public:
 
 private:
 
-	void createUlayer(SizeType& summed,
+	SizeType createUlayer(SizeType& summed,
 	                  SizeType& idsU,
 	                  SizeType savedSummed,
 	                  SizeType n,
+	                  bool isPeriodic,
 	                  SizeType counter)
 	{
 		PsimagLite::String I0("");
 		PsimagLite::String I1("");
 		PsimagLite::String O0("");
 		PsimagLite::String O1("");
+		SizeType periodicLastIndex = 0;
 		for (SizeType i = 0; i < n; ++i) {
 			bool hasTwoOutputs = true;
+			const bool oddCounter = (counter & 1);
+
 			if (counter == 0) {
 				I0 = "f" + ttos(2*i);
 				I1 = "f" + ttos(2*i+1);
@@ -96,45 +112,77 @@ private:
 				I1 = "s" + ttos(savedSummed++);
 			}
 
-			if (counter & 1) {
+			if (oddCounter) {
 				if (i + 1 == n) hasTwoOutputs = false;
 			} else {
 				if (i == 0) hasTwoOutputs = false;
 			}
 
+			srep_ += "u" + ttos(idsU++) + "("+I0+"," + I1 + "|";
+
+			if (!oddCounter && !hasTwoOutputs && isPeriodic) {
+				periodicLastIndex = summed++;
+				O1 = "s" + ttos(periodicLastIndex);
+				srep_ +=  O1 + ",";
+			}
+
 			O0 = "s" + ttos(summed++);
-			srep_ += "u" + ttos(idsU++) + "("+I0+"," + I1 + "|" + O0;
+			srep_ += O0;
+
 			if (hasTwoOutputs) {
 				O1 = "s" + ttos(summed++);
+				srep_ += "," + O1;
+			} else if (isPeriodic && oddCounter) {
+				// border here
+				periodicLastIndex = summed++;
+				O1 = "s" + ttos(periodicLastIndex);
 				srep_ += "," + O1;
 			}
 
 			srep_ += ")";
 		}
+
+		return periodicLastIndex;
 	}
 
 	void createWlayer(SizeType& summed,
 	                  SizeType& idsW,
 	                  SizeType savedSummed,
 	                  SizeType n,
+	                  bool isPeriodic,
+	                  SizeType periodicLastIndex,
 	                  SizeType counter)
 	{
 		PsimagLite::String I0("");
 		PsimagLite::String I1("");
 		PsimagLite::String O0("");
+		if (isPeriodic) ++savedSummed;
+
 		for (SizeType i = 0; i < n; ++i) {
 			bool hasTwoInputs = true;
+			const bool oddCounter = (counter & 1);
 
-			if (counter & 1) {
+			if (oddCounter) {
 				if (i == 0) hasTwoInputs = false;
 			} else {
 				if (i + 1 == n) hasTwoInputs = false;
 			}
 
+			srep_ += "w" + ttos(idsW++) +"(";
+
+			if (oddCounter && !hasTwoInputs && isPeriodic) {
+				I1 = "s" + ttos(periodicLastIndex);
+				srep_ += "," + I1;
+			}
+
 			I0 = "s" + ttos(savedSummed++);
-			srep_ += "w" + ttos(idsW++) +"(" + I0;
+			srep_ += I0;
+
 			if (hasTwoInputs) {
 				I1 = "s" + ttos(savedSummed++);
+				srep_ += "," + I1;
+			} else if (isPeriodic && !oddCounter) {
+				I1 = "s" + ttos(periodicLastIndex);
 				srep_ += "," + I1;
 			}
 
@@ -146,16 +194,16 @@ private:
 	void buildEnergies(const VectorType& hamTerm)
 	{
 		TensorSrep tensorSrep(srep_);
-		//std::cout<<"TensorId=E,0\n";
-		SizeType terms =hamTerm.size();
-		//std::cout<<"Terms="<<terms<<"\n";
-		for (SizeType site = 0; site < terms; ++site) {
+		SizeType sites = hamTerm.size();
+		for (SizeType site = 0; site < sites; ++site) {
 			if (hamTerm[site] == 0.0) continue;
-			energy_[site] = buildEnergyTerm(site, tensorSrep);
+			energy_[site] = buildEnergyTerm(site, sites, tensorSrep);
 		}
 	}
 
-	TensorSrep* buildEnergyTerm(SizeType site, const TensorSrep& tensorSrep) const
+	TensorSrep* buildEnergyTerm(SizeType site,
+	                            SizeType sites,
+	                            const TensorSrep& tensorSrep) const
 	{
 		TensorSrep tensorSrep2(tensorSrep);
 		tensorSrep2.conjugate();
@@ -164,15 +212,16 @@ private:
 		str3 += ttos(site+2) + ",f";
 		str3 += ttos(site+3) + "|f";
 		str3 += ttos(site) + ",f";
-		str3 += ttos(site+1) + ")\n";
+		SizeType x = (site + 1 == sites) ? 0 : site + 1;
+		str3 += ttos(x) + ")\n";
 		TensorSrep tensorSrep3(str3);
 		TensorSrep::VectorSizeType indicesToContract(2,site);
-		indicesToContract[1] = site + 1;
+		indicesToContract[1] = x;
 		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
 		tensorSrep4->contract(tensorSrep3,indicesToContract);
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		correctFreeIndicesBeforeContraction(*tensorSrep4, site);
+		correctFreeIndicesBeforeContraction(*tensorSrep4, site, sites);
 
 		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
@@ -184,11 +233,13 @@ private:
 	}
 
 	void correctFreeIndicesBeforeContraction(TensorSrep& t,
-	                                         SizeType site) const
+	                                         SizeType site,
+	                                         SizeType sites) const
 	{
 		if (site < 1) return;
 
-		t.swapFree(1,site+1);
+		SizeType x = (site + 1 == sites) ? 0 : site + 1;
+		t.swapFree(1,x);
 		t.swapFree(0,site);
 		t.refresh();
 

@@ -67,7 +67,8 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	// add output u1000 to be used by unitary condition checking
 	std::cout<<"u1000(1,1)\n";
 	SizeType iterMera = 5;
-	std::cout<<"MeraOptions=stopearly\n";
+	std::cout<<"MeraOptions=none\n";
+	std::cout<<"NoSymmetryLocal=1\n";
 	std::cout<<"IterMera="<<iterMera<<"\n";
 	std::cout<<"MERA="<<meraString<<"\n";
 
@@ -105,6 +106,7 @@ int main(int argc, char **argv)
 	SizeType sites = 0;
 	SizeType arity = 2;
 	SizeType dimension = 1;
+	bool periodic = false;
 	MeraParametersType::VectorType hamTerms;
 	SizeType m = 0;
 	PsimagLite::String evaluator("slow");
@@ -113,12 +115,13 @@ int main(int argc, char **argv)
 	strUsage += " -n sites -a arity -d dimension [-M model] [-m m] ";
 	strUsage += "| -S srep | -V\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:m:M:s:e:bV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:m:M:s:e:PbV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
 			assert(sites > 1);
-			hamTerms.resize(sites - 1,1.0);
+			hamTerms.resize(sites,1.0);
+			hamTerms[sites-1] = 0.0;
 			break;
 		case 'a':
 			arity = atoi(optarg);
@@ -143,6 +146,9 @@ int main(int argc, char **argv)
 			break;
 		case 'e':
 			evaluator = optarg;
+			break;
+		case 'P':
+			periodic = true;
 			break;
 		case 'b':
 			buildOnly = true;
@@ -170,8 +176,11 @@ int main(int argc, char **argv)
 	if (qOne.size() == 0 || sites*arity*dimension == 0)
 		usageMain(strUsage);
 
+	if (periodic && sites - 1 < hamTerms.size())
+		hamTerms[sites - 1] = 1;
+
 	// here build srep
-	MeraBuilderType meraBuilder(sites,arity,dimension,hamTerms);
+	MeraBuilderType meraBuilder(sites,arity,dimension,periodic,hamTerms);
 
 	std::cout<<"Sites="<<sites<<"\n";
 

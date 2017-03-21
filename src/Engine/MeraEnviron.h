@@ -74,7 +74,7 @@ private:
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
-		SizeType sites = tensorSrep_.maxTag('f');
+		SizeType sites = tensorSrep_.maxTag('f') + 1;
 		VectorStringType vstr(sites,"");
 		VectorStringType argForOutput(sites,"");
 		VectorStringType vdsrep(sites,"");
