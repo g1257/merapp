@@ -220,7 +220,7 @@ private:
 			PsimagLite::String str("energy after optimizing ");
 			str += tensorOptimizer_[i]->nameId().first;
 			str += ttos(tensorOptimizer_[i]->nameId().second) + "= ";
-			std::cout<<str<<energy()<<"\n";
+			std::cout<<str<<energy()<<" [ Remember shift="<<model_.energyShift()<<" ]\n";
 		}
 	}
 

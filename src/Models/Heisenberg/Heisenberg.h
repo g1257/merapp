@@ -34,18 +34,18 @@ public:
 	typedef typename PsimagLite::Vector<MatrixType*>::Type VectorMatrixType;
 
 	Heisenberg(const VectorType& v)
-	    : twoSiteHam_(v.size(),0)
+	    : twoSiteHam_(v.size(),0), shift_(0.0)
 	{
 		SizeType h = 2; // model dependency here
 		SizeType h2 = h*h;
 		SizeType n = twoSiteHam_.size();
-		RealType c = 0.0;
+
 		for (SizeType i = 0; i < n; ++i) {
 			twoSiteHam_[i] = new MatrixType(h2,h2);
-			c += setTwoSiteHam(*(twoSiteHam_[i]),i,v);
+			shift_ += setTwoSiteHam(*(twoSiteHam_[i]),i,v);
 		}
 
-		std::cout<<"Shift="<<c<<"\n";
+		std::cout<<"Shift="<<shift_<<"\n";
 	}
 
 	~Heisenberg()
@@ -54,6 +54,11 @@ public:
 			delete twoSiteHam_[i];
 			twoSiteHam_[i] = 0;
 		}
+	}
+
+	const RealType& energyShift() const
+	{
+		return shift_;
 	}
 
 	const MatrixType& twoSiteHam(SizeType id) const
@@ -98,6 +103,7 @@ private:
 	}
 
 	VectorMatrixType twoSiteHam_;
+	RealType shift_;
 };
 }
 #endif // HEISENBERG_H
