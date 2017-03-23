@@ -269,6 +269,13 @@ private:
 		}
 
 		t.refresh();
+
+		if (site + 1 == sites) {
+			t.swapFree(0,site);
+			t.swapFree(1,site);
+			t.refresh();
+		}
+
 		t.isValid(true);
 	}
 
