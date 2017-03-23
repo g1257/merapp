@@ -382,12 +382,13 @@ private:
 			data_[i]->loadSummedOrFree(summed,'s');
 
 		SizeType n = summed.size();
-		if (n&1)
-			return false;
 
 		PsimagLite::Sort<VectorSizeType> sort;
 		VectorSizeType iperm(n);
 		sort.sort(summed,iperm);
+
+		if (n&1)
+			return false;
 
 		if (usummed) usummed->resize(1 + maxTag('s'),1000);
 		for (SizeType i = 0; i < n; i += 2) {

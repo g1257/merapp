@@ -156,11 +156,11 @@ private:
 		PsimagLite::String I0("");
 		PsimagLite::String I1("");
 		PsimagLite::String O0("");
-		if (isPeriodic) ++savedSummed;
+		const bool oddCounter = (counter & 1);
+		if (isPeriodic && !oddCounter) ++savedSummed;
 
 		for (SizeType i = 0; i < n; ++i) {
 			bool hasTwoInputs = true;
-			const bool oddCounter = (counter & 1);
 
 			if (oddCounter) {
 				if (i == 0) hasTwoInputs = false;
@@ -172,7 +172,7 @@ private:
 
 			if (oddCounter && !hasTwoInputs && isPeriodic) {
 				I1 = "s" + ttos(periodicLastIndex);
-				srep_ += "," + I1;
+				srep_ +=  I1 + ",";
 			}
 
 			I0 = "s" + ttos(savedSummed++);
