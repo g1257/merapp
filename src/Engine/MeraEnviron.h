@@ -27,6 +27,7 @@ namespace Mera {
 template<typename ComplexOrRealType, typename SymmetryLocalType>
 class MeraEnviron {
 
+	typedef std::pair<SizeType, SizeType> PairSizeType;
 	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
@@ -98,8 +99,9 @@ private:
 		PsimagLite::String thisEnv("TensorId=" + name + "," + ttos(id) + "\n");
 		thisEnv += "Terms=" + ttos(terms) + "\n";
 		thisEnv += "IgnoreTerm=" + ttos(2*sites+1) + "\n";
-		SizeType layer = findLayerNumber(name, id, limits);
-		thisEnv += "Layer=" + ttos(layer) + "\n"; // FIXME
+		PairSizeType layer = findLayerNumber(name, id, limits);
+		thisEnv += "Layer=" + ttos(layer.first) + "\n";
+		thisEnv += "FirstOfLayer=" + ttos(layer.second) + "\n";
 		bool isRootTensor = (tensorSrep_(ind).name() == "r");
 		for (SizeType site = 0; site < sites; ++site) {
 			if (vstr[site] == "") continue;
@@ -328,16 +330,18 @@ private:
 		dsrep_ += d;
 	}
 
-	SizeType findLayerNumber(PsimagLite::String name,
+	PairSizeType findLayerNumber(PsimagLite::String name,
 	                         SizeType id,
 	                         const VectorSizeType& limits) const
 	{
 		if (name != "w" && name != "u")
-			return 0; // FIXME: think about layer number for other tensors
+			return PairSizeType(0,1); // FIXME: think about layer number for other tensors
 
 		SizeType n = limits.size();
 		for (SizeType i = 0; i < n; ++i) {
-			if (id < limits[i]) return i;
+			bool isFirst = (i > 0 && id == limits[i-1]);
+			if (id == 0) isFirst = true;
+			if (id < limits[i]) return PairSizeType(i,(isFirst) ? 1 : 0);
 		}
 
 		throw PsimagLite::RuntimeError("findLayerNumber: not found\n");

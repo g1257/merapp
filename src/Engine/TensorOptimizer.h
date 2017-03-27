@@ -83,9 +83,7 @@ public:
 	      verbose_(false)
 	{
 		io.readline(layer_,"Layer=");
-//		try {
-//			io.readline(firstOfLayer_,"FirstOfLayer=");
-//		} catch (std::exception&) {}
+		io.readline(firstOfLayer_,"FirstOfLayer=");
 
 		io.readline(ignore_,"IgnoreTerm=");
 		SizeType terms = 0;

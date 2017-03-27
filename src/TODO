@@ -20,6 +20,7 @@ DONE	symmetries for temporaries
 DONE	symmetry of scalars must be dealt automatically
 DONE	add symmetries for irreducible identities
 DONE	clean up memory of symmetries of temporaries
+DONE    Figure out Layer=
 	move irreducible identity code into its own class if possible
 	tensor in compressed form, modify looping over indices
 	target one sector only in effective H
@@ -29,6 +30,5 @@ DONE	clean up memory of symmetries of temporaries
 	stanza must combine outs and ins internally
 	numbering of output tensors
 	Clear output tensor storage (?)
-	Figure out Layer=
 	Fermions
 
