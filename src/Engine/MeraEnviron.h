@@ -49,8 +49,12 @@ public:
 	{
 		sizeOfRoot_ = findSizeOfRoot();
 		SizeType counterForOutput = 100;
+		VectorSizeType limits;
+		findLimits(limits);
 		for (SizeType i = 0; i < tensorSrep_.size(); ++i) {
-			counterForOutput += environForTensor(i, counterForOutput);
+			counterForOutput += environForTensor(i,
+			                                     counterForOutput,
+			                                     limits);
 		}
 
 		energies();
@@ -70,7 +74,8 @@ private:
 
 	// find Y (environment) for this tensor
 	SizeType environForTensor(SizeType ind,
-	                          SizeType counterForOutput)
+	                          SizeType counterForOutput,
+	                          const VectorSizeType& limits)
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
@@ -93,7 +98,8 @@ private:
 		PsimagLite::String thisEnv("TensorId=" + name + "," + ttos(id) + "\n");
 		thisEnv += "Terms=" + ttos(terms) + "\n";
 		thisEnv += "IgnoreTerm=" + ttos(2*sites+1) + "\n";
-		thisEnv += "Layer=0\n"; // FIXME
+		SizeType layer = findLayerNumber(name, id, limits);
+		thisEnv += "Layer=" + ttos(layer) + "\n"; // FIXME
 		bool isRootTensor = (tensorSrep_(ind).name() == "r");
 		for (SizeType site = 0; site < sites; ++site) {
 			if (vstr[site] == "") continue;
@@ -320,6 +326,41 @@ private:
 
 		envs_ += e;
 		dsrep_ += d;
+	}
+
+	SizeType findLayerNumber(PsimagLite::String name,
+	                         SizeType id,
+	                         const VectorSizeType& limits) const
+	{
+		if (name != "w" && name != "u")
+			return 0; // FIXME: think about layer number for other tensors
+
+		SizeType n = limits.size();
+		for (SizeType i = 0; i < n; ++i) {
+			if (id < limits[i]) return i;
+		}
+
+		throw PsimagLite::RuntimeError("findLayerNumber: not found\n");
+	}
+
+	void findLimits(VectorSizeType& limits) const
+	{
+		SizeType arity = builder_.arity();
+		SizeType sites = builder_.sites();
+
+		if (arity != 2) {
+			PsimagLite::RuntimeError("findLimits: supported only for arity=2\n");
+		}
+
+		limits.push_back(sites/arity);
+		SizeType tmp = sites/arity;
+		SizeType i = 1;
+
+		while (tmp > 1) {
+			limits.push_back(limits[i-1] + tmp/arity);
+			tmp /= arity;
+			++i;
+		}
 	}
 
 	MeraEnviron(const MeraEnviron&);

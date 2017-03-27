@@ -76,12 +76,17 @@ public:
 	      tensors_(tensors),
 	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
 	      layer_(0),
+	      firstOfLayer_(0),
 	      indexOfRootTensor_(0),
 	      params_(params),
 	      symmLocal_(symmLocal),
 	      verbose_(false)
 	{
 		io.readline(layer_,"Layer=");
+//		try {
+//			io.readline(firstOfLayer_,"FirstOfLayer=");
+//		} catch (std::exception&) {}
+
 		io.readline(ignore_,"IgnoreTerm=");
 		SizeType terms = 0;
 		io.readline(terms,"Terms=");
@@ -132,6 +137,8 @@ public:
 		if (tensorSrep_.size() == 0) return;
 
 		saveTensor();
+		bool optimizeOnlyFirstOfLayer =
+		        (params_.options.find("OptimizeOnlyFirstOfLayer") != PsimagLite::String::npos);
 
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
@@ -146,6 +153,9 @@ public:
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
+			if (optimizeOnlyFirstOfLayer && !firstOfLayer_)
+				continue;
+
 			RealType e = optimizeInternal(iter, upIter, evaluator);
 			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
@@ -580,6 +590,7 @@ private:
 	SizeType indToOptimize_;
 	SizeType ignore_;
 	SizeType layer_;
+	SizeType firstOfLayer_;
 	SizeType indexOfRootTensor_;
 	const ParametersForSolverType& params_;
 	SymmetryLocalType& symmLocal_;

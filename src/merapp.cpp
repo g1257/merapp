@@ -67,7 +67,6 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	// add output u1000 to be used by unitary condition checking
 	std::cout<<"u1000(1,1)\n";
 	SizeType iterMera = 5;
-	std::cout<<"MeraOptions=none\n";
 	std::cout<<"NoSymmetryLocal=1\n";
 	std::cout<<"IterMera="<<iterMera<<"\n";
 	std::cout<<"MERA="<<meraString<<"\n";

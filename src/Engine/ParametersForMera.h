@@ -22,6 +22,7 @@ struct ParametersForMera {
 	ParametersForMera(PsimagLite::String filename)
 	{
 		PsimagLite::IoSimple::In io(filename);
+		io.readline(options,"MeraOptions=");
 		io.read(hamiltonianConnection, "hamiltonianConnection");
 		io.read(qOne, "qOne");
 		io.readline(m, "m=");
@@ -31,6 +32,7 @@ struct ParametersForMera {
 		io.readline(evaluator, "evaluator=");
 	}
 
+	PsimagLite::String options;
 	VectorType hamiltonianConnection;
 	VectorSizeType qOne;
 	SizeType m;
@@ -41,6 +43,7 @@ struct ParametersForMera {
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const ParametersForMera<T>& p)
 {
+	os<<"MeraOptions=none\n";
 	os<<"hamiltonianConnection ";
 	os<<p.hamiltonianConnection;
 	os<<"qOne\n";
