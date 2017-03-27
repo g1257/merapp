@@ -205,9 +205,11 @@ private:
 
 	void optimizeAllTensors(SizeType iter)
 	{
+		RealType e = 0;
 		static bool seenRoot = false;
 		SizeType ntensors = tensorOptimizer_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
+
 			if (!seenRoot) {
 				if (tensorOptimizer_[i]->nameId().first != "r")
 					continue;
@@ -215,12 +217,16 @@ private:
 					seenRoot = true;
 			}
 
-			tensorOptimizer_[i]->optimize(iterTensor_,iter, paramsForMera_.evaluator);
+			tensorOptimizer_[i]->optimize(iterTensor_,
+			                              iter,
+			                              paramsForMera_.evaluator,
+			                              e);
 
+			e = energy();
 			PsimagLite::String str("energy after optimizing ");
 			str += tensorOptimizer_[i]->nameId().first;
 			str += ttos(tensorOptimizer_[i]->nameId().second) + "= ";
-			std::cout<<str<<energy()<<" [ Remember shift="<<model_.energyShift()<<" ]\n";
+			std::cout<<str<<e<<" [ Remember shift="<<model_.energyShift()<<" ]\n";
 		}
 	}
 

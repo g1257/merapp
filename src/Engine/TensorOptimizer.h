@@ -60,6 +60,7 @@ public:
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
 	LanczosSolverType;
 	typedef typename TensorEvalSlowType::SymmetryLocalType SymmetryLocalType;
+	typedef typename PsimagLite::Stack<VectorType>::Type StackVectorType;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
@@ -124,7 +125,10 @@ public:
 		}
 	}
 
-	void optimize(SizeType iters, SizeType upIter, PsimagLite::String evaluator)
+	void optimize(SizeType iters,
+	              SizeType upIter,
+	              PsimagLite::String evaluator,
+	              RealType eprev)
 	{
 		if (tensorSrep_.size() == 0) return;
 
@@ -138,11 +142,17 @@ public:
 			std::cout<<"cond="<<cond<<"\n";
 		}
 
-		RealType eprev = 0.0;
+		std::cerr<<"WILL DO IT "<<iters<<" TIMES\n";
+
 		for (SizeType iter = 0; iter < iters; ++iter) {
 			RealType e = optimizeInternal(iter, upIter, evaluator);
 			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
+				break;
+			}
+
+			if (eprev < e) {
+				restoreTensor();
 				break;
 			}
 
@@ -194,6 +204,14 @@ public:
 	}
 
 private:
+
+	void restoreTensor()
+	{
+		if (stack_.size() == 0)
+			throw PsimagLite::RuntimeError("restoreTensor: stack is empty\n");
+		tensors_[indToOptimize_]->data() = stack_.top();
+		stack_.pop();
+	}
 
 	PsimagLite::String conditionToSrep(PairStringSizeType nameId,
 	                                   SizeType ins,
@@ -306,8 +324,7 @@ private:
 		RealType result = 0.0;
 		for (SizeType i = 0; i < s.size(); ++i)
 			result += s[i];
-		if (verbose_)
-			std::cerr<<"TensorOptimizer["<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
+		std::cerr<<"ITER="<<iter<<" TensorOptimizer["<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
 		return result;
 	}
 
@@ -330,6 +347,7 @@ private:
 		}
 #endif
 
+		stack_.push(tensors_[indToOptimize_]->data());
 		tensors_[indToOptimize_]->setToMatrix(t);
 	}
 
@@ -566,6 +584,7 @@ private:
 	const ParametersForSolverType& params_;
 	SymmetryLocalType& symmLocal_;
 	bool verbose_;
+	StackVectorType stack_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H

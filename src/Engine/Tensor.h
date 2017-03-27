@@ -196,6 +196,11 @@ public:
 		return index;
 	}
 
+	const VectorComplexOrRealType& data() const { return data_; }
+
+	// FIXME: GIVES AWAY INTERNALS!!
+	VectorComplexOrRealType& data() { return data_; }
+
 private:
 
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
