@@ -197,15 +197,15 @@ public:
 
 	void optimize()
 	{
+		RealType eprev = 1e6;
 		for (SizeType i = 0; i < iterMera_; ++i)
-			optimizeAllTensors(i);
+			optimizeAllTensors(i, eprev);
 	}
 
 private:
 
-	void optimizeAllTensors(SizeType iter)
+	void optimizeAllTensors(SizeType iter, RealType& eprev)
 	{
-		RealType e = 0;
 		static bool seenRoot = false;
 		SizeType ntensors = tensorOptimizer_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
@@ -219,10 +219,15 @@ private:
 
 			tensorOptimizer_[i]->optimize(iterTensor_,
 			                              iter,
-			                              paramsForMera_.evaluator,
-			                              e);
+			                              paramsForMera_.evaluator);
 
-			e = energy();
+			RealType e = energy();
+			if (e > eprev) {
+				tensorOptimizer_[i]->restoreTensor();
+				e = energy();
+			}
+
+			eprev = e;
 			PsimagLite::String str("energy after optimizing ");
 			str += tensorOptimizer_[i]->nameId().first;
 			str += ttos(tensorOptimizer_[i]->nameId().second) + "= ";

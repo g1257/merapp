@@ -127,10 +127,11 @@ public:
 
 	void optimize(SizeType iters,
 	              SizeType upIter,
-	              PsimagLite::String evaluator,
-	              RealType eprev)
+	              PsimagLite::String evaluator)
 	{
 		if (tensorSrep_.size() == 0) return;
+
+		saveTensor();
 
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
@@ -142,17 +143,12 @@ public:
 			std::cout<<"cond="<<cond<<"\n";
 		}
 
-		std::cerr<<"WILL DO IT "<<iters<<" TIMES\n";
 
+		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
 			RealType e = optimizeInternal(iter, upIter, evaluator);
 			if (tensorToOptimize_.first == "r") {
 				std::cout<<"energy="<<e<<"\n";
-				break;
-			}
-
-			if (eprev < e) {
-				restoreTensor();
 				break;
 			}
 
@@ -203,14 +199,19 @@ public:
 		return tensorEval;
 	}
 
-private:
-
 	void restoreTensor()
 	{
 		if (stack_.size() == 0)
 			throw PsimagLite::RuntimeError("restoreTensor: stack is empty\n");
 		tensors_[indToOptimize_]->data() = stack_.top();
 		stack_.pop();
+	}
+
+private:
+
+	void saveTensor()
+	{
+		stack_.push(tensors_[indToOptimize_]->data());
 	}
 
 	PsimagLite::String conditionToSrep(PairStringSizeType nameId,
@@ -347,7 +348,6 @@ private:
 		}
 #endif
 
-		stack_.push(tensors_[indToOptimize_]->data());
 		tensors_[indToOptimize_]->setToMatrix(t);
 	}
 
