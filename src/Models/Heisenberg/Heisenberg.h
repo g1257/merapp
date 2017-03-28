@@ -39,7 +39,7 @@ public:
 	    : twoSiteHam_(v.size(),0), shift_(0.0), qOne_(2, 0)
 	{
 		qOne_[1] = 1;
-		SizeType h = 2; // model dependency here
+		SizeType h = 2;
 		SizeType h2 = h*h;
 		SizeType n = twoSiteHam_.size();
 
@@ -101,7 +101,7 @@ private:
 		diag(m,eigs,'N');
 		assert(n - 1 < eigs.size());
 		RealType diagCorrection = eigs[n-1];
-		std::cout<<"MeraSolver: DiagonalCorrection= "<<diagCorrection<<"\n";
+		std::cerr<<"MeraSolver: DiagonalCorrection= "<<diagCorrection<<"\n";
 		for (SizeType i = 0; i < n; ++i)
 			m2(i,i) -= diagCorrection;
 		return diagCorrection;

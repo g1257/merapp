@@ -75,6 +75,7 @@ std::ostream& operator<<(std::ostream& os, const ParametersForMera<T>& p)
 	os<<"m="<<p.m<<"\n";
 	os<<"verbose="<<((p.verbose) ? 1 : 0)<<"\n";
 	os<<"evaluator="<<p.evaluator<<"\n";
+	os<<"Model="<<p.model<<"\n";
 	os<<"Tolerance="<<p.tolerance<<"\n";
 	return os;
 }

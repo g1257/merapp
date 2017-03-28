@@ -19,6 +19,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef MERA_MODEL_SELECTOR_H
 #define MERA_MODEL_SELECTOR_H
 #include "../Models/Heisenberg/Heisenberg.h"
+#include "../Models/Hubbard/Hubbard.h"
 
 namespace Mera {
 
@@ -29,6 +30,7 @@ class ModelSelector {
 
 	// start models here:
 	typedef Heisenberg<ModelBaseType> ModelHeisenbergType;
+	typedef Hubbard<ModelBaseType> ModelHubbardType;
 	// end models
 
 public:
@@ -38,6 +40,8 @@ public:
 	{
 		if (name_ == "Heisenberg") {
 			model_ = new ModelHeisenbergType(hTerms);
+		} else if (name_ == "Hubbard") {
+			model_ = new ModelHubbardType(hTerms);
 		} else {
 			PsimagLite::String s(__FILE__);
 			s += " Unknown model " + name_ + "\n";

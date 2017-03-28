@@ -195,6 +195,6 @@ int main(int argc, char **argv)
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
-	MeraParametersType params(hamTerms,m,model,evaluator,tolerance);
+	MeraParametersType params(hamTerms,m,evaluator,model,tolerance);
 	main1(meraBuilder,params);
 }
