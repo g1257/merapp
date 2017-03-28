@@ -105,6 +105,7 @@ int main(int argc, char **argv)
 	SizeType sites = 0;
 	SizeType arity = 2;
 	SizeType dimension = 1;
+	double tolerance = 1e-4;
 	bool periodic = false;
 	MeraParametersType::VectorType hamTerms;
 	SizeType m = 0;
@@ -114,7 +115,7 @@ int main(int argc, char **argv)
 	strUsage += " -n sites -a arity -d dimension [-M model] [-m m] ";
 	strUsage += "| -S srep | -V\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:m:M:s:e:PbV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:m:M:s:e:t:PbV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
@@ -145,6 +146,9 @@ int main(int argc, char **argv)
 			break;
 		case 'e':
 			evaluator = optarg;
+			break;
+		case 't':
+			tolerance = atof(optarg);
 			break;
 		case 'P':
 			periodic = true;
@@ -192,6 +196,6 @@ int main(int argc, char **argv)
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
-	MeraParametersType params(hamTerms,qOne,m,evaluator);
+	MeraParametersType params(hamTerms,qOne,m,evaluator,tolerance);
 	main1(meraBuilder,params);
 }

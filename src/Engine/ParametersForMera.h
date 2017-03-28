@@ -9,14 +9,21 @@ template<typename ComplexOrRealType_>
 struct ParametersForMera {
 
 	typedef ComplexOrRealType_ ComplexOrRealType;
+	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 
 	ParametersForMera(const VectorType& hTerms,
 	                  const VectorSizeType& qOne1,
 	                  SizeType m1,
-	                  PsimagLite::String eval)
-	    : hamiltonianConnection(hTerms),qOne(qOne1),m(m1),verbose(false),evaluator(eval)
+	                  PsimagLite::String eval,
+	                  RealType tol)
+	    : hamiltonianConnection(hTerms),
+	      qOne(qOne1),
+	      m(m1),
+	      verbose(false),
+	      evaluator(eval),
+	      tolerance(tol)
 	{}
 
 	ParametersForMera(PsimagLite::String filename)
@@ -30,6 +37,7 @@ struct ParametersForMera {
 		io.readline(x, "verbose=");
 		verbose = (x > 0);
 		io.readline(evaluator, "evaluator=");
+		io.readline(tolerance, "Tolerance=");
 	}
 
 	PsimagLite::String options;
@@ -38,6 +46,7 @@ struct ParametersForMera {
 	SizeType m;
 	bool verbose;
 	PsimagLite::String evaluator;
+	RealType tolerance;
 }; // struct ParametersForMera
 
 template<typename T>
@@ -51,6 +60,7 @@ std::ostream& operator<<(std::ostream& os, const ParametersForMera<T>& p)
 	os<<"m="<<p.m<<"\n";
 	os<<"verbose="<<((p.verbose) ? 1 : 0)<<"\n";
 	os<<"evaluator="<<p.evaluator<<"\n";
+	os<<"Tolerance="<<p.tolerance<<"\n";
 	return os;
 }
 

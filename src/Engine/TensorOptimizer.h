@@ -146,7 +146,7 @@ public:
 			std::cout<<"cond="<<cond<<"\n";
 		}
 
-
+		RealType tolerance = params_.tolerance;
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
 
@@ -156,7 +156,7 @@ public:
 				break;
 			}
 
-			if (iter > 0 && fabs(eprev-e)<1e-4)
+			if (iter > 0 && tolerance > 0 && fabs(eprev-e) < tolerance)
 				break;
 			eprev = e;
 
