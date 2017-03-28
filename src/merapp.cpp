@@ -32,6 +32,8 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "DimensionSrep.h"
 #include "MeraBuilder.h"
 #include "SymmetryLocal.h"
+#include "ModelSelector.h"
+#include "ModelBase.h"
 
 void usageMain(const PsimagLite::String& str)
 {
@@ -42,9 +44,11 @@ template<typename ComplexOrRealType>
 void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
            const Mera::ParametersForMera<ComplexOrRealType>& params)
 {
+	typedef Mera::ModelBase<ComplexOrRealType> ModelBaseType;
+	Mera::ModelSelector<ModelBaseType> model(params.model, params.hamiltonianConnection);
 	PsimagLite::String srep = builder();
 	PsimagLite::String meraString = srep;
-	PsimagLite::String hString = "D" + ttos(params.qOne.size());
+	PsimagLite::String hString = "D" + ttos(model().qOne().size());
 	PsimagLite::String args = "(" + hString + "," + hString + "|" + hString + "," + hString + ")";
 	for (SizeType i = 0; i < params.hamiltonianConnection.size(); ++i) {
 		if (params.hamiltonianConnection[i] == 0.0) continue;
@@ -53,7 +57,7 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 
 	Mera::TensorSrep tsrep(srep);
 	SizeType maxLegs = 2.0*params.hamiltonianConnection.size();
-	Mera::SymmetryLocal symmLocal(tsrep.size(), params.qOne, maxLegs);
+	Mera::SymmetryLocal symmLocal(tsrep.size(), model().qOne(), maxLegs);
 	Mera::DimensionSrep<Mera::SymmetryLocal> dimSrep(srep, symmLocal, params.m);
 	PsimagLite::String dsrep = dimSrep();
 
@@ -170,13 +174,8 @@ int main(int argc, char **argv)
 	if (versionOnly)
 		return 0;
 
-	MeraParametersType::VectorSizeType qOne(2,0);
-	qOne[1] = 1;
-
-	if (model != "Heisenberg") qOne.clear();
-
 	// sanity checks here
-	if (qOne.size() == 0 || sites*arity*dimension == 0)
+	if (sites*arity*dimension == 0)
 		usageMain(strUsage);
 
 	if (periodic && sites - 1 < hamTerms.size())
@@ -196,6 +195,6 @@ int main(int argc, char **argv)
 
 	std::cout<<"#"<<argv[0]<<" version "<<MERA_VERSION<<"\n";
 
-	MeraParametersType params(hamTerms,qOne,m,model,evaluator,tolerance);
+	MeraParametersType params(hamTerms,m,model,evaluator,tolerance);
 	main1(meraBuilder,params);
 }

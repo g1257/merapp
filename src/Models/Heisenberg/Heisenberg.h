@@ -33,10 +33,12 @@ public:
 	typedef typename ModelBaseType::VectorRealType VectorRealType;
 	typedef typename ModelBaseType::MatrixType MatrixType;
 	typedef typename ModelBaseType::VectorMatrixType VectorMatrixType;
+	typedef typename ModelBaseType::VectorSizeType VectorSizeType;
 
 	Heisenberg(const VectorType& v)
-	    : twoSiteHam_(v.size(),0), shift_(0.0)
+	    : twoSiteHam_(v.size(),0), shift_(0.0), qOne_(2, 0)
 	{
+		qOne_[1] = 1;
 		SizeType h = 2; // model dependency here
 		SizeType h2 = h*h;
 		SizeType n = twoSiteHam_.size();
@@ -68,6 +70,8 @@ public:
 		assert(twoSiteHam_[id]);
 		return *(twoSiteHam_[id]);
 	}
+
+	const VectorSizeType& qOne() const { return qOne_; }
 
 private:
 
@@ -105,6 +109,7 @@ private:
 
 	VectorMatrixType twoSiteHam_;
 	RealType shift_;
+	VectorSizeType qOne_;
 };
 }
 #endif // HEISENBERG_H

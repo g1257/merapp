@@ -33,12 +33,15 @@ public:
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef typename PsimagLite::Vector<MatrixType*>::Type VectorMatrixType;
+	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 
 	virtual ~ModelBase() {}
 
 	virtual const RealType& energyShift() const = 0;
 
 	virtual const MatrixType& twoSiteHam(SizeType id) const = 0;
+
+	virtual const VectorSizeType& qOne() const = 0;
 };
 }
 #endif // HEISENBERG_H

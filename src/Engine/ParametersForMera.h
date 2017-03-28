@@ -31,13 +31,11 @@ struct ParametersForMera {
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 
 	ParametersForMera(const VectorType& hTerms,
-	                  const VectorSizeType& qOne1,
 	                  SizeType m1,
 	                  PsimagLite::String eval,
 	                  PsimagLite::String model1,
 	                  RealType tol)
 	    : hamiltonianConnection(hTerms),
-	      qOne(qOne1),
 	      m(m1),
 	      verbose(false),
 	      evaluator(eval),
@@ -50,7 +48,6 @@ struct ParametersForMera {
 		PsimagLite::IoSimple::In io(filename);
 		io.readline(options,"MeraOptions=");
 		io.read(hamiltonianConnection, "hamiltonianConnection");
-		io.read(qOne, "qOne");
 		io.readline(m, "m=");
 		int x = 0;
 		io.readline(x, "verbose=");
@@ -62,7 +59,6 @@ struct ParametersForMera {
 
 	PsimagLite::String options;
 	VectorType hamiltonianConnection;
-	VectorSizeType qOne;
 	SizeType m;
 	bool verbose;
 	PsimagLite::String evaluator;
@@ -76,8 +72,6 @@ std::ostream& operator<<(std::ostream& os, const ParametersForMera<T>& p)
 	os<<"MeraOptions=none\n";
 	os<<"hamiltonianConnection ";
 	os<<p.hamiltonianConnection;
-	os<<"qOne\n";
-	os<<p.qOne<<"\n";
 	os<<"m="<<p.m<<"\n";
 	os<<"verbose="<<((p.verbose) ? 1 : 0)<<"\n";
 	os<<"evaluator="<<p.evaluator<<"\n";
