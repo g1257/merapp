@@ -25,7 +25,8 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
 #include "ParametersForMera.h"
-#include "../Models/Heisenberg/Heisenberg.h"
+#include "ModelSelector.h"
+#include "ModelBase.h"
 
 namespace Mera {
 
@@ -48,7 +49,8 @@ class MeraSolver {
 	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
 	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
-	typedef Heisenberg<ComplexOrRealType> ModelType; // Model Dependency choice here FIXME
+	typedef ModelBase<ComplexOrRealType> ModelBaseType;
+	typedef ModelSelector<ModelBaseType> ModelType;
 	typedef typename TensorOptimizerType::SymmetryLocalType SymmetryLocalType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
@@ -61,7 +63,7 @@ public:
 	      iterMera_(1),
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
-	      model_(paramsForMera_.hamiltonianConnection),
+	      model_(paramsForMera_.model, paramsForMera_.hamiltonianConnection),
 	      paramsForLanczos_(0),
 	      noSymmLocal_(false)
 	{
@@ -242,7 +244,8 @@ private:
 			eprev = e;
 			PsimagLite::String str("energy after optimizing ");
 			str += name + ttos(id) + "= ";
-			std::cout<<str<<e<<" [ Remember shift="<<model_.energyShift()<<" ]\n";
+			std::cout<<str<<e<<" [ Remember shift=";
+			std::cout<<model_().energyShift()<<" ]\n";
 		}
 	}
 
@@ -327,7 +330,7 @@ private:
 			assert(ind < tensors_.size());
 			tensors_[ind] = new TensorType(dimensions,ins);
 			if (name == "h") {
-				tensors_[ind]->setToMatrix(model_.twoSiteHam(id));
+				tensors_[ind]->setToMatrix(model_().twoSiteHam(id));
 			} else {
 				tensors_[ind]->setToIdentity(1.0);
 			}

@@ -22,16 +22,17 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 namespace  Mera {
 
-template<typename ComplexOrRealType>
-class Heisenberg {
+template<typename ModelBaseType>
+class Heisenberg : public ModelBaseType {
 
 public:
 
-	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
-	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
-	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
-	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
-	typedef typename PsimagLite::Vector<MatrixType*>::Type VectorMatrixType;
+	typedef typename ModelBaseType::ComplexOrRealType ComplexOrRealType;
+	typedef typename ModelBaseType::VectorType VectorType;
+	typedef typename ModelBaseType::RealType RealType;
+	typedef typename ModelBaseType::VectorRealType VectorRealType;
+	typedef typename ModelBaseType::MatrixType MatrixType;
+	typedef typename ModelBaseType::VectorMatrixType VectorMatrixType;
 
 	Heisenberg(const VectorType& v)
 	    : twoSiteHam_(v.size(),0), shift_(0.0)

@@ -1,3 +1,20 @@
+/*
+Copyright (c) 2016-2017, UT-Battelle, LLC
+
+MERA++, Version 0.
+
+This file is part of MERA++.
+MERA++ is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+MERA++ is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with MERA++. If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef ParametersForMera_H
 #define ParametersForMera_H
 #include "Vector.h"
@@ -17,12 +34,14 @@ struct ParametersForMera {
 	                  const VectorSizeType& qOne1,
 	                  SizeType m1,
 	                  PsimagLite::String eval,
+	                  PsimagLite::String model1,
 	                  RealType tol)
 	    : hamiltonianConnection(hTerms),
 	      qOne(qOne1),
 	      m(m1),
 	      verbose(false),
 	      evaluator(eval),
+	      model(model1),
 	      tolerance(tol)
 	{}
 
@@ -37,6 +56,7 @@ struct ParametersForMera {
 		io.readline(x, "verbose=");
 		verbose = (x > 0);
 		io.readline(evaluator, "evaluator=");
+		io.readline(model, "Model=");
 		io.readline(tolerance, "Tolerance=");
 	}
 
@@ -46,6 +66,7 @@ struct ParametersForMera {
 	SizeType m;
 	bool verbose;
 	PsimagLite::String evaluator;
+	PsimagLite::String model;
 	RealType tolerance;
 }; // struct ParametersForMera
 
