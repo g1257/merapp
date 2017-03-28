@@ -339,9 +339,8 @@ private:
 
 		SizeType n = limits.size();
 		for (SizeType i = 0; i < n; ++i) {
-			bool isFirst = (i > 0 && id == limits[i-1]);
-			if (id == 0) isFirst = true;
-			if (id < limits[i]) return PairSizeType(i,(isFirst) ? 1 : 0);
+			SizeType firstOfLayer = (i > 0) ? limits[i-1] : 0;
+			if (id < limits[i]) return PairSizeType(i,firstOfLayer);
 		}
 
 		throw PsimagLite::RuntimeError("findLayerNumber: not found\n");

@@ -135,8 +135,6 @@ public:
 		if (tensorSrep_.size() == 0) return;
 
 		saveTensor();
-		bool optimizeOnlyFirstOfLayer =
-		        (params_.options.find("OptimizeOnlyFirstOfLayer") != PsimagLite::String::npos);
 
 		SizeType ins = tensors_[indToOptimize_]->ins();
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
@@ -151,8 +149,6 @@ public:
 
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
-			if (optimizeOnlyFirstOfLayer && !firstOfLayer_)
-				continue;
 
 			RealType e = optimizeInternal(iter, upIter, evaluator);
 			if (tensorToOptimize_.first == "r") {
@@ -213,6 +209,14 @@ public:
 			throw PsimagLite::RuntimeError("restoreTensor: stack is empty\n");
 		tensors_[indToOptimize_]->data() = stack_.top();
 		stack_.pop();
+	}
+
+	const SizeType& firstOfLayer() const { return firstOfLayer_; }
+
+	void copyFirstOfLayer(PsimagLite::String name, SizeType id)
+	{
+		SizeType ind = nameIdsTensor_[PairStringSizeType(name, id)];
+		tensors_[indToOptimize_]->data() = tensors_[ind]->data();
 	}
 
 private:

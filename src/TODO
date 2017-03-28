@@ -21,6 +21,9 @@ DONE	symmetry of scalars must be dealt automatically
 DONE	add symmetries for irreducible identities
 DONE	clean up memory of symmetries of temporaries
 DONE    Figure out Layer=
+	Copy tensor first of layer to others
+	Builder: ternary MERA
+	Models: Implement Hubbard
 	move irreducible identity code into its own class if possible
 	tensor in compressed form, modify looping over indices
 	target one sector only in effective H

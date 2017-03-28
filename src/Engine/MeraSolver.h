@@ -207,11 +207,23 @@ private:
 	void optimizeAllTensors(SizeType iter, RealType& eprev)
 	{
 		static bool seenRoot = false;
+		bool optimizeOnlyFirstOfLayer = (paramsForMera_.options.find("OptimizeOnlyFirstOfLayer")
+		                                 != PsimagLite::String::npos);
 		SizeType ntensors = tensorOptimizer_.size();
+
 		for (SizeType i = 0; i < ntensors; ++i) {
 
+			PsimagLite::String name = tensorOptimizer_[i]->nameId().first;
+			SizeType id = tensorOptimizer_[i]->nameId().second;
+
+			SizeType firstOfLayer = tensorOptimizer_[i]->firstOfLayer();
+			if (optimizeOnlyFirstOfLayer && firstOfLayer != id && name != "r") {
+				tensorOptimizer_[i]->copyFirstOfLayer(name, firstOfLayer);
+				continue;
+			}
+
 			if (!seenRoot) {
-				if (tensorOptimizer_[i]->nameId().first != "r")
+				if (name != "r")
 					continue;
 				else
 					seenRoot = true;
@@ -229,8 +241,7 @@ private:
 
 			eprev = e;
 			PsimagLite::String str("energy after optimizing ");
-			str += tensorOptimizer_[i]->nameId().first;
-			str += ttos(tensorOptimizer_[i]->nameId().second) + "= ";
+			str += name + ttos(id) + "= ";
 			std::cout<<str<<e<<" [ Remember shift="<<model_.energyShift()<<" ]\n";
 		}
 	}
