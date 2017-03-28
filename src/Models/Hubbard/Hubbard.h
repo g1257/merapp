@@ -97,6 +97,9 @@ private:
 			m += tmpt;
 		}
 
+		if (!isHermitian(m))
+			throw PsimagLite::RuntimeError("Not hermitian 2 site H\n");
+
 		return normalizeHam(m);
 	}
 
@@ -144,9 +147,9 @@ private:
 		assert(h2 == h*h);
 		for (SizeType i = 0; i < h2; ++i) {
 			div_t qi = div(i, h);
-			RealType sign = (i & 2) ? -1.0 : 1.0;
+			RealType sign = (qi.rem & 2) ? -1.0 : 1.0;
+			if (spin == 1) sign = (qi.quot & 1) ? -1.0 : 1.0;
 			for (SizeType j = 0; j < h2; ++j) {
-				if (spin == 1) sign = (j & 1) ? -1.0 : 1.0;
 				div_t qj = div(j, h);
 				dest(i,j) = a(qi.rem, qj.rem)*b(qi.quot, qj.quot)*sign;
 			}
