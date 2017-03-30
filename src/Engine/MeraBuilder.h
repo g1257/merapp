@@ -4,6 +4,7 @@
 #include "TensorSrep.h"
 #include "Vector.h"
 #include "Builder1D.h"
+#include "Builder2D.h"
 
 namespace Mera {
 
@@ -22,9 +23,6 @@ public:
 	            const VectorType& hamTerms)
 	    : sites_(sites), arity_(arity), srep_(""), energy_(sites,0)
 	{
-		if (dimension != 1)
-			throw PsimagLite::RuntimeError("MeraBuilder: dimension must be 1 for now\n");
-
 		if (arity != 2)
 			throw PsimagLite::RuntimeError("MeraBuilder: arity must be 2 for now\n");
 
@@ -32,6 +30,11 @@ public:
 
 		if (dimension == 1) {
 			builder = new Builder1D(sites, isPeriodic);
+		} else if (dimension == 2) {
+			builder = new Builder2D(sites, isPeriodic);
+		} else {
+			PsimagLite::String msg("MeraBuilder: dimension ");
+			throw PsimagLite::RuntimeError(msg + ttos(dimension) + " is not supported\n");
 		}
 
 		srep_ = builder->srep();
