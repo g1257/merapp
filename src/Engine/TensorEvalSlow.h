@@ -336,9 +336,16 @@ private:
 	{
 		assert(symmLocal_);
 		SizeType ntensors = tensorSrep.size();
-		for (SizeType i = 0; i < ntensors; ++i)
+		for (SizeType i = 0; i < ntensors; ++i) {
+			// tensor r (root tensor) has no out legs, so different symmetry
+			// other tensors might have different symmetry also
+			// Therefore, symmetry as implemented only applies to u and w and h
+			PsimagLite::String name = tensorSrep(i).name();
+			if (name != "u" && name != "w" && name != "h")
+				continue;
 			if (!symmetriesPass(tensorSrep(i),summed,free))
 				return false;
+		}
 
 		return true;
 	}
