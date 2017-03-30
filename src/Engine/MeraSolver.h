@@ -60,6 +60,7 @@ public:
 	MeraSolver(PsimagLite::String filename)
 	    : paramsForMera_(filename),
 	      symmLocal_(filename),
+	      isMeraPeriodic_(false),
 	      iterMera_(1),
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
@@ -73,6 +74,10 @@ public:
 
 		paramsForLanczos_ = new ParametersForSolverType(io,"Mera");
 
+		int x = 0;
+		io.readline(x, "IsMeraPeriodic=");
+		isMeraPeriodic_ = (x > 0);
+
 		try {
 			io.readline(iterMera_,"IterMera=");
 		} catch (std::exception&) {}
@@ -81,7 +86,7 @@ public:
 			io.readline(iterTensor_,"IterTensor=");
 		} catch (std::exception&) {}
 
-		int x = 0;
+
 		try {
 			io.readline(x,"NoSymmetryLocal=");
 		} catch (std::exception&) {}
@@ -209,8 +214,11 @@ private:
 	void optimizeAllTensors(SizeType iter, RealType& eprev)
 	{
 		static bool seenRoot = false;
-		bool optimizeOnlyFirstOfLayer = (paramsForMera_.options.find("OptimizeOnlyFirstOfLayer")
-		                                 != PsimagLite::String::npos);
+		bool optimizeOnlyFirstOfLayer = isMeraPeriodic_;
+
+		if (paramsForMera_.options.find("OptimizeAllLayers") != PsimagLite::String::npos)
+			optimizeOnlyFirstOfLayer = false;
+
 		SizeType ntensors = tensorOptimizer_.size();
 
 		for (SizeType i = 0; i < ntensors; ++i) {
@@ -368,6 +376,7 @@ private:
 
 	const ParametersForMeraType paramsForMera_;
 	SymmetryLocalType symmLocal_;
+	bool isMeraPeriodic_;
 	SizeType iterMera_;
 	SizeType iterTensor_;
 	SizeType indexOfRootTensor_;

@@ -70,9 +70,10 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep();
 	// add output u1000 to be used by unitary condition checking
 	std::cout<<"u1000(1,1)\n";
-	SizeType iterMera = 5;
+	std::cout<<"IsMeraPeriodic="<<builder.isPeriodic()<<"\n";
 	std::cout<<"NoSymmetryLocal=1\n";
-	std::cout<<"IterMera="<<iterMera<<"\n";
+	std::cout<<"IterMera=10\n";
+	std::cout<<"IterTensor=100\n";
 	std::cout<<"MERA="<<meraString<<"\n";
 
 	std::cout<<environ.environs();

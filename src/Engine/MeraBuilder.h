@@ -21,7 +21,11 @@ public:
 	            SizeType dimension,
 	            bool isPeriodic,
 	            const VectorType& hamTerms)
-	    : sites_(sites), arity_(arity), srep_(""), energy_(sites,0)
+	    : sites_(sites),
+	      arity_(arity),
+	      isPeriodic_(isPeriodic),
+	      srep_(""),
+	      energy_(sites,0)
 	{
 		if (arity != 2)
 			throw PsimagLite::RuntimeError("MeraBuilder: arity must be 2 for now\n");
@@ -69,6 +73,8 @@ public:
 
 	const SizeType& sites() const { return sites_; }
 
+	bool isPeriodic() const { return isPeriodic_; }
+
 private:
 
 	void buildEnergies(const BuilderBase& builder,
@@ -84,6 +90,7 @@ private:
 
 	SizeType sites_;
 	SizeType arity_;
+	bool isPeriodic_;
 	PsimagLite::String srep_;
 	VectorTensorSrepType energy_;
 }; // class MeraBuilder
