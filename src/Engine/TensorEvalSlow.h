@@ -357,7 +357,7 @@ private:
 		assert(symmLocal_);
 		PsimagLite::String tensorNameId = ts.name() + ttos(ts.id());
 		SizeType tensorIndex = symmLocal_->nameIdToIndex(tensorNameId);
-		if (ts.maxTag('f') == 0) return true;
+		//if (ts.maxTag('f') == 0) return true;
 		if (tensorIndex >= symmLocal_->size())
 			assert(false);
 

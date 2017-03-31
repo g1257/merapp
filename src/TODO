@@ -26,6 +26,7 @@ DELAYED	Builder: ternary MERA
 DONE	Models: Implement Hubbard
 DONE	free model
 DONE	free builder
+	accelerate symetries
 	"Binary" 2D MERA
 	Z2 symmetry
 	move irreducible identity code into its own class if possible

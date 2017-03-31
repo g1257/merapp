@@ -245,6 +245,8 @@ private:
 
 			RealType e = energy();
 			if (e > eprev) {
+				std::cerr<<"MeraSolver: found larger energy ";
+				std::cerr<<e<<" restoring previous...\n";
 				tensorOptimizer_[i]->restoreTensor();
 				e = energy();
 			}

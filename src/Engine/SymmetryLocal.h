@@ -300,7 +300,7 @@ private:
 		assert(discarded > 0);
 		VectorSizeType r(discarded,0);
 
-#if 0
+#if 1
 		for (SizeType i = 0; i < discarded; ++i) {
 			r[i] = static_cast<SizeType>(drand48()*n);
 			while (std::find(r.begin(), r.begin() + i, r[i]) != r.begin() + i)
