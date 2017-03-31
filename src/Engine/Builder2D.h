@@ -24,6 +24,8 @@ namespace Mera {
 
 class Builder2D : public BuilderBase {
 
+	static const SizeType DIMENSION = 2;
+
 public:
 
 	typedef TensorSrep::VectorSizeType VectorSizeType;
@@ -78,26 +80,31 @@ public:
 	const PsimagLite::String& srep() const { return srep_; }
 
 
-	TensorSrep* buildEnergyTerm(SizeType site,
+	TensorSrep* buildEnergyTerm(SizeType c,
 	                            const TensorSrep& tensorSrep) const
 	{
+		SizeType connections = DIMENSION*sites_;
+		div_t q = div(c, DIMENSION);
+		SizeType direction = q.rem;
+		SizeType site = q.quot;
+		SizeType sitep = findSitePrime(site,direction);
+
 		TensorSrep tensorSrep2(tensorSrep);
 		tensorSrep2.conjugate();
 		PsimagLite::String str3("h");
-		str3 += ttos(site) + "(f";
-		str3 += ttos(site+2) + ",f";
-		str3 += ttos(site+3) + "|f";
-		str3 += ttos(site) + ",f";
-		SizeType x = (site + 1 == sites_) ? 0 : site + 1;
-		str3 += ttos(x) + ")\n";
+		str3 += ttos(c) + "(";
+		str3 += "f" + ttos(connections) + ",";
+		str3 += "f" + ttos(connections + 1) + "|";
+		str3 += "f" + ttos(site) + ",";
+		str3 += "f" + ttos(sitep) + ")";
 		TensorSrep tensorSrep3(str3);
 		TensorSrep::VectorSizeType indicesToContract(2,site);
-		indicesToContract[1] = x;
+		indicesToContract[1] = sitep;
 		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
 		tensorSrep4->contract(tensorSrep3,indicesToContract);
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		correctFreeIndicesBeforeContraction(*tensorSrep4, site);
+		//correctFreeIndicesBeforeContraction(*tensorSrep4, site);
 
 		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
@@ -113,6 +120,18 @@ private:
 	void sitesNotSupported() const
 	{
 		throw PsimagLite::RuntimeError("Builder2D: Requires sites == (4*x)^2 for x integer\n");
+	}
+
+	SizeType findSitePrime(SizeType site,SizeType direction) const
+	{
+		SizeType l = sqrt(sites_);
+		assert(l*l == sites_);
+		div_t q = div(site, l);
+		int x = q.rem;
+		int y = q.quot;
+		if (direction == 0)
+			return snapBack(x + 1, l) + y*l;
+		return x + snapBack(y + 1, l);
 	}
 
 	void createUlayer(SizeType& summed,

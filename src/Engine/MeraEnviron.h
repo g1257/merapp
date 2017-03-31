@@ -80,36 +80,36 @@ private:
 	{
 		SizeType id = tensorSrep_(ind).id();
 		PsimagLite::String name = tensorSrep_(ind).name();
-		SizeType sites = tensorSrep_.maxTag('f') + 1;
-		VectorStringType vstr(sites,"");
-		VectorStringType argForOutput(sites,"");
-		VectorStringType vdsrep(sites,"");
+		SizeType connections = params_.hamiltonianConnection.size();
+		VectorStringType vstr(connections,"");
+		VectorStringType argForOutput(connections,"");
+		VectorStringType vdsrep(connections,"");
 		SizeType terms = 0;
-		assert(params_.hamiltonianConnection.size() == sites);
-		for (SizeType site = 0; site < sites; ++site) {
-			if (params_.hamiltonianConnection[site] == 0.0) continue;
-			TensorSrep tmp = environForTensorOneSite(ind, site);
-			vstr[site] = tmp.sRep();
-			argForOutput[site] = calcArgForOutput(vdsrep[site],tmp);
-			if (vstr[site] != "") ++terms;
+
+		for (SizeType c = 0; c < connections; ++c) {
+			if (params_.hamiltonianConnection[c] == 0.0) continue;
+			TensorSrep tmp = environForTensorOneSite(ind, c);
+			vstr[c] = tmp.sRep();
+			argForOutput[c] = calcArgForOutput(vdsrep[c],tmp);
+			if (vstr[c] != "") ++terms;
 		}
 
 		if (terms == 0) return terms;
 
 		PsimagLite::String thisEnv("TensorId=" + name + "," + ttos(id) + "\n");
 		thisEnv += "Terms=" + ttos(terms) + "\n";
-		thisEnv += "IgnoreTerm=" + ttos(2*sites+1) + "\n";
+		thisEnv += "IgnoreTerm=" + ttos(2*connections+1) + "\n";
 		PairSizeType layer = findLayerNumber(name, id, limits);
 		thisEnv += "Layer=" + ttos(layer.first) + "\n";
 		thisEnv += "FirstOfLayer=" + ttos(layer.second) + "\n";
 		bool isRootTensor = (tensorSrep_(ind).name() == "r");
-		for (SizeType site = 0; site < sites; ++site) {
-			if (vstr[site] == "") continue;
+		for (SizeType c = 0; c < connections; ++c) {
+			if (vstr[c] == "") continue;
 			PsimagLite::String tmp = "u" + ttos(counterForOutput++);
-			thisEnv += "Environ=" + tmp + argForOutput[site] + "=" + vstr[site] + "\n";
-			dsrep_ += tmp + vdsrep[site];
+			thisEnv += "Environ=" + tmp + argForOutput[c] + "=" + vstr[c] + "\n";
+			dsrep_ += tmp + vdsrep[c];
 			if (isRootTensor)
-				irreducibleIdentityDsrep(tmp + argForOutput[site], vstr[site]);
+				irreducibleIdentityDsrep(tmp + argForOutput[c], vstr[c]);
 		}
 
 		thisEnv += "\n";

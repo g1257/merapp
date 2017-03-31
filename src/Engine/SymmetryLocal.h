@@ -267,7 +267,9 @@ private:
 			unpack(coordinates,i,dim);
 			SizeType sum = 0;
 			for (SizeType j = 0; j < m; ++j) {
+				assert(q[j]);
 				const VectorSizeType& qqq = *(q[j]);
+				assert(coordinates[j] < qqq.size());
 				sum += qqq[coordinates[j]];
 			}
 
