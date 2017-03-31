@@ -23,6 +23,7 @@ public:
 	            const VectorType& hamTerms)
 	    : sites_(sites),
 	      arity_(arity),
+	      dimension_(dimension),
 	      isPeriodic_(isPeriodic),
 	      srep_(""),
 	      energy_(sites,0)
@@ -81,12 +82,13 @@ private:
 		SizeType sites = hamTerm.size();
 		for (SizeType site = 0; site < sites; ++site) {
 			if (hamTerm[site] == 0.0) continue;
-			energy_[site] = builder.buildEnergyTerm(site, sites, tensorSrep);
+			energy_[site] = builder.buildEnergyTerm(site, tensorSrep);
 		}
 	}
 
 	SizeType sites_;
 	SizeType arity_;
+	SizeType dimension_;
 	bool isPeriodic_;
 	PsimagLite::String srep_;
 	VectorTensorSrepType energy_;

@@ -30,7 +30,6 @@ public:
 	virtual const PsimagLite::String& srep() const = 0;
 
 	virtual TensorSrep* buildEnergyTerm(SizeType site,
-	                                    SizeType sites,
 	                                    const TensorSrep& tensorSrep) const = 0;
 };
 }

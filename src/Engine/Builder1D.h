@@ -30,7 +30,7 @@ public:
 	typedef TensorSrep::PairSizeType PairSizeType;
 
 	Builder1D(SizeType sites, SizeType arity, bool isPeriodic)
-	    : srep_("")
+	    : sites_(sites), srep_("")
 	{
 		if (arity != 2)
 			throw PsimagLite::RuntimeError("MeraBuilder1D: arity must be 2 for now\n");
@@ -73,7 +73,6 @@ public:
 
 
 	TensorSrep* buildEnergyTerm(SizeType site,
-	                            SizeType sites,
 	                            const TensorSrep& tensorSrep) const
 	{
 		TensorSrep tensorSrep2(tensorSrep);
@@ -83,7 +82,7 @@ public:
 		str3 += ttos(site+2) + ",f";
 		str3 += ttos(site+3) + "|f";
 		str3 += ttos(site) + ",f";
-		SizeType x = (site + 1 == sites) ? 0 : site + 1;
+		SizeType x = (site + 1 == sites_) ? 0 : site + 1;
 		str3 += ttos(x) + ")\n";
 		TensorSrep tensorSrep3(str3);
 		TensorSrep::VectorSizeType indicesToContract(2,site);
@@ -92,7 +91,7 @@ public:
 		tensorSrep4->contract(tensorSrep3,indicesToContract);
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		correctFreeIndicesBeforeContraction(*tensorSrep4, site, sites);
+		correctFreeIndicesBeforeContraction(*tensorSrep4, site);
 
 		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
@@ -209,12 +208,11 @@ private:
 	}
 
 	void correctFreeIndicesBeforeContraction(TensorSrep& t,
-	                                         SizeType site,
-	                                         SizeType sites) const
+	                                         SizeType site) const
 	{
 		if (site < 1) return;
 
-		SizeType x = (site + 1 == sites) ? 0 : site + 1;
+		SizeType x = (site + 1 == sites_) ? 0 : site + 1;
 		t.swapFree(1,x);
 		t.swapFree(0,site);
 		t.refresh();
@@ -246,7 +244,7 @@ private:
 
 		t.refresh();
 
-		if (site + 1 == sites) {
+		if (site + 1 == sites_) {
 			t.swapFree(0,site);
 			t.swapFree(1,site);
 			t.refresh();
@@ -255,6 +253,7 @@ private:
 		t.isValid(true);
 	}
 
+	SizeType sites_;
 	PsimagLite::String srep_;
 };
 }
