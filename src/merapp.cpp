@@ -79,25 +79,6 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	std::cout<<environ.environs();
 }
 
-template<typename VectorType>
-void fillHamTerms(VectorType& v,
-                  PsimagLite::String terms)
-{
-	PsimagLite::Vector<PsimagLite::String>::Type tokens;
-	PsimagLite::tokenizer(terms,tokens,",");
-	if (tokens.size() & 1) {
-		std::cerr<<"-s site0,value0,site1,value1,... expected\n";
-		throw PsimagLite::RuntimeError("fillHamTerms\n");
-	}
-
-	for (SizeType i = 0; i < tokens.size(); i += 2) {
-		SizeType ind = atoi(tokens[i].c_str());
-		assert(ind < v.size());
-		assert(i + 1 < tokens.size());
-		v[ind] = atof(tokens[i+1].c_str());;
-	}
-}
-
 int main(int argc, char **argv)
 {
 	// check for complex or real  here FIXME
@@ -120,13 +101,10 @@ int main(int argc, char **argv)
 	strUsage += " -n sites -a arity -d dimension [-M model] [-m m] ";
 	strUsage += "| -S srep | -V\n";
 
-	while ((opt = getopt(argc, argv,"n:a:d:m:M:s:e:t:PbV")) != -1) {
+	while ((opt = getopt(argc, argv,"n:a:d:m:M:e:t:PbV")) != -1) {
 		switch (opt) {
 		case 'n':
 			sites = atoi(optarg);
-			assert(sites > 1);
-			hamTerms.resize(sites,1.0);
-			hamTerms[sites-1] = 0.0;
 			break;
 		case 'a':
 			arity = atoi(optarg);
@@ -139,15 +117,6 @@ int main(int argc, char **argv)
 			break;
 		case 'M':
 			model = optarg;
-			break;
-		case 's':
-			if (hamTerms.size() == 0) {
-				std::cerr<<argv[0]<<": option -s must be after -n\n";
-				return 1;
-			}
-
-			std::fill(hamTerms.begin(),hamTerms.end(),0.0);
-			fillHamTerms(hamTerms,optarg);
 			break;
 		case 'e':
 			evaluator = optarg;
@@ -176,11 +145,16 @@ int main(int argc, char **argv)
 		return 0;
 
 	// sanity checks here
-	if (sites*arity*dimension == 0)
+	if (sites*arity*dimension == 0 || sites == 1)
 		usageMain(strUsage);
 
-	if (periodic && sites - 1 < hamTerms.size())
-		hamTerms[sites - 1] = 1;
+	assert(sites*dimension > 0);
+	hamTerms.resize(sites*dimension,1.0);
+	if (dimension == 1) {
+		assert(sites > 0);
+		assert(hamTerms.size() > sites - 1);
+		hamTerms[sites-1] = (periodic) ? 1.0 : 0.0;
+	}
 
 	// here build srep
 	MeraBuilderType meraBuilder(sites,arity,dimension,periodic,hamTerms);

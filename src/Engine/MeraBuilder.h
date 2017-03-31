@@ -26,7 +26,7 @@ public:
 	      dimension_(dimension),
 	      isPeriodic_(isPeriodic),
 	      srep_(""),
-	      energy_(sites,0)
+	      energy_(sites*dimension,0)
 	{
 		BuilderBase* builder = 0;
 
@@ -79,10 +79,14 @@ private:
 	                   const VectorType& hamTerm)
 	{
 		TensorSrep tensorSrep(srep_);
-		SizeType sites = hamTerm.size();
-		for (SizeType site = 0; site < sites; ++site) {
-			if (hamTerm[site] == 0.0) continue;
-			energy_[site] = builder.buildEnergyTerm(site, tensorSrep);
+		SizeType connections = hamTerm.size();
+		assert(connections == sites_*dimension_);
+		assert(connections == energy_.size());
+		for (SizeType c = 0; c < connections; ++c) {
+			assert(hamTerm.size() > c);
+			if (hamTerm[c] == 0.0) continue;
+			assert(c < energy_.size());
+			energy_[c] = builder.buildEnergyTerm(c, tensorSrep);
 		}
 	}
 
