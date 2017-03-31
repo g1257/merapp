@@ -29,9 +29,12 @@ public:
 	typedef TensorSrep::VectorPairSizeType VectorPairSizeType;
 	typedef TensorSrep::PairSizeType PairSizeType;
 
-	Builder2D(SizeType sites, bool isPeriodic)
+	Builder2D(SizeType sites, SizeType arity, bool isPeriodic)
 	    : srep_("")
 	{
+		if (arity != 4)
+			throw PsimagLite::RuntimeError("MeraBuilder2D: arity must be 4 for now\n");
+
 		throw PsimagLite::RuntimeError("2D Mera is work in progress\n");
 
 		SizeType x = sqrt(sites);

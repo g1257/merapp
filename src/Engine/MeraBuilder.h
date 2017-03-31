@@ -27,15 +27,12 @@ public:
 	      srep_(""),
 	      energy_(sites,0)
 	{
-		if (arity != 2)
-			throw PsimagLite::RuntimeError("MeraBuilder: arity must be 2 for now\n");
-
 		BuilderBase* builder = 0;
 
 		if (dimension == 1) {
-			builder = new Builder1D(sites, isPeriodic);
+			builder = new Builder1D(sites, arity, isPeriodic);
 		} else if (dimension == 2) {
-			builder = new Builder2D(sites, isPeriodic);
+			builder = new Builder2D(sites, arity, isPeriodic);
 		} else {
 			PsimagLite::String msg("MeraBuilder: dimension ");
 			throw PsimagLite::RuntimeError(msg + ttos(dimension) + " is not supported\n");

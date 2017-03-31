@@ -29,9 +29,12 @@ public:
 	typedef TensorSrep::VectorPairSizeType VectorPairSizeType;
 	typedef TensorSrep::PairSizeType PairSizeType;
 
-	Builder1D(SizeType sites, bool isPeriodic)
+	Builder1D(SizeType sites, SizeType arity, bool isPeriodic)
 	    : srep_("")
 	{
+		if (arity != 2)
+			throw PsimagLite::RuntimeError("MeraBuilder1D: arity must be 2 for now\n");
+
 		SizeType ln = 0;
 		if ((ln = ProgramGlobals::logBase2Strict(sites)) == 0)
 			throw PsimagLite::RuntimeError("MeraBuilder: sites must be a power of 2\n");
