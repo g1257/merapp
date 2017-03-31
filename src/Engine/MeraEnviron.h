@@ -124,7 +124,8 @@ private:
 		const TensorSrep& energySrep = builder_.energy(site);
 		TensorSrep tensorSrep4(energySrep);
 		tensorSrep4.eraseTensor(irreducibleIdentity_,ind,0);
-		if (!tensorSrep4.isValid(true))
+		bool verbose = false;
+		if (!tensorSrep4.isValid(verbose))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		SizeType jnd = tensorSrep4.findConjugate(ind);
 		bool hasConjugate = (jnd < tensorSrep4.size());
@@ -140,7 +141,7 @@ private:
 			tensorSrep4.eraseTensor(irreducibleIdentity_,jnd,0);
 			// use energySrep to compute r size
 			//
-			if (!tensorSrep4.isValid(true))
+			if (!tensorSrep4.isValid(verbose))
 				throw PsimagLite::RuntimeError("Invalid tensor\n");
 		}
 

@@ -102,7 +102,8 @@ public:
 		indicesToContract[1] = sitep;
 		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
 		tensorSrep4->contract(tensorSrep3,indicesToContract);
-		if (!tensorSrep4->isValid(true))
+		bool verbose = false;
+		if (!tensorSrep4->isValid(verbose))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		//correctFreeIndicesBeforeContraction(*tensorSrep4, site);
 
@@ -110,7 +111,7 @@ public:
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
 		tensorSrep4->contract(tensorSrep2);
 		//std::cout<<"e"<<site<<"()="<<tensorSrep4->sRep()<<"\n";
-		if (!tensorSrep4->isValid(true))
+		if (!tensorSrep4->isValid(verbose))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		return tensorSrep4;
 	}
@@ -281,7 +282,7 @@ private:
 			t.refresh();
 		}
 
-		t.isValid(true);
+		t.isValid(false);
 	}
 
 	SizeType sites_;

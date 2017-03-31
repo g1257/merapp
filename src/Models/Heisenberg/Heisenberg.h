@@ -43,11 +43,15 @@ public:
 		SizeType h2 = h*h;
 		SizeType n = twoSiteHam_.size();
 
+		std::cerr<<"DiagonalCorrections "<<n<<"     ";
 		for (SizeType i = 0; i < n; ++i) {
 			twoSiteHam_[i] = new MatrixType(h2,h2);
-			shift_ += setTwoSiteHam(*(twoSiteHam_[i]),i,v);
+			RealType tmp = setTwoSiteHam(*(twoSiteHam_[i]),i,v);
+			shift_ += tmp;
+			std::cerr<<tmp<<" ";
 		}
 
+		std::cerr<<"\n";
 		std::cout<<"Shift="<<shift_<<"\n";
 	}
 
@@ -101,7 +105,6 @@ private:
 		diag(m,eigs,'N');
 		assert(n - 1 < eigs.size());
 		RealType diagCorrection = eigs[n-1];
-		std::cerr<<"MeraSolver: DiagonalCorrection= "<<diagCorrection<<"\n";
 		for (SizeType i = 0; i < n; ++i)
 			m2(i,i) -= diagCorrection;
 		return diagCorrection;
