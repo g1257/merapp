@@ -134,7 +134,7 @@ private:
 			PsimagLite::String inArgs("");
 			for (SizeType i = 0; i < 4; ++i) {
 				SizeType tmp = assignment[i];
-				if (counter > 0) tmp += savedSummed++;
+				if (counter > 0) tmp += savedSummed;
 				inArgs += fOrS + ttos(tmp);
 				if (i < 3) inArgs += ",";
 			}
@@ -147,11 +147,12 @@ private:
 				if (counter > 0) tmp += summed;
 				outArgs += "s" + ttos(tmp);
 				if (i < 3) outArgs += ",";
-				summed++;
 			}
 
 			srep_ += outArgs + ")";
 		}
+
+		summed += 4*n;
 	}
 
 	void getUAssignment(VectorSizeType& assignment,
@@ -162,7 +163,7 @@ private:
 		SizeType x = 2*q.rem;
 		SizeType y = 2*q.quot;
 		SizeType counter = 0;
-		SizeType n = l*l;
+		SizeType n = 2*l;
 		assignment[counter++] = x + y*n;
 		assignment[counter++] = x + 1 + y*n;
 		assignment[counter++] = x + (y+1)*n;
@@ -202,7 +203,7 @@ private:
 		int x = 2*q.rem;
 		int y = 2*q.quot;
 		SizeType counter = 0;
-		int n = l*l;
+		int n = 2*l;
 		SizeType xm1 = snapBack(x - 1, n);
 		SizeType ym1 = snapBack(y - 1, n);
 
