@@ -26,6 +26,7 @@ class Builder2D : public BuilderBase {
 
 public:
 
+	typedef TensorSrep::VectorSizeType VectorSizeType;
 	typedef TensorSrep::VectorPairSizeType VectorPairSizeType;
 	typedef TensorSrep::PairSizeType PairSizeType;
 
@@ -35,15 +36,13 @@ public:
 		if (arity != 4)
 			throw PsimagLite::RuntimeError("MeraBuilder2D: arity must be 4 for now\n");
 
-		throw PsimagLite::RuntimeError("2D Mera is work in progress\n");
-
 		SizeType x = sqrt(sites);
 		if (x*x != sites) sitesNotSupported();
 		if (x & 1) sitesNotSupported();
 		x /= 2;
 		if (x & 1) sitesNotSupported();
 
-		SizeType tensors = sites/2;
+		SizeType tensors = sites/4;
 		SizeType counter = 0;
 		SizeType summed = 0;
 		SizeType savedSummedForU = 0;
@@ -51,26 +50,30 @@ public:
 		SizeType idsW = 0;
 		while (tensors > 1) {
 			SizeType savedSummedForW = summed;
-			SizeType pLastIndex = createUlayer(summed,
-			                                   idsU,
-			                                   savedSummedForU,
-			                                   tensors,
-			                                   isPeriodic,
-			                                   counter);
+			createUlayer(summed,
+			             idsU,
+			             savedSummedForU,
+			             tensors,
+			             counter);
 			savedSummedForU = summed;
 			createWlayer(summed,
 			             idsW,
 			             savedSummedForW,
-			             tensors,
-			             isPeriodic,
-			             pLastIndex,
-			             counter);
-			tensors /= 2;
+			             tensors);
+			tensors /= 4;
 			counter++;
 		}
 
-		assert(summed > 1);
-		srep_ += "r0(s" + ttos(summed-2) + ",s" + ttos(summed-1) + ")";
+		assert(summed > 4);
+		summed -= 4;
+		PsimagLite::String rArgs("");
+		for (SizeType i = 0; i < 4; ++i) {
+			rArgs += "s" + ttos(summed++);
+			if (i < 3) rArgs += ",";
+		}
+
+		srep_ += "r0(" + rArgs + ")";
+		throw PsimagLite::RuntimeError("testing " + srep_ + "\n");
 	}
 
 	const PsimagLite::String& srep() const { return srep_; }
@@ -114,107 +117,107 @@ private:
 		throw PsimagLite::RuntimeError("Builder2D: Requires sites == (4*x)^2 for x integer\n");
 	}
 
-	SizeType createUlayer(SizeType& summed,
-	                      SizeType& idsU,
-	                      SizeType savedSummed,
-	                      SizeType n,
-	                      bool isPeriodic,
-	                      SizeType counter)
+	void createUlayer(SizeType& summed,
+	                  SizeType& idsU,
+	                  SizeType savedSummed,
+	                  SizeType n,
+	                  SizeType counter)
 	{
-		PsimagLite::String I0("");
-		PsimagLite::String I1("");
-		PsimagLite::String O0("");
-		PsimagLite::String O1("");
-		SizeType periodicLastIndex = 0;
+		VectorSizeType assignment(4);
+		SizeType sqrtN = sqrt(n);
+		assert(sqrtN*sqrtN == n);
+		PsimagLite::String fOrS = (counter == 0) ? "f" : "s";
 		for (SizeType i = 0; i < n; ++i) {
-			bool hasTwoOutputs = true;
-			const bool oddCounter = (counter & 1);
+			getUAssignment(assignment, i, sqrtN);
+			assert(assignment.size() == 4);
 
-			if (counter == 0) {
-				I0 = "f" + ttos(2*i);
-				I1 = "f" + ttos(2*i+1);
-			} else {
-				I0 = "s" + ttos(savedSummed++);
-				I1 = "s" + ttos(savedSummed++);
+			PsimagLite::String inArgs("");
+			for (SizeType i = 0; i < 4; ++i) {
+				SizeType tmp = assignment[i];
+				if (counter > 0) tmp += savedSummed++;
+				inArgs += fOrS + ttos(tmp);
+				if (i < 3) inArgs += ",";
 			}
 
-			if (oddCounter) {
-				if (i + 1 == n) hasTwoOutputs = false;
-			} else {
-				if (i == 0) hasTwoOutputs = false;
+			srep_ += "u" + ttos(idsU++) + "(" + inArgs + "|";
+
+			PsimagLite::String outArgs("");
+			for (SizeType i = 0; i < 4; ++i) {
+				SizeType tmp = assignment[i];
+				if (counter > 0) tmp += summed;
+				outArgs += "s" + ttos(tmp);
+				if (i < 3) outArgs += ",";
+				summed++;
 			}
 
-			srep_ += "u" + ttos(idsU++) + "("+I0+"," + I1 + "|";
-
-			if (!oddCounter && !hasTwoOutputs && isPeriodic) {
-				periodicLastIndex = summed++;
-				O1 = "s" + ttos(periodicLastIndex);
-				srep_ +=  O1 + ",";
-			}
-
-			O0 = "s" + ttos(summed++);
-			srep_ += O0;
-
-			if (hasTwoOutputs) {
-				O1 = "s" + ttos(summed++);
-				srep_ += "," + O1;
-			} else if (isPeriodic && oddCounter) {
-				// border here
-				periodicLastIndex = summed++;
-				O1 = "s" + ttos(periodicLastIndex);
-				srep_ += "," + O1;
-			}
-
-			srep_ += ")";
+			srep_ += outArgs + ")";
 		}
+	}
 
-		return periodicLastIndex;
+	void getUAssignment(VectorSizeType& assignment,
+	                    SizeType ind,
+	                    SizeType l) const
+	{
+		div_t q = div(ind, l);
+		SizeType x = 2*q.rem;
+		SizeType y = 2*q.quot;
+		SizeType counter = 0;
+		SizeType n = l*l;
+		assignment[counter++] = x + y*n;
+		assignment[counter++] = x + 1 + y*n;
+		assignment[counter++] = x + (y+1)*n;
+		assignment[counter++] = x + 1 + (y+1)*n;
 	}
 
 	void createWlayer(SizeType& summed,
 	                  SizeType& idsW,
 	                  SizeType savedSummed,
-	                  SizeType n,
-	                  bool isPeriodic,
-	                  SizeType periodicLastIndex,
-	                  SizeType counter)
+	                  SizeType n)
 	{
-		PsimagLite::String I0("");
-		PsimagLite::String I1("");
-		PsimagLite::String O0("");
-		const bool oddCounter = (counter & 1);
-		if (isPeriodic && !oddCounter) ++savedSummed;
-
+		SizeType sqrtN = sqrt(n);
+		assert(sqrtN*sqrtN == n);
+		VectorSizeType assignment(4, 0);
 		for (SizeType i = 0; i < n; ++i) {
-			bool hasTwoInputs = true;
+			getWAssignment(assignment, i, sqrtN);
+			assert(assignment.size() == 4);
 
-			if (oddCounter) {
-				if (i == 0) hasTwoInputs = false;
-			} else {
-				if (i + 1 == n) hasTwoInputs = false;
+			PsimagLite::String inArgs("");
+			for (SizeType i = 0; i < 4; ++i) {
+				SizeType tmp = assignment[i] + savedSummed;
+				inArgs += "s" + ttos(tmp);
+				if (i < 3) inArgs += ",";
 			}
 
-			srep_ += "w" + ttos(idsW++) +"(";
+			srep_ += "w" + ttos(idsW++) +"(" + inArgs + "|";
 
-			if (oddCounter && !hasTwoInputs && isPeriodic) {
-				I1 = "s" + ttos(periodicLastIndex);
-				srep_ +=  I1 + ",";
-			}
-
-			I0 = "s" + ttos(savedSummed++);
-			srep_ += I0;
-
-			if (hasTwoInputs) {
-				I1 = "s" + ttos(savedSummed++);
-				srep_ += "," + I1;
-			} else if (isPeriodic && !oddCounter) {
-				I1 = "s" + ttos(periodicLastIndex);
-				srep_ += "," + I1;
-			}
-
-			O0 = "s" + ttos(summed++);
-			srep_ += "|" + O0 + ")";
+			srep_ += "s" + ttos(summed++) + ")";
 		}
+	}
+
+	void getWAssignment(VectorSizeType& assignment,
+	                    SizeType ind,
+	                    SizeType l) const
+	{
+		div_t q = div(ind, l);
+		int x = 2*q.rem;
+		int y = 2*q.quot;
+		SizeType counter = 0;
+		int n = l*l;
+		SizeType xm1 = snapBack(x - 1, n);
+		SizeType ym1 = snapBack(y - 1, n);
+
+		assignment[counter++] = xm1 + ym1*n;
+		assignment[counter++] = x + ym1*n;
+		assignment[counter++] = xm1 + y*n;
+		assignment[counter++] = x + y*n;
+	}
+
+	SizeType snapBack(int x, int l) const
+	{
+		if (x >= 0 && x < l) return x;
+		while (x < 0) x += l;
+		while (x >= l) x -= l;
+		return x;
 	}
 
 	void correctFreeIndicesBeforeContraction(TensorSrep& t,
