@@ -41,8 +41,8 @@ class MeraSolver {
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
-	typedef typename TensorOptimizerType::SrepEquationType SrepEquationType;
-	typedef typename TensorOptimizerType::VectorSrepEquationType VectorSrepEquationType;
+	typedef typename TensorOptimizerType::SrepStatementType SrepStatementType;
+	typedef typename TensorOptimizerType::VectorSrepStatementType VectorSrepStatementType;
 	typedef typename TensorOptimizerType::TensorEvalBaseType TensorEvalBaseType;
 	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
 	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
@@ -137,7 +137,7 @@ public:
 					size_t index = srep.find("equal");
 					if (index != PsimagLite::String::npos)
 						srep.replace(index,5,"=");
-					energyTerms_[i] = new SrepEquationType(srep);
+					energyTerms_[i] = new SrepStatementType(srep);
 					allTensorsDefinedOrDie(energyTerms_[i]->rhs());
 				}
 
@@ -272,7 +272,7 @@ private:
 	{
 		SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
 		assert(ind < energyTerms_.size());
-		SrepEquationType* ptr = energyTerms_[ind];
+		SrepStatementType* ptr = energyTerms_[ind];
 		if (!ptr) return 0.0;
 		TensorEvalBaseType* tensorEval =
 		        TensorOptimizerType::getTensorEvalPtr(paramsForMera_.evaluator,
@@ -389,7 +389,7 @@ private:
 	VectorTensorOptimizerType tensorOptimizer_;
 	ParametersForSolverType* paramsForLanczos_;
 	bool noSymmLocal_;
-	VectorSrepEquationType energyTerms_;
+	VectorSrepStatementType energyTerms_;
 }; // class MeraSolver
 } // namespace Mera
 #endif // MERASOLVER_H

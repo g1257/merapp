@@ -22,11 +22,13 @@ DONE	add symmetries for irreducible identities
 DONE	clean up memory of symmetries of temporaries
 DONE    Figure out Layer=
 DONE	Copy tensor first of layer to others
-DELAYED	Builder: ternary MERA
 DONE	Models: Implement Hubbard
 DONE	free model
 DONE	free builder
-	"Binary" 2D MERA
+DELAYED	Builder: ternary MERA
+	"Binary" 2D MERA: work on environments
+	move symmetry and dimensionsrep into numeric driver
+	better srep2Tikz driver needed
 	feature: change "m" within run
 	accelerate symetries
 	Z2 symmetry

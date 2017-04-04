@@ -18,7 +18,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorEvalSlow.h"
 #include "TensorEvalNew.h"
 #include "Vector.h"
-#include "SrepEquation.h"
+#include "SrepStatement.h"
 
 int main(int argc, char **argv)
 {
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 	for (SizeType i = 0; i < vt.size(); ++i)
 		nameIdTensor[idNames[i]] = i;
 
-	Mera::SrepEquation<double> srepEq(str);
+	Mera::SrepStatement<double> srepEq(str);
 	TensorEvalBaseType* tensorEval = 0;
 	if (evaluator == "slow") {
 		tensorEval = new TensorEvalSlowType(srepEq,vt,idNames,nameIdTensor,0,false);

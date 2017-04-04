@@ -49,8 +49,8 @@ public:
 	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef typename TensorEvalBaseType::SrepEquationType SrepEquationType;
-	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
+	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
+	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
@@ -103,7 +103,7 @@ public:
 			size_t index = srep.find("equal");
 			if (index != PsimagLite::String::npos)
 				srep.replace(index,5,"=");
-			tensorSrep_[i] = new SrepEquationType(srep);
+			tensorSrep_[i] = new SrepStatementType(srep);
 		}
 
 		bool flag = false;
@@ -140,9 +140,9 @@ public:
 		SizeType outs = tensors_[indToOptimize_]->args() - ins;
 		PsimagLite::String cond = conditionToSrep(tensorToOptimize_,ins,outs);
 
-		SrepEquationType* condSrep = 0;
+		SrepStatementType* condSrep = 0;
 		if (cond != "") {
-			condSrep = new SrepEquationType(cond);
+			condSrep = new SrepStatementType(cond);
 			std::cout<<"cond="<<cond<<"\n";
 		}
 
@@ -178,7 +178,7 @@ public:
 	SizeType layer() const { return layer_; }
 
 	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
-	                                            const SrepEquationType& srep,
+	                                            const SrepStatementType& srep,
 	                                            VectorTensorType& tensors,
 	                                            const VectorPairStringSizeType& tensorNameIds,
 	                                            MapPairStringSizeType& nameIdsTensor,
@@ -393,7 +393,7 @@ private:
 	}
 
 	void appendToMatrix(MatrixType& m,
-	                    SrepEquationType& eq,
+	                    SrepStatementType& eq,
 	                    PsimagLite::String evaluator)
 	{
 		SizeType total = eq.rhs().maxTag('f') + 1;
@@ -571,7 +571,7 @@ private:
 		return sum;
 	}
 
-	TensorType& outputTensor(const SrepEquationType& eq)
+	TensorType& outputTensor(const SrepStatementType& eq)
 	{
 		SizeType indexOfOutputTensor = TensorEvalBaseType::indexOfOutputTensor(eq,
 		                                                                       tensorNameIds_,
@@ -585,7 +585,7 @@ private:
 	TensorOptimizer& operator=(const TensorOptimizer&);
 
 	PairStringSizeType tensorToOptimize_;
-	VectorSrepEquationType tensorSrep_;
+	VectorSrepStatementType tensorSrep_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;

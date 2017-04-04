@@ -15,8 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef SREPEQUATION_H
-#define SREPEQUATION_H
+#ifndef SrepStatement_H
+#define SrepStatement_H
 #include "Vector.h"
 #include "TensorSrep.h"
 #include <map>
@@ -24,7 +24,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 namespace  Mera {
 
 template<typename ComplexOrRealType>
-class SrepEquation {
+class SrepStatement {
 
 public:
 
@@ -37,20 +37,20 @@ public:
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 	typedef TensorSrep TensorSrepType;
 
-	SrepEquation(PsimagLite::String str)
+	SrepStatement(PsimagLite::String str)
 	    : lhs_(0),rhs_(0)
 	{
 		VectorStringType vstr;
 		PsimagLite::tokenizer(str,vstr,"=");
 		if (vstr.size() != 2)
-			throw PsimagLite::RuntimeError("SrepEquation:: syntax error " + str + "\n");
+			throw PsimagLite::RuntimeError("SrepStatement:: syntax error " + str + "\n");
 		lhs_ = new TensorStanza(vstr[0]);
 		rhs_ = new TensorSrepType(vstr[1]);
 
 		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
 	}
 
-	SrepEquation(const SrepEquation& other)
+	SrepStatement(const SrepStatement& other)
 	    : lhs_(0),rhs_(0)
 	{
 		lhs_ = new TensorStanza(*(other.lhs_));
@@ -58,7 +58,7 @@ public:
 		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
 	}
 
-	~SrepEquation()
+	~SrepStatement()
 	{
 		delete lhs_;
 		delete rhs_;
@@ -118,13 +118,13 @@ private:
 		}
 	}
 
-	SrepEquation& operator=(const SrepEquation&);
+	SrepStatement& operator=(const SrepStatement&);
 
 	TensorStanza* lhs_;
 	TensorSrepType* rhs_;
 	PairStringSizeType nameIdOfOutput_;
-}; // class SrepEquation
+}; // class SrepStatement
 
 } // namespace Mera
 
-#endif // SREPEQUATION_H
+#endif // SrepStatement_H

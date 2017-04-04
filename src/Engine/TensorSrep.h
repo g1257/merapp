@@ -408,6 +408,7 @@ private:
 
 	void canonicalize()
 	{
+		// this function does the causal cone simplifications if possible
 		simplify();
 
 		VectorSizeType frees(maxTag('f') + 1,0);

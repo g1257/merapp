@@ -25,7 +25,7 @@ template<typename ComplexOrRealType>
 class TensorEvalNew : public TensorEvalBase<ComplexOrRealType> {
 
 	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
-	typedef typename TensorEvalBaseType::SrepEquationType SrepEquationType;
+	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
 	typedef typename TensorEvalBaseType::HandleType HandleType;
 	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
@@ -36,7 +36,7 @@ class TensorEvalNew : public TensorEvalBase<ComplexOrRealType> {
 
 public:
 
-	TensorEvalNew(const SrepEquationType& tSrep,
+	TensorEvalNew(const SrepStatementType& tSrep,
 	              const VectorTensorType& vt,
 	              const VectorPairStringSizeType& tensorNameIds,
 	              MapPairStringSizeType& nameIdsTensor)

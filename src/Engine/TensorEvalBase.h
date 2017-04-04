@@ -18,7 +18,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef TENSOREVALBASE_H
 #define TENSOREVALBASE_H
 #include "Tensor.h"
-#include "SrepEquation.h"
+#include "SrepStatement.h"
 #include "TensorEvalHandle.h"
 
 namespace Mera {
@@ -32,8 +32,8 @@ public:
 	typedef Tensor<ComplexOrRealType> TensorType;
 	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
 	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
-	typedef SrepEquation<ComplexOrRealType> SrepEquationType;
-	typedef typename SrepEquationType::PairStringSizeType PairStringSizeType;
+	typedef SrepStatement<ComplexOrRealType> SrepStatementType;
+	typedef typename SrepStatementType::PairStringSizeType PairStringSizeType;
 	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 
@@ -43,13 +43,13 @@ public:
 
 	virtual void printResult(std::ostream& os) const = 0;
 
-	static SizeType indexOfOutputTensor(const SrepEquationType& eq,
+	static SizeType indexOfOutputTensor(const SrepStatementType& eq,
 	                                    const VectorPairStringSizeType& tensorNameIds,
 	                                    MapPairStringSizeType& nameIdsTensor)
 	{
 		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
 		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
-			PsimagLite::String msg("SrepEquation: Could not find ");
+			PsimagLite::String msg("TensorEvalBase: Could not find ");
 			msg += "output tensor " + eq.nameIdOfOutput().first;
 			msg += ttos(eq.nameIdOfOutput().second) + "\n";
 			throw PsimagLite::RuntimeError(msg);

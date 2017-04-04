@@ -35,7 +35,7 @@ class TensorEvalSlow : public TensorEvalBase<ComplexOrRealType> {
 public:
 
 	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
-	typedef typename TensorEvalBaseType::SrepEquationType SrepEquationType;
+	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
 	typedef typename TensorEvalBaseType::HandleType HandleType;
 	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
@@ -43,20 +43,20 @@ public:
 	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
 	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
-	typedef typename PsimagLite::Vector<SrepEquationType*>::Type VectorSrepEquationType;
+	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
 	typedef SymmetryLocal SymmetryLocalType;
 	typedef SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
 
 	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
 
-	TensorEvalSlow(const SrepEquationType& tSrep,
+	TensorEvalSlow(const SrepStatementType& tSrep,
 	               const VectorTensorType& vt,
 	               const VectorPairStringSizeType& tensorNameIds,
 	               MapPairStringSizeType& nameIdsTensor,
 	               SymmetryLocalType* symmLocal,
 	               bool modify = EVAL_BREAKUP)
-	    : srepEq_(tSrep),
+	    : srepStatement_(tSrep),
 	      data_(vt), // deep copy
 	      tensorNameIds_(tensorNameIds), // deep copy
 	      nameIdsTensor_(nameIdsTensor), // deep copy
@@ -69,7 +69,7 @@ public:
 
 		if (!modify_) return;
 
-		TensorBreakup tensorBreakup(srepEq_.lhs(), srepEq_.rhs());
+		TensorBreakup tensorBreakup(srepStatement_.lhs(), srepStatement_.rhs());
 		// get t0, t1, etc definitions and result
 		VectorStringType vstr;
 		tensorBreakup(vstr);
@@ -81,9 +81,9 @@ public:
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
 			if (temporaryName == tSrep.lhs().sRep()) {
-				std::cout<<"Definition of "<<srepEq_.rhs().sRep()<<" is ";
+				std::cout<<"Definition of "<<srepStatement_.rhs().sRep()<<" is ";
 				std::cout<<vstr[i + 1]<<"\n";
-				srepEq_.rhs() = TensorSrep(vstr[i + 1]);
+				srepStatement_.rhs() = TensorSrep(vstr[i + 1]);
 				outputLocation = i;
 			}
 
@@ -103,10 +103,10 @@ public:
 			data_.push_back(t);
 		}
 
-		VectorSrepEquationType veqs;
+		VectorSrepStatementType veqs;
 		TensorSrepType::VectorPairSizeType empty;
 		for (SizeType i = 0; i < vstr.size(); i += 2) {
-			veqs.push_back(new SrepEquationType(vstr[i] + "=" + vstr[i+1]));
+			veqs.push_back(new SrepStatementType(vstr[i] + "=" + vstr[i+1]));
 			SizeType j = veqs.size() - 1;
 			if (i != outputLocation)
 				veqs[j]->canonicalize();
@@ -143,7 +143,7 @@ public:
 		HandleType handle(HandleType::STATUS_DONE);
 		if (modify_ && EVAL_BREAKUP) return handle;
 
-		SizeType total = srepEq_.lhs().maxTag('f') + 1;
+		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
 
 		static VectorSizeType dimensions;
 		static VectorVectorSizeType q;
@@ -155,9 +155,9 @@ public:
 			std::fill(q.begin(), q.end(), static_cast<VectorSizeType*>(0));
 		}
 
-		bool hasFree = srepEq_.lhs().hasLegType('f');
+		bool hasFree = srepStatement_.lhs().hasLegType('f');
 		if (hasFree) {
-			prepare(dimensions,q,srepEq_.rhs(),TensorStanza::INDEX_TYPE_FREE);
+			prepare(dimensions,q,srepStatement_.rhs(),TensorStanza::INDEX_TYPE_FREE);
 			setQnsForOutput(q);
 		} else {
 			assert(dimensions.size() == 1);
@@ -173,7 +173,7 @@ public:
 		outputTensor().setSizes(dimensions);
 
 		do {
-			outputTensor()(free) = slowEvaluator(free,srepEq_.rhs());
+			outputTensor()(free) = slowEvaluator(free,srepStatement_.rhs());
 		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 
 		return handle;
@@ -413,11 +413,11 @@ private:
 		PairStringSizeType p = tensorNameIds_[indexOfOutputTensor_];
 		PsimagLite::String str = p.first + ttos(p.second);
 
-		SizeType legs = srepEq_.lhs().legs();
+		SizeType legs = srepStatement_.lhs().legs();
 		VectorSizeType v(legs, 0);
 		for (SizeType j = 0; j < legs; ++j) {
-			assert(srepEq_.lhs().legType(j) == TensorStanza::INDEX_TYPE_FREE);
-			v[j] = srepEq_.lhs().legTag(j);
+			assert(srepStatement_.lhs().legType(j) == TensorStanza::INDEX_TYPE_FREE);
+			v[j] = srepStatement_.lhs().legTag(j);
 		}
 
 		PsimagLite::Sort<VectorSizeType> sort;
@@ -445,7 +445,7 @@ private:
 
 	TensorEvalSlow& operator=(const TensorEvalSlow& other);
 
-	SrepEquationType srepEq_;
+	SrepStatementType srepStatement_;
 	VectorTensorType data_;
 	VectorPairStringSizeType tensorNameIds_;
 	mutable MapPairStringSizeType nameIdsTensor_;
