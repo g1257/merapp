@@ -75,25 +75,28 @@ public:
 		}
 	}
 
-	void contract(const TensorSrep& other)
+	void contract(const TensorSrep& other,
+	              bool relabel)
 	{
 		TensorSrep copy(other);
 		SizeType ms = maxTag('s');
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
-		contract(0);
+		contract(0, relabel);
 	}
 
 	// FIXME: should it be a member?
 	void contract(const TensorSrep& other,
-	              const VectorSizeType& indicesToContract)
+	              const VectorSizeType& indicesToContract,
+	              bool relabel)
 	{
 		TensorSrep copy(other);
 		SizeType ms = maxTag('s');
 		copy.shiftSummedBy(ms + 1);
 		append(copy);
-		contract(&indicesToContract);
-		relabelFrees(size() - copy.size());
+		contract(&indicesToContract, relabel);
+		if (relabel)
+			relabelFrees(size() - copy.size());
 	}
 
 	// FIXME: Erase tensor by name/id not index
@@ -277,16 +280,6 @@ public:
 		return false;
 	}
 
-	//	friend std::ostream& operator<<(std::ostream& os, const TensorSrep& ts)
-	//	{
-	//		os<<"tensorSrep.size="<<ts.size()<<"\n";
-	//		for (SizeType i = 0; i < ts.size(); ++i) {
-	//			os<<*(ts.data_[i])<<"\n";
-	//		}
-
-	//		return os;
-	//	}
-
 private:
 
 	void parseIt()
@@ -318,7 +311,7 @@ private:
 		}
 	}
 
-	void contract(const VectorSizeType* indicesToContract)
+	void contract(const VectorSizeType* indicesToContract, bool relabel)
 	{
 		if (indicesToContract && indicesToContract->size() == 0)
 			return;
@@ -336,6 +329,8 @@ private:
 		verifySummed(0);
 
 		fixDuplicatedFrees();
+
+		if (!relabel) return;
 
 		canonicalize();
 	}

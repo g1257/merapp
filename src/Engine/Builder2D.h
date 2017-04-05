@@ -101,16 +101,22 @@ public:
 		TensorSrep::VectorSizeType indicesToContract(2,site);
 		indicesToContract[1] = sitep;
 		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
-		tensorSrep4->contract(tensorSrep3,indicesToContract);
+		bool relabel = false;
+		tensorSrep4->contract(tensorSrep3,indicesToContract,relabel);
 		bool verbose = false;
 		if (!tensorSrep4->isValid(verbose))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		//correctFreeIndicesBeforeContraction(*tensorSrep4, site);
+		VectorPairSizeType replacements;
+		replacements.push_back(PairSizeType(connections, site));
+		replacements.push_back(PairSizeType(connections + 1, sitep));
+		correctFreeIndicesBeforeContraction(*tensorSrep4, replacements);
 
-		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
-		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
-		tensorSrep4->contract(tensorSrep2);
-		//std::cout<<"e"<<site<<"()="<<tensorSrep4->sRep()<<"\n";
+		std::cerr<<"UPPER"<<site<<"_"<<sitep<<"="<<tensorSrep4->sRep()<<"\n";
+		std::cerr<<"LOWER"<<site<<"_"<<sitep<<"="<<tensorSrep2.sRep()<<"\n";
+
+		relabel = true;
+		tensorSrep4->contract(tensorSrep2, relabel);
+		std::cerr<<"e"<<site<<"_"<<sitep<<"="<<tensorSrep4->sRep()<<"\n";
 		if (!tensorSrep4->isValid(verbose))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		return tensorSrep4;
@@ -120,7 +126,9 @@ private:
 
 	void sitesNotSupported() const
 	{
-		throw PsimagLite::RuntimeError("Builder2D: Requires sites == (4*x)^2 for x integer\n");
+		PsimagLite::String str("Builder2D: Requires sites == (4*x)^2");
+		str += " for some integer x\n";
+		throw PsimagLite::RuntimeError(str);
 	}
 
 	SizeType findSitePrime(SizeType site,SizeType direction) const
@@ -128,11 +136,11 @@ private:
 		SizeType l = sqrt(sites_);
 		assert(l*l == sites_);
 		div_t q = div(site, l);
-		int x = q.rem;
-		int y = q.quot;
+		int x = q.quot;
+		int y = q.rem;
 		if (direction == 0)
-			return snapBack(x + 1, l) + y*l;
-		return x + snapBack(y + 1, l);
+			return snapBack(x + 1, l)*l + y;
+		return x*l + snapBack(y + 1, l);
 	}
 
 	void createUlayer(SizeType& summed,
@@ -240,50 +248,18 @@ private:
 	}
 
 	void correctFreeIndicesBeforeContraction(TensorSrep& t,
-	                                         SizeType site) const
+	                                         VectorPairSizeType& replacements) const
 	{
-		if (site < 1) return;
-
-		SizeType x = (site + 1 == sites_) ? 0 : site + 1;
-		t.swapFree(1,x);
-		t.swapFree(0,site);
-		t.refresh();
-
-		SizeType max = site/2;
-		if (site & 1) ++max;
 		for (SizeType i = 0; i < t.size(); ++i) {
 			TensorStanza& stanza = t(i);
-			if (stanza.name() != "u") continue;
-			SizeType id = stanza.id();
-			if (id > max) continue;
-			SizeType ins = stanza.ins();
-			SizeType k = 0;
-			VectorPairSizeType replacements;
-			for (SizeType j = 0; j < ins; ++j) {
-				if (stanza.legType(j) != TensorStanza::INDEX_TYPE_FREE)
-					continue;
-				SizeType legTag = stanza.legTag(j);
-				SizeType shouldBe = 2*id + k;
-				if (shouldBe > site) break;
-				if (legTag != shouldBe)
-					replacements.push_back(PairSizeType(legTag, shouldBe));
-				++k;
-			}
-
 			stanza.replaceSummedOrFrees(replacements, 'f');
 			stanza.refresh();
 		}
 
 		t.refresh();
-
-		if (site + 1 == sites_) {
-			t.swapFree(0,site);
-			t.swapFree(1,site);
-			t.refresh();
-		}
-
-		t.isValid(false);
+		t.isValid(true);
 	}
+
 
 	SizeType sites_;
 	PsimagLite::String srep_;

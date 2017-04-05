@@ -88,14 +88,15 @@ public:
 		TensorSrep::VectorSizeType indicesToContract(2,site);
 		indicesToContract[1] = x;
 		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
-		tensorSrep4->contract(tensorSrep3,indicesToContract);
+		bool relabel = true;
+		tensorSrep4->contract(tensorSrep3,indicesToContract,relabel);
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
 		correctFreeIndicesBeforeContraction(*tensorSrep4, site);
 
 		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
 		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
-		tensorSrep4->contract(tensorSrep2);
+		tensorSrep4->contract(tensorSrep2, relabel);
 		//std::cout<<"e"<<site<<"()="<<tensorSrep4->sRep()<<"\n";
 		if (!tensorSrep4->isValid(true))
 			throw PsimagLite::RuntimeError("Invalid tensor\n");
