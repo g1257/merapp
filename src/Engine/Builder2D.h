@@ -260,7 +260,6 @@ private:
 		t.isValid(true);
 	}
 
-
 	SizeType sites_;
 	PsimagLite::String srep_;
 };
