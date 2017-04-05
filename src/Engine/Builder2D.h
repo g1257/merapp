@@ -83,43 +83,7 @@ public:
 	TensorSrep* buildEnergyTerm(SizeType c,
 	                            const TensorSrep& tensorSrep) const
 	{
-		SizeType connections = DIMENSION*sites_;
-		div_t q = div(c, DIMENSION);
-		SizeType direction = q.rem;
-		SizeType site = q.quot;
-		SizeType sitep = findSitePrime(site,direction);
-
-		TensorSrep tensorSrep2(tensorSrep);
-		tensorSrep2.conjugate();
-		PsimagLite::String str3("h");
-		str3 += ttos(c) + "(";
-		str3 += "f" + ttos(connections) + ",";
-		str3 += "f" + ttos(connections + 1) + "|";
-		str3 += "f" + ttos(site) + ",";
-		str3 += "f" + ttos(sitep) + ")";
-		TensorSrep tensorSrep3(str3);
-		TensorSrep::VectorSizeType indicesToContract(2,site);
-		indicesToContract[1] = sitep;
-		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
-		bool relabel = false;
-		tensorSrep4->contract(tensorSrep3,indicesToContract,relabel);
-		bool verbose = false;
-		if (!tensorSrep4->isValid(verbose))
-			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		VectorPairSizeType replacements;
-		replacements.push_back(PairSizeType(connections, site));
-		replacements.push_back(PairSizeType(connections + 1, sitep));
-		correctFreeIndicesBeforeContraction(*tensorSrep4, replacements);
-
-		std::cerr<<"UPPER"<<site<<"_"<<sitep<<"="<<tensorSrep4->sRep()<<"\n";
-		std::cerr<<"LOWER"<<site<<"_"<<sitep<<"="<<tensorSrep2.sRep()<<"\n";
-
-		relabel = true;
-		tensorSrep4->contract(tensorSrep2, relabel);
-		std::cerr<<"e"<<site<<"_"<<sitep<<"="<<tensorSrep4->sRep()<<"\n";
-		if (!tensorSrep4->isValid(verbose))
-			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		return tensorSrep4;
+		return BuilderBase::energyTerm(c, tensorSrep, DIMENSION, sites_);
 	}
 
 private:
@@ -129,18 +93,6 @@ private:
 		PsimagLite::String str("Builder2D: Requires sites == (4*x)^2");
 		str += " for some integer x\n";
 		throw PsimagLite::RuntimeError(str);
-	}
-
-	SizeType findSitePrime(SizeType site,SizeType direction) const
-	{
-		SizeType l = sqrt(sites_);
-		assert(l*l == sites_);
-		div_t q = div(site, l);
-		int x = q.quot;
-		int y = q.rem;
-		if (direction == 0)
-			return snapBack(x + 1, l)*l + y;
-		return x*l + snapBack(y + 1, l);
 	}
 
 	void createUlayer(SizeType& summed,
@@ -230,34 +182,13 @@ private:
 		int y = 2*q.quot;
 		SizeType counter = 0;
 		int n = 2*l;
-		SizeType xm1 = snapBack(x - 1, n);
-		SizeType ym1 = snapBack(y - 1, n);
+		SizeType xm1 = this->snapBack(x - 1, n);
+		SizeType ym1 = this->snapBack(y - 1, n);
 
 		assignment[counter++] = xm1 + ym1*n;
 		assignment[counter++] = x + ym1*n;
 		assignment[counter++] = xm1 + y*n;
 		assignment[counter++] = x + y*n;
-	}
-
-	SizeType snapBack(int x, int l) const
-	{
-		if (x >= 0 && x < l) return x;
-		while (x < 0) x += l;
-		while (x >= l) x -= l;
-		return x;
-	}
-
-	void correctFreeIndicesBeforeContraction(TensorSrep& t,
-	                                         VectorPairSizeType& replacements) const
-	{
-		for (SizeType i = 0; i < t.size(); ++i) {
-			TensorStanza& stanza = t(i);
-			stanza.replaceSummedOrFrees(replacements, 'f');
-			stanza.refresh();
-		}
-
-		t.refresh();
-		t.isValid(true);
 	}
 
 	SizeType sites_;

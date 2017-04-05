@@ -24,6 +24,8 @@ namespace Mera {
 
 class Builder1D : public BuilderBase {
 
+	static const SizeType DIMENSION = 1;
+
 public:
 
 	typedef TensorSrep::VectorPairSizeType VectorPairSizeType;
@@ -75,39 +77,7 @@ public:
 	TensorSrep* buildEnergyTerm(SizeType c,
 	                            const TensorSrep& tensorSrep) const
 	{
-		SizeType site = c;
-		SizeType sitep = (site + 1 == sites_) ? 0 : site + 1;
-		SizeType connections = sites_;
-		TensorSrep tensorSrep2(tensorSrep);
-		tensorSrep2.conjugate();
-		PsimagLite::String str3("h");
-		str3 += ttos(c) + "(";
-		str3 += "f" + ttos(connections) + ",";
-		str3 += "f" + ttos(connections + 1) + "|";
-		str3 += "f" + ttos(site) + ",";
-		str3 += "f" + ttos(sitep) + ")";
-		TensorSrep tensorSrep3(str3);
-		TensorSrep::VectorSizeType indicesToContract(2,site);
-		indicesToContract[1] = sitep;
-		TensorSrep* tensorSrep4 = new TensorSrep(tensorSrep);
-		bool relabel = false;
-		tensorSrep4->contract(tensorSrep3,indicesToContract,relabel);
-		if (!tensorSrep4->isValid(true))
-			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		VectorPairSizeType replacements;
-		replacements.push_back(PairSizeType(connections, site));
-		replacements.push_back(PairSizeType(connections + 1, sitep));
-		correctFreeIndicesBeforeContraction(*tensorSrep4, replacements);
-
-		std::cerr<<"LOWER"<<site<<"="<<tensorSrep2.sRep()<<"\n";
-		std::cerr<<"UPPER"<<site<<"="<<tensorSrep4->sRep()<<"\n";
-
-		relabel = true;
-		tensorSrep4->contract(tensorSrep2, relabel);
-		//std::cout<<"e"<<site<<"()="<<tensorSrep4->sRep()<<"\n";
-		if (!tensorSrep4->isValid(true))
-			throw PsimagLite::RuntimeError("Invalid tensor\n");
-		return tensorSrep4;
+		return BuilderBase::energyTerm(c, tensorSrep, DIMENSION, sites_);
 	}
 
 private:
@@ -213,19 +183,6 @@ private:
 			O0 = "s" + ttos(summed++);
 			srep_ += "|" + O0 + ")";
 		}
-	}
-
-	void correctFreeIndicesBeforeContraction(TensorSrep& t,
-	                                         VectorPairSizeType& replacements) const
-	{
-		for (SizeType i = 0; i < t.size(); ++i) {
-			TensorStanza& stanza = t(i);
-			stanza.replaceSummedOrFrees(replacements, 'f');
-			stanza.refresh();
-		}
-
-		t.refresh();
-		t.isValid(true);
 	}
 
 	SizeType sites_;
