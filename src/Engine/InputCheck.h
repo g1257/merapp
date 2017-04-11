@@ -41,7 +41,10 @@ public:
 	InputCheck() : optsReadable_(0)
 	{
 		PsimagLite::String knownLabels = "TauMax IterMera IterTensor DimensionSrep";
-		knownLabels += " TensorId Layer IgnoreTerm Environ Terms";
+		knownLabels += " TensorId Layer IgnoreTerm Environ Terms SymmForTensor";
+		knownLabels += " Total NoSymmetryLocal FirstOfLayer Tolerance Model MeraOptions";
+		knownLabels += " Sites Shift MERA IsMeraPeriodic MaxLegs hamiltonianConnection";
+		knownLabels += " qOne SymmTensors";
 		PsimagLite::tokenizer(knownLabels,knownLabels_," ");
 	}
 
@@ -78,6 +81,7 @@ public:
 	bool checkSimpleLabel(const PsimagLite::String& label,
 	                      SizeType line) const
 	{
+		if (label.substr(0,3) == "Leg") return true;
 		for (SizeType i = 0; i < knownLabels_.size(); ++i)
 			if (knownLabels_[i] == label) return true;
 		PsimagLite::String msg("WARNING: Unknown label " + label +"\n");
