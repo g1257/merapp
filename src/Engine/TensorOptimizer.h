@@ -28,6 +28,8 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "CrsMatrix.h"
 #include "BLAS.h"
 #include "SymmetryLocal.h"
+#include "ParallelEnvironHelper.h"
+#include "Parallelizer.h"
 
 namespace Mera {
 
@@ -37,12 +39,12 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
+	typedef ParallelEnvironHelper<ComplexOrRealType> ParallelEnvironHelperType;
 
 public:
 
 	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
 	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
-	typedef TensorEvalNew<ComplexOrRealType> TensorEvalNewType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
@@ -51,7 +53,7 @@ public:
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
 	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
 	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
-	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
+	typedef typename ParallelEnvironHelperType::MatrixType MatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
 	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef PsimagLite::ParametersForSolver<RealType> ParametersForSolverType;
@@ -164,8 +166,16 @@ public:
 
 			if (condSrep->lhs().maxTag('f') == 0) continue;
 
+			ParallelEnvironHelperType parallelEnvironHelper(tensorSrep_,
+			                                                evaluator,
+			                                                ignore_,
+			                                                tensorNameIds_,
+															nameIdsTensor_,
+															tensors_,
+															symmLocal_);
+
 			MatrixType condMatrix;
-			appendToMatrix(condMatrix, *condSrep, evaluator);
+			parallelEnvironHelper.appendToMatrix(condMatrix, *condSrep, evaluator);
 			if (!isTheIdentity(condMatrix))
 				std::cerr<<"not a isometry or unitary\n";
 		}
@@ -184,23 +194,12 @@ public:
 	                                            MapPairStringSizeType& nameIdsTensor,
 	                                            SymmetryLocalType& symmLocal)
 	{
-		TensorEvalBaseType* tensorEval = 0;
-		if (evaluator == "slow") {
-			tensorEval = new TensorEvalSlowType(srep,
-			                                    tensors,
-			                                    tensorNameIds,
-			                                    nameIdsTensor,
-			                                    &symmLocal);
-		} else if (evaluator == "new") {
-			tensorEval = new TensorEvalNewType(srep,
-			                                   tensors,
-			                                   tensorNameIds,
-			                                   nameIdsTensor);
-		} else {
-			throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
-		}
-
-		return tensorEval;
+		return ParallelEnvironHelperType::getTensorEvalPtr(evaluator,
+		                                                   srep,
+		                                                   tensors,
+		                                                   tensorNameIds,
+		                                                   nameIdsTensor,
+		                                                   symmLocal);
 	}
 
 	void restoreTensor()
@@ -277,15 +276,24 @@ private:
 
 	RealType optimizeInternal(SizeType iter, SizeType upIter, PsimagLite::String evaluator)
 	{
-		SizeType terms = tensorSrep_.size();
-		MatrixType m;
 		if (verbose_)
 			std::cerr<<"ignore="<<ignore_<<"\n";
-		for (SizeType i = 0; i < terms; ++i) {
-			if (i == ignore_) continue;
-			appendToMatrix(m, *(tensorSrep_[i]), evaluator);
-		}
+		typedef PsimagLite::Parallelizer<ParallelEnvironHelperType> ParallelizerType;
+		ParallelizerType threadedEnviron(PsimagLite::Concurrency::npthreads,
+		                                       PsimagLite::MPI::COMM_WORLD);
 
+		ParallelEnvironHelperType parallelEnvironHelper(tensorSrep_,
+		                                                evaluator,
+		                                                ignore_,
+		                                                tensorNameIds_,
+														nameIdsTensor_,
+														tensors_,
+														symmLocal_);
+
+		threadedEnviron.loopCreate(parallelEnvironHelper);
+		parallelEnvironHelper.sync();
+
+		MatrixType m = parallelEnvironHelper.matrix();
 		MatrixType mSrc = m;
 		VectorRealType s(m.n_row(),0);
 		if (tensorToOptimize_.first == "r") { // diagonalize
@@ -392,153 +400,7 @@ private:
 				t(i,j) = gsVector[i + j*rows];
 	}
 
-	void appendToMatrix(MatrixType& m,
-	                    SrepStatementType& eq,
-	                    PsimagLite::String evaluator)
-	{
-		SizeType total = eq.rhs().maxTag('f') + 1;
-		VectorSizeType freeIndices(total,0);
-		VectorDirType directions(total,TensorStanza::TensorLegType::INDEX_DIR_IN);
-		VectorSizeType dimensions(total,0);
-		VectorBoolType conjugate(total,false);
-		prepareFreeIndices(directions,conjugate,dimensions,eq.rhs());
-		modifyDirections(directions,conjugate);
-		PairSizeType rc = getRowsAndCols(dimensions,directions);
-		if (m.n_row() == 0) {
-			m.resize(rc.first, rc.second);
-			m.setTo(0.0);
-		} else if (m.n_row() != rc.first || m.n_col() != rc.second) {
-			PsimagLite::String str("Hamiltonian terms environ \n");
-			throw PsimagLite::RuntimeError(str);
-		}
 
-		assert(m.n_row() > 0 && m.n_col() > 0);
-
-		// prepare output tensor for evaluator
-		outputTensor(eq).setSizes(dimensions);
-
-		// evaluate environment
-		TensorEvalBaseType* tensorEval = getTensorEvalPtr(evaluator,
-		                                                  eq,
-		                                                  tensors_,
-		                                                  tensorNameIds_,
-		                                                  nameIdsTensor_,
-		                                                  symmLocal_);
-
-		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
-		while (!handle.done());
-
-		delete tensorEval;
-		tensorEval = 0;
-
-		// copy result into m
-		SizeType count = 0;
-		do {
-			PairSizeType rc = getRowAndColFromFree(freeIndices,dimensions,directions);
-			ComplexOrRealType tmp = outputTensor(eq)(freeIndices);
-			m(rc.first,rc.second) += tmp;
-			count++;
-		} while (ProgramGlobals::nextIndex(freeIndices,dimensions,total));
-	}
-
-	void prepareFreeIndices(VectorDirType& directions,
-	                        VectorBoolType& conjugate,
-	                        VectorSizeType& dimensions,
-	                        const TensorSrep& t) const
-	{
-		assert(dimensions.size() == directions.size());
-		assert(dimensions.size() == conjugate.size());
-
-		SizeType ntensors = t.size();
-		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = t(i).name();
-			SizeType id = t(i).id();
-			PairStringSizeType p(name,id);
-
-			SizeType ind = nameIdsTensor_[p];
-			assert(ind < tensors_.size());
-
-			SizeType ins = t(i).ins();
-			SizeType legs = t(i).legs();
-			bool conjugate1 = t(i).isConjugate();
-			for (SizeType j = 0; j < legs; ++j) {
-				TensorStanza::IndexTypeEnum legType = t(i).legType(j);
-				if (legType != TensorStanza::INDEX_TYPE_FREE) continue;
-				SizeType index = t(i).legTag(j);
-				assert(index < dimensions.size());
-				dimensions[index] = tensors_[ind]->dimension(j);
-				assert(index < directions.size());
-				directions[index] = (j < ins) ? TensorStanza::INDEX_DIR_IN :
-				                                TensorStanza::INDEX_DIR_OUT;
-				conjugate[index] = conjugate1;
-			}
-		}
-	}
-
-	PairSizeType getRowAndColFromFree(VectorSizeType& freeIndices,
-	                                  const VectorSizeType& dimensions,
-	                                  const VectorDirType& dirs) const
-	{
-		SizeType n = freeIndices.size();
-		assert(n == dirs.size());
-		assert(n == dimensions.size());
-		SizeType row = 0;
-		SizeType col = 0;
-		SizeType prodRow = 1;
-		SizeType prodCol = 1;
-		for (SizeType i = 0; i < n; ++i) {
-			if (dirs[i] == TensorStanza::INDEX_DIR_IN) {
-				row += freeIndices[i]*prodRow;
-				prodRow *= dimensions[i];
-			} else {
-				col += freeIndices[i]*prodCol;
-				prodCol *= dimensions[i];
-			}
-		}
-
-		return PairSizeType(row,col);
-	}
-
-	PairSizeType getRowsAndCols(const VectorSizeType& dimensions,
-	                            const VectorDirType& dirs) const
-	{
-		SizeType n = dimensions.size();
-		assert(n == dirs.size());
-
-		VectorSizeType freeIndices(n,0);
-		for (SizeType i = 0; i < n; ++i) {
-			if (dimensions[i] == 0) continue;
-			freeIndices[i] = dimensions[i] - 1;
-		}
-
-		PairSizeType p = getRowAndColFromFree(freeIndices,dimensions,dirs);
-		return PairSizeType(p.first + 1, p.second + 1);
-	}
-
-	void modifyDirections(VectorDirType& dirs,
-	                      const VectorBoolType& conjugate) const
-	{
-		SizeType n = dirs.size();
-		assert(n == conjugate.size());
-
-		SizeType counter = 0;
-		for (SizeType i = 0; i < n; ++i) {
-			if (conjugate[i]) dirs[i] = oppositeDir(dirs[i]);
-			if (dirs[i] == dirs[0]) counter++;
-		}
-
-		if (counter < n) return;
-		counter /= 2;
-		for (SizeType i = counter; i < n; ++i)
-			dirs[i] = oppositeDir(dirs[0]);
-	}
-
-	TensorStanza::IndexDirectionEnum oppositeDir(TensorStanza::IndexDirectionEnum dir) const
-	{
-		TensorStanza::IndexDirectionEnum in = TensorStanza::INDEX_DIR_IN;
-		TensorStanza::IndexDirectionEnum out = TensorStanza::INDEX_DIR_OUT;
-		return (dir == in) ? out : in;
-	}
 
 	RealType computeRyR(const MatrixType& y) const
 	{
@@ -569,15 +431,6 @@ private:
 		}
 
 		return sum;
-	}
-
-	TensorType& outputTensor(const SrepStatementType& eq)
-	{
-		SizeType indexOfOutputTensor = TensorEvalBaseType::indexOfOutputTensor(eq,
-		                                                                       tensorNameIds_,
-		                                                                       nameIdsTensor_);
-		assert(indexOfOutputTensor < tensors_.size());
-		return *(tensors_[indexOfOutputTensor]);
 	}
 
 	TensorOptimizer(const TensorOptimizer&);

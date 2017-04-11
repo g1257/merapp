@@ -15,6 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
+#define USE_PTHREADS_OR_NOT_NG
 #include "Vector.h"
 #include "MeraSolver.h"
 #include "Version.h"
