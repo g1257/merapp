@@ -81,8 +81,8 @@ public:
 			// add them to tensorNameIds nameIdsTensor
 			PsimagLite::String temporaryName = vstr[i];
 			if (temporaryName == tSrep.lhs().sRep()) {
-				std::cout<<"Definition of "<<srepStatement_.rhs().sRep()<<" is ";
-				std::cout<<vstr[i + 1]<<"\n";
+				//std::cout<<"Definition of "<<srepStatement_.rhs().sRep()<<" is ";
+				//std::cout<<vstr[i + 1]<<"\n";
 				srepStatement_.rhs() = TensorSrep(vstr[i + 1]);
 				outputLocation = i;
 			}
@@ -119,7 +119,7 @@ public:
 			                     symmLocal_,
 			                     false);
 
-			std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
+			//std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
 			tEval(); //handle the handle here
 		}
 
@@ -145,15 +145,8 @@ public:
 
 		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
 
-		static VectorSizeType dimensions;
-		static VectorVectorSizeType q;
-		if (total != dimensions.size()) {
-			dimensions.resize(total, 0);
-			q.resize(total, 0);
-		} else {
-			std::fill(dimensions.begin(), dimensions.end(), 0);
-			std::fill(q.begin(), q.end(), static_cast<VectorSizeType*>(0));
-		}
+		VectorSizeType dimensions(total, 0);
+		VectorVectorSizeType q(total, 0);
 
 		bool hasFree = srepStatement_.lhs().hasLegType('f');
 		if (hasFree) {
@@ -164,9 +157,7 @@ public:
 			dimensions[0] = 1;
 		}
 
-		static VectorSizeType free;
-		if (total != free.size()) free.resize(total,0);
-		else std::fill(free.begin(), free.end(), 0);
+		VectorSizeType free(total, 0);
 
 		if (dimensions.size() == 1 && dimensions[0] == 0)
 			dimensions[0] = 1;
@@ -204,13 +195,9 @@ private:
 	                                const TensorSrepType& srep)
 	{
 		SizeType total = srep.maxTag('s') + 1;
-		static VectorSizeType summed;
-		if (summed.size() != total) summed.resize(total,0);
-		else std::fill(summed.begin(), summed.end(), 0);
+		VectorSizeType summed(total, 0);
 
-		static VectorSizeType dimensions;
-		if (dimensions.size() != total) dimensions.resize(total,0);
-		else std::fill(dimensions.begin(), dimensions.end(), 0);
+		VectorSizeType dimensions(total, 0);
 
 		VectorVectorSizeType q;
 		bool hasSummed = srep.hasLegType('s');

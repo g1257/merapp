@@ -170,9 +170,9 @@ public:
 			                                                evaluator,
 			                                                ignore_,
 			                                                tensorNameIds_,
-															nameIdsTensor_,
-															tensors_,
-															symmLocal_);
+			                                                nameIdsTensor_,
+			                                                tensors_,
+			                                                symmLocal_);
 
 			MatrixType condMatrix;
 			parallelEnvironHelper.appendToMatrix(condMatrix, *condSrep, evaluator);
@@ -280,15 +280,15 @@ private:
 			std::cerr<<"ignore="<<ignore_<<"\n";
 		typedef PsimagLite::Parallelizer<ParallelEnvironHelperType> ParallelizerType;
 		ParallelizerType threadedEnviron(PsimagLite::Concurrency::npthreads,
-		                                       PsimagLite::MPI::COMM_WORLD);
+		                                 PsimagLite::MPI::COMM_WORLD);
 
 		ParallelEnvironHelperType parallelEnvironHelper(tensorSrep_,
 		                                                evaluator,
 		                                                ignore_,
 		                                                tensorNameIds_,
-														nameIdsTensor_,
-														tensors_,
-														symmLocal_);
+		                                                nameIdsTensor_,
+		                                                tensors_,
+		                                                symmLocal_);
 
 		threadedEnviron.loopCreate(parallelEnvironHelper);
 		parallelEnvironHelper.sync();

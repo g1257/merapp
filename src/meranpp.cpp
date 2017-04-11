@@ -24,7 +24,8 @@ int main(int argc, char** argv)
 	PsimagLite::String file = "";
 	int opt = 0;
 	int precision = 6;
-	while ((opt = getopt(argc, argv,"f:p:")) != -1) {
+	SizeType threads = 1;
+	while ((opt = getopt(argc, argv,"f:p:t:")) != -1) {
 		switch (opt) {
 		case 'f':
 			file = optarg;
@@ -34,6 +35,9 @@ int main(int argc, char** argv)
 			std::cout.precision(precision);
 			std::cerr.precision(precision);
 			break;
+		case 't':
+			threads = atoi(optarg);
+			break;
 		}
 	}
 
@@ -42,6 +46,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	PsimagLite::Concurrency c(&argc, &argv, threads);
 	std::cout<<"#MERA_VERSION="<<MERA_VERSION<<"\n";
 	Mera::MeraSolver<double> meraSolver(file);
 

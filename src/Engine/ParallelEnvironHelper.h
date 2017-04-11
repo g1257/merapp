@@ -51,7 +51,7 @@ public:
 
 	ParallelEnvironHelper(VectorSrepStatementType& tensorSrep,
 	                      PsimagLite::String evaluator,
-	                      bool ignore,
+	                      SizeType ignore,
 	                      const VectorPairStringSizeType& tensorNameAndIds,
 	                      MapPairStringSizeType& nameIdsTensor,
 	                      VectorTensorType& tensors,
@@ -301,7 +301,7 @@ private:
 
 	VectorSrepStatementType& tensorSrep_;
 	PsimagLite::String evaluator_;
-	bool ignore_;
+	SizeType ignore_;
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;
