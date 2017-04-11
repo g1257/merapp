@@ -24,7 +24,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorEvalNew.h"
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
-#include "ParametersForMera.h"
 #include "ModelSelector.h"
 #include "ModelBase.h"
 
@@ -38,6 +37,7 @@ class MeraSolver {
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef TensorOptimizer<ComplexOrRealType,InputNgType::Readable> TensorOptimizerType;
 	typedef typename PsimagLite::Vector<TensorOptimizerType*>::Type VectorTensorOptimizerType;
+	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef typename TensorOptimizerType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
@@ -48,10 +48,10 @@ class MeraSolver {
 	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
 	typedef typename TensorEvalBaseType::TensorType TensorType;
 	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 	typedef ModelBase<ComplexOrRealType> ModelBaseType;
 	typedef ModelSelector<ModelBaseType> ModelType;
 	typedef typename TensorOptimizerType::SymmetryLocalType SymmetryLocalType;
+	typedef typename TensorOptimizerType::ParametersForMeraType ParametersForMeraType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
@@ -155,6 +155,7 @@ public:
 			                                                   nameIdsTensor_,
 			                                                   tensors_,
 			                                                   *paramsForLanczos_,
+			                                                   paramsForMera_,
 			                                                   *symmLocal));
 
 			if (name == "r") {
@@ -259,35 +260,100 @@ private:
 		}
 	}
 
+	class ParallelEnergyHelper {
+
+	public:
+
+		ParallelEnergyHelper(bool noSymmLocal,
+		                     SymmetryLocalType& symmLocal,
+		                     VectorSrepStatementType& energyTerms,
+		                     const VectorPairStringSizeType& tensorNameAndIds,
+		                     MapPairStringSizeType& nameIdsTensor,
+		                     VectorTensorType& tensors,
+		                     const ParametersForMeraType& paramsForMera)
+		    : noSymmLocal_(noSymmLocal),
+		      symmLocal_(symmLocal),
+		      energyTerms_(energyTerms),
+		      tensorNameIds_(tensorNameAndIds),
+		      nameIdsTensor_(nameIdsTensor),
+		      tensors_(tensors),
+		      paramsForMera_(paramsForMera),
+		      e_(PsimagLite::Concurrency::npthreads, 0.0)
+		{}
+
+		void doTask(SizeType taskNumber, SizeType threadNum)
+		{
+			assert(threadNum < e_.size());
+			e_[threadNum] += energy(taskNumber);
+		}
+
+		SizeType tasks() const { return energyTerms_.size(); }
+
+		void sync()
+		{
+			if (e_.size() == 0) return;
+			for (SizeType i = 1; i < e_.size(); ++i)
+				e_[0] += e_[i];
+		}
+
+		RealType energy() const
+		{
+			if (e_.size() == 0)
+				throw PsimagLite::RuntimeError("ParallelEnergyHelper failed\n");
+			return e_[0];
+		}
+
+	private:
+
+		RealType energy(SizeType ind)
+		{
+			SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
+			assert(ind < energyTerms_.size());
+			SrepStatementType* ptr = energyTerms_[ind];
+			if (!ptr) return 0.0;
+			TensorEvalBaseType* tensorEval =
+			        TensorOptimizerType::getTensorEvalPtr(paramsForMera_.evaluator,
+			                                              *ptr,
+			                                              tensors_,
+			                                              tensorNameIds_,
+			                                              nameIdsTensor_,
+			                                              *symmLocal);
+
+			typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
+			while (!handle.done());
+			delete tensorEval;
+			tensorEval = 0;
+			VectorSizeType args(1,0);
+			return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
+		}
+
+		bool noSymmLocal_;
+		SymmetryLocalType& symmLocal_;
+		VectorSrepStatementType& energyTerms_;
+		const VectorPairStringSizeType& tensorNameIds_;
+		MapPairStringSizeType& nameIdsTensor_;
+		VectorTensorType& tensors_;
+		const ParametersForMeraType& paramsForMera_;
+		VectorRealType e_;
+	}; // class ParallelEnergyHelper
+
 	RealType energy()
 	{
-		RealType e = 0;
-		for (SizeType i = 0; i < energyTerms_.size(); ++i)
-			e += energy(i);
+		typedef PsimagLite::Parallelizer<ParallelEnergyHelper> ParallelizerType;
+		ParallelizerType threadedEnergies(PsimagLite::Concurrency::npthreads,
+		                                  PsimagLite::MPI::COMM_WORLD);
 
-		return e;
-	}
+		ParallelEnergyHelper parallelEnergyHelper(noSymmLocal_,
+		                                          symmLocal_,
+		                                          energyTerms_,
+		                                          tensorNameIds_,
+	                                              nameIdsTensor_,
+		                                          tensors_,
+		                                          paramsForMera_);
 
-	RealType energy(SizeType ind)
-	{
-		SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
-		assert(ind < energyTerms_.size());
-		SrepStatementType* ptr = energyTerms_[ind];
-		if (!ptr) return 0.0;
-		TensorEvalBaseType* tensorEval =
-		        TensorOptimizerType::getTensorEvalPtr(paramsForMera_.evaluator,
-		                                              *ptr,
-		                                              tensors_,
-		                                              tensorNameIds_,
-		                                              nameIdsTensor_,
-		                                              *symmLocal);
-
-		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
-		while (!handle.done());
-		delete tensorEval;
-		tensorEval = 0;
-		VectorSizeType args(1,0);
-		return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
+		threadedEnergies.loopCreate(parallelEnergyHelper);
+		parallelEnergyHelper.sync();
+		return parallelEnergyHelper.energy();
 	}
 
 	void initTensorNameIds()

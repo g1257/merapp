@@ -30,6 +30,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "SymmetryLocal.h"
 #include "ParallelEnvironHelper.h"
 #include "Parallelizer.h"
+#include "ParametersForMera.h"
 
 namespace Mera {
 
@@ -43,6 +44,7 @@ class TensorOptimizer {
 
 public:
 
+	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
 	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
@@ -71,6 +73,7 @@ public:
 	                MapPairStringSizeType& nameIdsTensor,
 	                VectorTensorType& tensors,
 	                const ParametersForSolverType& params,
+	                const ParametersForMeraType& paramsForMera,
 	                SymmetryLocalType& symmLocal)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
 	      tensorNameIds_(tensorNameAndIds),
@@ -81,6 +84,7 @@ public:
 	      firstOfLayer_(0),
 	      indexOfRootTensor_(0),
 	      params_(params),
+	      paramsForMera_(paramsForMera),
 	      symmLocal_(symmLocal),
 	      verbose_(false)
 	{
@@ -148,7 +152,7 @@ public:
 			std::cout<<"cond="<<cond<<"\n";
 		}
 
-		RealType tolerance = params_.tolerance;
+		RealType tolerance = paramsForMera_.tolerance;
 		RealType eprev = 0.0;
 		for (SizeType iter = 0; iter < iters; ++iter) {
 
@@ -160,6 +164,8 @@ public:
 
 			if (iter > 0 && tolerance > 0 && fabs(eprev-e) < tolerance)
 				break;
+			std::cerr<<"TensorOptimizer: e="<<e;
+			std::cerr<<" eprev="<<eprev<<" tolerance="<<tolerance<<"\n";
 			eprev = e;
 
 			if (!condSrep) continue;
@@ -345,7 +351,8 @@ private:
 		RealType result = 0.0;
 		for (SizeType i = 0; i < s.size(); ++i)
 			result += s[i];
-		std::cerr<<"ITER="<<iter<<" TensorOptimizer["<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
+		std::cerr<<"ITER="<<iter<<" TensorOptimizer[";
+		std::cerr<<indToOptimize_<<"] svdSumOfS= "<<result<<"\n";
 		return result;
 	}
 
@@ -448,6 +455,7 @@ private:
 	SizeType firstOfLayer_;
 	SizeType indexOfRootTensor_;
 	const ParametersForSolverType& params_;
+	const ParametersForMeraType& paramsForMera_;
 	SymmetryLocalType& symmLocal_;
 	bool verbose_;
 	StackVectorType stack_;
