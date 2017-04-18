@@ -161,7 +161,7 @@ private:
 		dsrep = "(";
 		for (SizeType i = 0; i < ins.size(); ++i) {
 			ret += ins[i];
-			dsrep += "1";
+			dsrep += "D1";
 			if (i + 1 >= ins.size()) continue;
 			ret += ",";
 			dsrep += ",";
@@ -174,7 +174,7 @@ private:
 
 		for (SizeType i = 0; i < outs.size(); ++i) {
 			ret += outs[i];
-			dsrep += "1";
+			dsrep += "D1";
 			if (i + 1 >= outs.size()) continue;
 			ret += ",";
 			dsrep += ",";

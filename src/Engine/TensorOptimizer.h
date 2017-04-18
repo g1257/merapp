@@ -74,7 +74,7 @@ public:
 	                VectorTensorType& tensors,
 	                const ParametersForSolverType& params,
 	                const ParametersForMeraType& paramsForMera,
-	                SymmetryLocalType& symmLocal)
+	                SymmetryLocalType* symmLocal)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
 	      tensorNameIds_(tensorNameAndIds),
 	      nameIdsTensor_(nameIdsTensor),
@@ -198,7 +198,7 @@ public:
 	                                            VectorTensorType& tensors,
 	                                            const VectorPairStringSizeType& tensorNameIds,
 	                                            MapPairStringSizeType& nameIdsTensor,
-	                                            SymmetryLocalType& symmLocal)
+	                                            SymmetryLocalType* symmLocal)
 	{
 		return ParallelEnvironHelperType::getTensorEvalPtr(evaluator,
 		                                                   srep,
@@ -456,7 +456,7 @@ private:
 	SizeType indexOfRootTensor_;
 	const ParametersForSolverType& params_;
 	const ParametersForMeraType& paramsForMera_;
-	SymmetryLocalType& symmLocal_;
+	SymmetryLocalType* symmLocal_;
 	bool verbose_;
 	StackVectorType stack_;
 }; // class TensorOptimizer

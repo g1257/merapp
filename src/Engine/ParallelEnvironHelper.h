@@ -55,7 +55,7 @@ public:
 	                      const VectorPairStringSizeType& tensorNameAndIds,
 	                      MapPairStringSizeType& nameIdsTensor,
 	                      VectorTensorType& tensors,
-	                      SymmetryLocalType& symmLocal)
+	                      SymmetryLocalType* symmLocal)
 	    : tensorSrep_(tensorSrep),
 	      evaluator_(evaluator),
 	      ignore_(ignore),
@@ -105,7 +105,7 @@ public:
 	                                            VectorTensorType& tensors,
 	                                            const VectorPairStringSizeType& tensorNameIds,
 	                                            MapPairStringSizeType& nameIdsTensor,
-	                                            SymmetryLocalType& symmLocal)
+	                                            SymmetryLocalType* symmLocal)
 	{
 		TensorEvalBaseType* tensorEval = 0;
 		if (evaluator == "slow") {
@@ -113,7 +113,7 @@ public:
 			                                    tensors,
 			                                    tensorNameIds,
 			                                    nameIdsTensor,
-			                                    &symmLocal);
+			                                    symmLocal);
 		} else if (evaluator == "new") {
 			tensorEval = new TensorEvalNewType(srep,
 			                                   tensors,
@@ -305,7 +305,7 @@ private:
 	const VectorPairStringSizeType& tensorNameIds_;
 	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;
-	SymmetryLocalType& symmLocal_;
+	SymmetryLocalType* symmLocal_;
 	VectorMatrixType m_;
 }; // class ParallelEnvironHelper
 }

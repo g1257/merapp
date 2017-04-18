@@ -26,6 +26,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "InputCheck.h"
 #include "ModelSelector.h"
 #include "ModelBase.h"
+#include "DimensionSrep.h"
 
 namespace Mera {
 
@@ -59,14 +60,14 @@ public:
 
 	MeraSolver(PsimagLite::String filename)
 	    : paramsForMera_(filename),
-	      symmLocal_(filename),
+	      symmLocal_(0),
+	      meraStr_(""),
 	      isMeraPeriodic_(false),
 	      iterMera_(1),
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
 	      model_(paramsForMera_.model, paramsForMera_.hamiltonianConnection),
-	      paramsForLanczos_(0),
-	      noSymmLocal_(false)
+	      paramsForLanczos_(0)
 	{
 		InputCheck inputCheck;
 		InputNgType::Writeable ioWriteable(filename,inputCheck);
@@ -87,22 +88,24 @@ public:
 		} catch (std::exception&) {}
 
 
+		io.readline(meraStr_,"MERA=");
+		io.readline(dsrepEnvirons_, "DsrepEnvirons=");
+
+		PsimagLite::String hString = "D" + ttos(model_().qOne().size());
+		PsimagLite::String args = "(" + hString + "," + hString + "|";
+		args += hString + "," + hString + ")";
+		for (SizeType i = 0; i < paramsForMera_.hamiltonianConnection.size(); ++i) {
+			if (paramsForMera_.hamiltonianConnection[i] == 0.0) continue;
+			meraStr_ += "h" + ttos(i) + args;
+		}
+
 		try {
 			io.readline(x,"NoSymmetryLocal=");
 		} catch (std::exception&) {}
 
-		noSymmLocal_ = (x == 0) ? false : true;
+		bool noSymmLocal = (x == 0) ? false : true;
 
-		SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
-
-		PsimagLite::String dstr("");
-		io.readline(dstr,"DimensionSrep=");
-		TensorSrep tdstr(dstr);
-		findTensors(tdstr);
-
-		initTensorNameIds();
-
-		initTensors(tdstr);
+		updateTensorSizes(noSymmLocal);
 
 		bool rootTensorFound = false;
 		while (true) {
@@ -156,7 +159,7 @@ public:
 			                                                   tensors_,
 			                                                   *paramsForLanczos_,
 			                                                   paramsForMera_,
-			                                                   *symmLocal));
+			                                                   symmLocal_));
 
 			if (name == "r") {
 				if (rootTensorFound) {
@@ -264,15 +267,13 @@ private:
 
 	public:
 
-		ParallelEnergyHelper(bool noSymmLocal,
-		                     SymmetryLocalType& symmLocal,
+		ParallelEnergyHelper(SymmetryLocalType* symmLocal,
 		                     VectorSrepStatementType& energyTerms,
 		                     const VectorPairStringSizeType& tensorNameAndIds,
 		                     MapPairStringSizeType& nameIdsTensor,
 		                     VectorTensorType& tensors,
 		                     const ParametersForMeraType& paramsForMera)
-		    : noSymmLocal_(noSymmLocal),
-		      symmLocal_(symmLocal),
+		    : symmLocal_(symmLocal),
 		      energyTerms_(energyTerms),
 		      tensorNameIds_(tensorNameAndIds),
 		      nameIdsTensor_(nameIdsTensor),
@@ -307,7 +308,6 @@ private:
 
 		RealType energy(SizeType ind)
 		{
-			SymmetryLocalType* symmLocal = (noSymmLocal_) ? 0 : &symmLocal_;
 			assert(ind < energyTerms_.size());
 			SrepStatementType* ptr = energyTerms_[ind];
 			if (!ptr) return 0.0;
@@ -317,7 +317,7 @@ private:
 			                                              tensors_,
 			                                              tensorNameIds_,
 			                                              nameIdsTensor_,
-			                                              *symmLocal);
+			                                              symmLocal_);
 
 			typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 			while (!handle.done());
@@ -327,8 +327,7 @@ private:
 			return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
 		}
 
-		bool noSymmLocal_;
-		SymmetryLocalType& symmLocal_;
+		SymmetryLocalType* symmLocal_;
 		VectorSrepStatementType& energyTerms_;
 		const VectorPairStringSizeType& tensorNameIds_;
 		MapPairStringSizeType& nameIdsTensor_;
@@ -343,8 +342,7 @@ private:
 		ParallelizerType threadedEnergies(PsimagLite::Concurrency::npthreads,
 		                                  PsimagLite::MPI::COMM_WORLD);
 
-		ParallelEnergyHelper parallelEnergyHelper(noSymmLocal_,
-		                                          symmLocal_,
+		ParallelEnergyHelper parallelEnergyHelper(symmLocal_,
 		                                          energyTerms_,
 		                                          tensorNameIds_,
 	                                              nameIdsTensor_,
@@ -438,12 +436,36 @@ private:
 		}
 	}
 
+	void updateTensorSizes(bool noSymmLocal)
+	{
+		TensorSrep tsrep(meraStr_);
+		SizeType maxLegs = 2.0*paramsForMera_.hamiltonianConnection.size();
+		SymmetryLocal* symmLocal = new SymmetryLocal(tsrep.size(), model_().qOne(), maxLegs);
+		DimensionSrep<SymmetryLocal> dimSrep(meraStr_, *symmLocal, paramsForMera_.m);
+		PsimagLite::String dsrep = dimSrep() + dsrepEnvirons_;
+
+		delete symmLocal_;
+		symmLocal_ = 0;
+		if (!noSymmLocal)
+			symmLocal_ = symmLocal;
+
+		TensorSrep tdstr(dsrep);
+		if (tensorNameIds_.size() == 0) {
+			findTensors(tdstr);
+			initTensorNameIds();
+		}
+
+		initTensors(tdstr);
+	}
+
 	MeraSolver(const MeraSolver&);
 
 	MeraSolver& operator=(const MeraSolver&);
 
 	const ParametersForMeraType paramsForMera_;
-	SymmetryLocalType symmLocal_;
+	SymmetryLocalType* symmLocal_;
+	PsimagLite::String meraStr_;
+	PsimagLite::String dsrepEnvirons_;
 	bool isMeraPeriodic_;
 	SizeType iterMera_;
 	SizeType iterTensor_;
@@ -454,7 +476,6 @@ private:
 	ModelType model_;
 	VectorTensorOptimizerType tensorOptimizer_;
 	ParametersForSolverType* paramsForLanczos_;
-	bool noSymmLocal_;
 	VectorSrepStatementType energyTerms_;
 }; // class MeraSolver
 } // namespace Mera

@@ -66,16 +66,13 @@ void main1(const Mera::MeraBuilder<ComplexOrRealType>& builder,
 	                                                                  dsrep,
 	                                                                  symmLocal);
 	std::cout<<params;
-	symmLocal.save(std::cout);
-	std::cout<<"DimensionSrep="<<dsrep<<environ.dimensionSrep();
-	// add output u1000 to be used by unitary condition checking
-	std::cout<<"u1000(1,1)\n";
 	std::cout<<"IsMeraPeriodic="<<builder.isPeriodic()<<"\n";
 	std::cout<<"NoSymmetryLocal=1\n";
 	std::cout<<"IterMera=10\n";
 	std::cout<<"IterTensor=100\n";
 	std::cout<<"MERA="<<meraString<<"\n";
-
+	// add output u1000 to be used by unitary condition checking
+	std::cout<<"DsrepEnvirons=u1000(D1,D1)"<<environ.dimensionSrep()<<"\n";
 	std::cout<<environ.environs();
 }
 
