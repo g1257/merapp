@@ -287,6 +287,7 @@ private:
 
 	void checkAndAccumulate(const MatrixType& m) const
 	{
+		if (m.n_row() == 0 && m.n_col() == 0) return;
 		assert(m_.size() > 0);
 		SizeType nrow = m_[0]->n_row();
 		SizeType ncol = m_[0]->n_col();
