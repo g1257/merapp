@@ -315,8 +315,18 @@ private:
 			if (printmatrix)
 				if (m.n_row() < 512) std::cout<<m;
 
+			SizeType args = tensors_[indToOptimize_]->args();
+			if ((args & 1) || args < 2)
+				throw PsimagLite::RuntimeError("r tensor should have even lengs\n");
+			SizeType argsOver2 = args/2;
 			SizeType rows = tensors_[indToOptimize_]->argSize(0);
-			SizeType cols = tensors_[indToOptimize_]->argSize(1);
+			for (SizeType i = 1; i < argsOver2; ++i)
+				rows *= tensors_[indToOptimize_]->argSize(i);
+
+			SizeType cols = tensors_[indToOptimize_]->argSize(argsOver2);
+			for (SizeType i = argsOver2 + 1; i < args; ++i)
+				cols *= tensors_[indToOptimize_]->argSize(i);
+
 			assert(rows*cols == m.n_row());
 			MatrixType t(rows,cols);
 			bool fullDiag = (params_.options.find("fulldiag") != PsimagLite::String::npos);
