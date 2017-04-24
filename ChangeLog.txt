@@ -1,0 +1,10 @@
+2017-04-24  Version 0.42
+
+* Parallelization
+	- Tensor optimzer over energy terms
+	- Energies over terms
+
+* DimensionSrep and SymmetryLocal now in numeric driver
+
+* TensorOptimizer: bug fix for arity != 2
+
