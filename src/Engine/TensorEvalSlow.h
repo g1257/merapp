@@ -24,6 +24,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorBreakup.h"
 #include "TensorEvalBase.h"
 #include "SymmetryLocal.h"
+#include "BLAS.h"
 
 namespace Mera {
 
@@ -45,6 +46,7 @@ public:
 	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
+	typedef typename TensorType::MatrixType MatrixType;
 	typedef SymmetryLocal SymmetryLocalType;
 	typedef SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
 
@@ -144,6 +146,9 @@ public:
 		if (modify_ && EVAL_BREAKUP) return handle;
 
 		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
+
+		if (srepStatement_.rhs().size() == 2 && total > 0)
+			return operatorParensFast();
 
 		VectorSizeType dimensions(total, 0);
 		VectorVectorSizeType q(total, 0);
@@ -383,6 +388,63 @@ private:
 		}
 
 		return (qin == qout);
+	}
+
+	HandleType operatorParensFast()
+	{
+		HandleType handle(HandleType::STATUS_DONE);
+		assert(!modify_ || !EVAL_BREAKUP);
+
+		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
+
+		assert(srepStatement_.rhs().size() == 2 && total > 0);
+
+		VectorSizeType dimensions(total, 0);
+		VectorVectorSizeType q(total, 0);
+
+		bool hasFree = srepStatement_.lhs().hasLegType('f');
+		if (hasFree) {
+			prepare(dimensions,q,srepStatement_.rhs(),TensorStanza::INDEX_TYPE_FREE);
+			setQnsForOutput(q);
+		} else {
+			assert(dimensions.size() == 1);
+			dimensions[0] = 1;
+		}
+
+		if (dimensions.size() == 1 && dimensions[0] == 0)
+			dimensions[0] = 1;
+		outputTensor().setSizes(dimensions);
+
+		MatrixType m1;
+		reshapeIntoMatrix(m1, srepStatement_.rhs()(0));
+		SizeType frees1 = m1.rows();
+		SizeType summed = m1.cols();
+		MatrixType m2;
+		reshapeIntoMatrix(m2, srepStatement_.rhs()(1));
+		assert(summed == m2.rows());
+		SizeType frees2 = m2.cols();
+		assert(frees1*frees2 == total);
+		MatrixType m3(frees1, frees2);
+		const ComplexOrRealType alpha = 1.0;
+		const ComplexOrRealType beta = 0.0;
+		int errorCodeNotSetFixme = 0;
+		psimag::BLAS::GEMM('N',
+		                   'N',
+		                   frees1,
+		                   frees2,
+		                   summed,
+		                   alpha,
+		                   &(m1(0,0)),
+		                   frees1,
+		                   &(m2(0,0)),
+		                   summed,
+		                   beta,
+		                   &(m3(0,0)),
+		                   errorCodeNotSetFixme);
+
+		reshapeIntoTensor(outputTensor(), m3, srepStatement_.rhs());
+
+		return handle;
 	}
 
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
