@@ -147,7 +147,7 @@ public:
 
 		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
 
-		if (srepStatement_.rhs().size() == 2 && total > 0)
+		if (srepStatement_.rhs().size() == 2 && total > 0 && !symmLocal_)
 			return operatorParensFast();
 
 		VectorSizeType dimensions(total, 0);
@@ -282,9 +282,9 @@ private:
 		return prod;
 	}
 
-	ComplexOrRealType evalThisTensor(const TensorStanza& ts,
-	                                 const VectorSizeType& summed,
-	                                 const VectorSizeType& free)
+	ComplexOrRealType& evalThisTensor(const TensorStanza& ts,
+	                                  const VectorSizeType& summed,
+	                                  const VectorSizeType& free) const
 	{
 		SizeType id = ts.id();
 		SizeType mid = idNameToIndex(ts.name(),id);
@@ -394,6 +394,7 @@ private:
 	{
 		HandleType handle(HandleType::STATUS_DONE);
 		assert(!modify_ || !EVAL_BREAKUP);
+		assert(!symmLocal_);
 
 		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
 
@@ -450,6 +451,8 @@ private:
 	void reshapeIntoMatrix(MatrixType& m, const TensorStanza& ts) const
 	{
 		SizeType total = ts.maxTag('f') + 1;
+		SizeType totalSummed = ts.maxTag('s') + 1;
+		m.resize(total, totalSummed);
 		VectorSizeType dimensions(total, 0);
 		VectorSizeType free(total, 0);
 
@@ -483,8 +486,77 @@ private:
 
 		do {
 			SizeType col = vectorToIndex(summed, dimensions);
-			m(row, col) = getOneEntry(ts, free, summed);
+			m(row, col) = evalThisTensor(ts, free, summed);
 		} while (ProgramGlobals::nextIndex(summed,dimensions,total));
+	}
+
+	void reshapeIntoTensor(TensorType& tensor,
+	                       const MatrixType& src,
+	                       const TensorSrep& srep) const
+	{
+		SizeType rows = src.rows();
+		SizeType cols = src.cols();
+		SizeType total1 = srep(0).maxTag('f') + 1;
+		SizeType total2 = srep(1).maxTag('f') + 1;
+		VectorVectorSizeType q;
+		VectorSizeType dimensions1;
+		prepareStanza(dimensions1,q,srep(0),TensorStanza::INDEX_TYPE_FREE);
+		VectorSizeType dimensions2;
+		prepareStanza(dimensions2,q,srep(1),TensorStanza::INDEX_TYPE_FREE);
+		MatrixType frees1(rows, total1);
+		MatrixType frees2(cols, total2);
+		for (SizeType i = 0; i < rows; ++i)
+			getFrees(frees1, i, dimensions1);
+
+		for (SizeType j = 0; j < cols; ++j)
+			getFrees(frees2, j, dimensions2);
+
+		VectorSizeType frees(total1 + total2, 0);
+
+		for (SizeType i = 0; i < rows; ++i) {
+			for (SizeType j = 0; j < cols; ++j) {
+				combineFrees(frees, frees1, frees2, i, j);
+				// update output tensor
+			}
+		}
+	}
+
+	void getFrees(MatrixType& frees, SizeType row, const VectorSizeType& d) const
+	{
+		SizeType n = d.size();
+		assert(n > 0);
+		assert(frees.rows() == n);
+		SizeType prod = d[0];
+		for (SizeType i = 1; i < n - 1; ++i) {
+			prod *= d[i-1];
+		}
+
+		SizeType temp = row;
+		SizeType j = 0;
+		SizeType k = (n >= 2) ? n - 2 : 0;
+		while (j < n && k < n) {
+			div_t q = div(temp, prod);
+			frees(row, j++) = q.quot;
+			temp = q.rem;
+			prod /= d[k--];
+		}
+
+		frees(row, j++) = temp;
+	}
+
+	void combineFrees(VectorSizeType& frees,
+	                  const MatrixType& frees1,
+	                  const MatrixType& frees2,
+	                  SizeType ind,
+	                  SizeType jnd) const
+	{
+		SizeType total1 = frees1.cols();
+		SizeType total2 = frees2.cols();
+		assert(frees.size() == total1 + total2);
+		for (SizeType k = 0; k < total1; ++k)
+			frees[k] = frees1(ind, k);
+		for (SizeType k = 0; k < total2; ++k)
+			frees[k] = frees2(jnd, k);
 	}
 
 	SizeType vectorToIndex(const VectorSizeType& v,
