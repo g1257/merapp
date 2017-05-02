@@ -447,6 +447,59 @@ private:
 		return handle;
 	}
 
+	void reshapeIntoMatrix(MatrixType& m, const TensorStanza& ts) const
+	{
+		SizeType total = ts.maxTag('f') + 1;
+		VectorSizeType dimensions(total, 0);
+		VectorSizeType free(total, 0);
+
+		if (dimensions.size() == 1 && dimensions[0] == 0)
+			dimensions[0] = 1;
+
+		do {
+			SizeType row = vectorToIndex(free, dimensions);
+			reshapeIntoMatrix(m, ts, free, row);
+		} while (ProgramGlobals::nextIndex(free,dimensions,total));
+	}
+
+	void reshapeIntoMatrix(MatrixType& m,
+	                       const TensorStanza& ts,
+	                       const VectorSizeType& free,
+	                       SizeType row) const
+	{
+		SizeType total = ts.maxTag('s') + 1;
+		VectorSizeType summed(total, 0);
+
+		VectorSizeType dimensions(total, 0);
+
+		VectorVectorSizeType q;
+		bool hasSummed = ts.hasLegType('s');
+		if (hasSummed) {
+			prepareStanza(dimensions, q, ts, TensorStanza::INDEX_TYPE_SUMMED);
+		} else {
+			assert(dimensions.size() == 1);
+			dimensions[0] = 1;
+		}
+
+		do {
+			SizeType col = vectorToIndex(summed, dimensions);
+			m(row, col) = getOneEntry(ts, free, summed);
+		} while (ProgramGlobals::nextIndex(summed,dimensions,total));
+	}
+
+	SizeType vectorToIndex(const VectorSizeType& v,
+	                       const VectorSizeType& d) const
+	{
+		assert(v.size() > 0);
+		assert(v.size() == d.size());
+		SizeType sum = v[0];
+		for (SizeType i = 1; i < d.size(); ++i) {
+			sum += v[i]*d[i-1];
+		}
+
+		return sum;
+	}
+
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
 	{
 		typename MapPairStringSizeType::iterator it =
