@@ -452,41 +452,45 @@ private:
 	{
 		SizeType total = ts.maxTag('f') + 1;
 		SizeType totalSummed = ts.maxTag('s') + 1;
-		m.resize(total, totalSummed);
 		VectorSizeType dimensions(total, 0);
 		VectorSizeType free(total, 0);
 
 		if (dimensions.size() == 1 && dimensions[0] == 0)
 			dimensions[0] = 1;
 
+		VectorSizeType dimensionsSummed(totalSummed, 0);
+		VectorVectorSizeType q;
+		bool hasSummed = ts.hasLegType('s');
+		if (hasSummed) {
+			prepareStanza(dimensionsSummed, q, ts, TensorStanza::INDEX_TYPE_SUMMED);
+		} else {
+			assert(dimensions.size() == 1);
+			dimensionsSummed[0] = 1;
+		}
+
+		err("Should be volumeOf(total) below\n");
+		m.resize(total, volumeOf(dimensionsSummed));
+
 		do {
 			SizeType row = vectorToIndex(free, dimensions);
-			reshapeIntoMatrix(m, ts, free, row);
+			reshapeIntoMatrix(m, ts, free, row, dimensionsSummed);
 		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 	}
 
 	void reshapeIntoMatrix(MatrixType& m,
-	                       const TensorStanza& ts,
+	                       const TensorStanza& ts1,
 	                       const VectorSizeType& free,
-	                       SizeType row) const
+	                       SizeType row,
+	                       const VectorSizeType& dimensions) const
 	{
+		TensorStanza ts = ts1;
+		ts.canonicalize();
 		SizeType total = ts.maxTag('s') + 1;
 		VectorSizeType summed(total, 0);
 
-		VectorSizeType dimensions(total, 0);
-
-		VectorVectorSizeType q;
-		bool hasSummed = ts.hasLegType('s');
-		if (hasSummed) {
-			prepareStanza(dimensions, q, ts, TensorStanza::INDEX_TYPE_SUMMED);
-		} else {
-			assert(dimensions.size() == 1);
-			dimensions[0] = 1;
-		}
-
 		do {
 			SizeType col = vectorToIndex(summed, dimensions);
-			m(row, col) = evalThisTensor(ts, free, summed);
+			m(row, col) = evalThisTensor(ts, summed, free);
 		} while (ProgramGlobals::nextIndex(summed,dimensions,total));
 	}
 
@@ -517,8 +521,21 @@ private:
 			for (SizeType j = 0; j < cols; ++j) {
 				combineFrees(frees, frees1, frees2, i, j);
 				// update output tensor
+				err("need code to update output tensor\n");
 			}
 		}
+	}
+
+	SizeType volumeOf(const VectorSizeType& v) const
+	{
+		SizeType n = v.size();
+		if (n == 0) return 1;
+		SizeType prod = v[0];
+		for (SizeType i = 1; i < n; ++i) {
+			prod *= v[i];
+		}
+
+		return prod;
 	}
 
 	void getFrees(MatrixType& frees, SizeType row, const VectorSizeType& d) const

@@ -150,6 +150,24 @@ public:
 		opaque_.srep_ = srepFromObject();
 	}
 
+	void canonicalize()
+	{
+		if (opaque_.srep_ == "") return;
+		if (!hasLegType('f')) return;
+
+		VectorSizeType frees(maxTag('f') + 1,0);
+		SizeType counter = 0;
+		SizeType legs = legs_.size();
+		for (SizeType j = 0; j < legs; ++j) {
+			if (legs_[j].name() != 'f')
+				continue;
+			frees[legs_[j].numericTag()] = counter++;
+		}
+
+		setIndices(frees,'f');
+		refresh();
+	}
+
 	bool replaceSummedOrFrees(const VectorPairSizeType& replacements,
 	                          char type)
 	{
