@@ -417,14 +417,14 @@ private:
 		outputTensor().setSizes(dimensions);
 
 		MatrixType m1;
-		reshapeIntoMatrix(m1, srepStatement_.rhs()(0));
+		reshapeIntoMatrix(m1, srepStatement_.rhs()(0), dimensions);
 		SizeType frees1 = m1.rows();
 		SizeType summed = m1.cols();
 		MatrixType m2;
-		reshapeIntoMatrix(m2, srepStatement_.rhs()(1));
+		reshapeIntoMatrix(m2, srepStatement_.rhs()(1), dimensions);
 		assert(summed == m2.rows());
 		SizeType frees2 = m2.cols();
-		assert(frees1*frees2 == total);
+		assert(frees1*frees2 == volumeOf(dimensions));
 		MatrixType m3(frees1, frees2);
 		const ComplexOrRealType alpha = 1.0;
 		const ComplexOrRealType beta = 0.0;
@@ -448,33 +448,31 @@ private:
 		return handle;
 	}
 
-	void reshapeIntoMatrix(MatrixType& m, const TensorStanza& ts) const
+	void reshapeIntoMatrix(MatrixType& m,
+	                       const TensorStanza& ts,
+	                       const VectorSizeType& dimensions) const
 	{
-		SizeType total = ts.maxTag('f') + 1;
 		SizeType totalSummed = ts.maxTag('s') + 1;
-		VectorSizeType dimensions(total, 0);
-		VectorSizeType free(total, 0);
-
-		if (dimensions.size() == 1 && dimensions[0] == 0)
-			dimensions[0] = 1;
-
 		VectorSizeType dimensionsSummed(totalSummed, 0);
 		VectorVectorSizeType q;
 		bool hasSummed = ts.hasLegType('s');
 		if (hasSummed) {
 			prepareStanza(dimensionsSummed, q, ts, TensorStanza::INDEX_TYPE_SUMMED);
 		} else {
-			assert(dimensions.size() == 1);
+			assert(dimensionsSummed.size() == 1);
 			dimensionsSummed[0] = 1;
 		}
 
-		err("Should be volumeOf(total) below\n");
-		m.resize(total, volumeOf(dimensionsSummed));
+		VectorSizeType reducedDimensions;
+		reduceDimensions(reducedDimensions, dimensions, ts);
+		m.resize(volumeOf(reducedDimensions), volumeOf(dimensionsSummed));
+		SizeType total = reducedDimensions.size();
+		VectorSizeType free(total, 0);
 
 		do {
-			SizeType row = vectorToIndex(free, dimensions);
+			SizeType row = vectorToIndex(free, reducedDimensions);
 			reshapeIntoMatrix(m, ts, free, row, dimensionsSummed);
-		} while (ProgramGlobals::nextIndex(free,dimensions,total));
+		} while (ProgramGlobals::nextIndex(free,reducedDimensions,total));
 	}
 
 	void reshapeIntoMatrix(MatrixType& m,
@@ -536,6 +534,30 @@ private:
 		}
 
 		return prod;
+	}
+
+	void reduceDimensions(VectorSizeType& rd,
+	                      const VectorSizeType& v,
+	                      const TensorStanza& ts) const
+	{
+		SizeType n = v.size();
+		if (n == 0) return;
+		PsimagLite::Vector<bool>::Type free(n, false);
+		SizeType legs = ts.legs();
+		SizeType count = 0;
+		for (SizeType i = 0; i < legs; ++i) {
+			if (ts.legType(i) != TensorStanza::INDEX_TYPE_FREE)
+				continue;
+			free[ts.legTag(i)] = true;
+			++count;
+		}
+
+		rd.resize(count);
+		SizeType j = 0;
+		for (SizeType i = 0; i < n; ++i) {
+			if (!free[i]) continue;
+			rd[j++] = v[i];
+		}
 	}
 
 	void getFrees(MatrixType& frees, SizeType row, const VectorSizeType& d) const
