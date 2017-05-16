@@ -25,6 +25,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorEvalBase.h"
 #include "SymmetryLocal.h"
 #include "BLAS.h"
+#include "PsimagLite.h"
 
 namespace Mera {
 
