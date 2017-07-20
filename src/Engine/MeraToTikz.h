@@ -18,7 +18,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef MERATOTIKZ_H
 #define MERATOTIKZ_H
 #include "Vector.h"
-#include "Tokenizer.h"
 #include "TypeToString.h"
 #include <cassert>
 #include <iostream>

@@ -41,7 +41,7 @@ public:
 	    : lhs_(0),rhs_(0)
 	{
 		VectorStringType vstr;
-		PsimagLite::tokenizer(str,vstr,"=");
+		PsimagLite::split(vstr, str, "=");
 		if (vstr.size() != 2)
 			throw PsimagLite::RuntimeError("SrepStatement:: syntax error " + str + "\n");
 		lhs_ = new TensorStanza(vstr[0]);

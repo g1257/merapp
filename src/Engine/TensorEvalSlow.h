@@ -20,7 +20,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 #include "TensorSrep.h"
 #include <map>
-#include "Tokenizer.h"
 #include "TensorBreakup.h"
 #include "TensorEvalBase.h"
 #include "SymmetryLocal.h"

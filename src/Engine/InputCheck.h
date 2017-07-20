@@ -27,7 +27,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <stdexcept>
 #include "Options.h"
-#include "Tokenizer.h"
 
 namespace Mera {
 
@@ -45,7 +44,7 @@ public:
 		knownLabels += " Total NoSymmetryLocal FirstOfLayer Tolerance Model MeraOptions";
 		knownLabels += " Sites Shift MERA IsMeraPeriodic DsrepEnvirons hamiltonianConnection";
 		knownLabels += " qOne";
-		PsimagLite::tokenizer(knownLabels,knownLabels_," ");
+		PsimagLite::split(knownLabels_, knownLabels, " ");
 	}
 
 	~InputCheck()

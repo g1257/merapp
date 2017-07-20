@@ -18,12 +18,12 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef TENSORSTANZA_H
 #define TENSORSTANZA_H
 #include "Vector.h"
-#include "Tokenizer.h"
 #include "TypeToString.h"
 #include "TensorLeg.h"
 #include <cassert>
 #include <iostream>
 #include <algorithm>
+#include "PsimagLite.h"
 
 namespace Mera {
 
@@ -73,7 +73,7 @@ public:
 	    : opaque_(srep)
 	{
 		VectorStringType tokens;
-		PsimagLite::tokenizer(opaque_.srep_,tokens,"|");
+		PsimagLite::split(tokens, opaque_.srep_, "|");
 		SizeType ts = tokens.size();
 		if (ts == 0 || ts > 2) {
 			PsimagLite::String str("TensorStanza: malformed stanza ");
@@ -440,7 +440,7 @@ private:
 	{
 		if (part.length() == 0 || part == ")") return;
 		VectorStringType tokens;
-		PsimagLite::tokenizer(part,tokens,",");
+		PsimagLite::split(tokens, part, ",");
 		SizeType total = tokens.size();
 		for (SizeType i = 0; i < total; ++i)
 			si.push_back(TensorLegType(tokens[i],inOrOut));
