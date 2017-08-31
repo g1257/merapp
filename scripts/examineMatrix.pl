@@ -223,7 +223,7 @@ sub findConnected
     print STDERR "$0: Found $counter connected sub-graphs\n";
 	$counter = scalar(@permutation);
 	my $sum = 0;
-	open(FOUT, "> permutation.txt") or die "$0: writing to permutation.txt : $!\n";
+	open(FOUT, ">", "permutation.txt") or die "$0: writing to permutation.txt : $!\n";
 	print FOUT "PERMUTATION\n";
 	print FOUT "$counter $counter\n";
 	for (my $i = 0; $i < $counter; ++$i) {
