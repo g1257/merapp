@@ -18,7 +18,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef ParametersForMera_H
 #define ParametersForMera_H
 #include "Vector.h"
-#include "IoSimple.h"
+#include "Io/IoSimple.h"
 
 namespace Mera {
 

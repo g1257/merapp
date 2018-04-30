@@ -2,7 +2,7 @@
 #define SYMMETRYLOCAL_H
 #include "Matrix.h"
 #include "Vector.h"
-#include "IoSimple.h"
+#include "Io/IoSimple.h"
 #include "Sort.h"
 
 namespace Mera {

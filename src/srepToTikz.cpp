@@ -20,7 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include <cstdlib>
 #include "Version.h"
-#include "IoSimple.h"
+#include "Io/IoSimple.h"
 
 int main(int argc, char** argv)
 {
