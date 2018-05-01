@@ -279,7 +279,7 @@ private:
 		      nameIdsTensor_(nameIdsTensor),
 		      tensors_(tensors),
 		      paramsForMera_(paramsForMera),
-		      e_(PsimagLite::Concurrency::npthreads, 0.0)
+		      e_(PsimagLite::Concurrency::codeSectionParams.npthreads, 0.0)
 		{}
 
 		void doTask(SizeType taskNumber, SizeType threadNum)
@@ -339,8 +339,7 @@ private:
 	RealType energy()
 	{
 		typedef PsimagLite::Parallelizer<ParallelEnergyHelper> ParallelizerType;
-		ParallelizerType threadedEnergies(PsimagLite::Concurrency::npthreads,
-		                                  PsimagLite::MPI::COMM_WORLD);
+		ParallelizerType threadedEnergies(PsimagLite::Concurrency::codeSectionParams);
 
 		ParallelEnergyHelper parallelEnergyHelper(symmLocal_,
 		                                          energyTerms_,

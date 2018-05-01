@@ -63,7 +63,7 @@ public:
 	      nameIdsTensor_(nameIdsTensor),
 	      tensors_(tensors),
 	      symmLocal_(symmLocal),
-	      m_(PsimagLite::Concurrency::npthreads, 0)
+	      m_(PsimagLite::Concurrency::codeSectionParams.npthreads, 0)
 	{
 		for (SizeType i = 0; i < m_.size(); ++i)
 			m_[i] = new MatrixType;

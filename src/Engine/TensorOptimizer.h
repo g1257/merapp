@@ -285,8 +285,7 @@ private:
 		if (verbose_)
 			std::cerr<<"ignore="<<ignore_<<"\n";
 		typedef PsimagLite::Parallelizer<ParallelEnvironHelperType> ParallelizerType;
-		ParallelizerType threadedEnviron(PsimagLite::Concurrency::npthreads,
-		                                 PsimagLite::MPI::COMM_WORLD);
+		ParallelizerType threadedEnviron(PsimagLite::Concurrency::codeSectionParams);
 
 		ParallelEnvironHelperType parallelEnvironHelper(tensorSrep_,
 		                                                evaluator,
