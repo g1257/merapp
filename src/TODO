@@ -1,3 +1,6 @@
+
+----> IoSimple::In should become InputNg
+
 Symbolic driver:
 DONE	Normalize s* indices
 DONE	Environ for r
