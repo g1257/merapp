@@ -31,6 +31,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "ParallelEnvironHelper.h"
 #include "Parallelizer.h"
 #include "ParametersForMera.h"
+#include "Random48.h"
 
 namespace Mera {
 
@@ -86,7 +87,8 @@ public:
 	      params_(params),
 	      paramsForMera_(paramsForMera),
 	      symmLocal_(symmLocal),
-	      verbose_(false)
+	      verbose_(false),
+	      rng_(1234)
 	{
 		io.readline(layer_,"Layer=");
 		io.readline(firstOfLayer_,"FirstOfLayer=");
@@ -410,7 +412,10 @@ private:
 		LanczosSolverType lanczosSolver(srcSparse,params_);
 		VectorType gsVector(n,0.0);
 		if (s.size() == 0) s.resize(1,0.0);
-		lanczosSolver.computeGroundState(s[0],gsVector);
+
+		VectorType initialV(n);
+		randomizeVector(initialV, 1, 0, rng_);
+		lanczosSolver.computeOneState(s[0], gsVector, initialV, 0);
 		for (SizeType i = 0; i < rows; ++i)
 			for (SizeType j = 0; j < cols; ++j)
 				t(i,j) = gsVector[i + j*rows];
@@ -467,6 +472,7 @@ private:
 	const ParametersForMeraType& paramsForMera_;
 	SymmetryLocalType* symmLocal_;
 	bool verbose_;
+	PsimagLite::Random48<double> rng_;
 	StackVectorType stack_;
 }; // class TensorOptimizer
 } // namespace Mera
