@@ -147,8 +147,8 @@ public:
 
 		SizeType total = srepStatement_.lhs().maxTag('f') + 1;
 
-		if (srepStatement_.rhs().size() == 2 && total > 0 && !symmLocal_)
-			return operatorParensFast();
+		//if (srepStatement_.rhs().size() == 2 && total > 0 && !symmLocal_)
+		//	return operatorParensFast();
 
 		VectorSizeType dimensions(total, 0);
 		VectorVectorSizeType q(total, 0);
@@ -428,7 +428,6 @@ private:
 		MatrixType m3(frees1, frees2);
 		const ComplexOrRealType alpha = 1.0;
 		const ComplexOrRealType beta = 0.0;
-		int errorCodeNotSetFixme = 0;
 		psimag::BLAS::GEMM('N',
 		                   'N',
 		                   frees1,
@@ -441,7 +440,7 @@ private:
 		                   summed,
 		                   beta,
 		                   &(m3(0,0)),
-		                   errorCodeNotSetFixme);
+		                   m3.rows());
 
 		reshapeIntoTensor(outputTensor(), m3, srepStatement_.rhs());
 
