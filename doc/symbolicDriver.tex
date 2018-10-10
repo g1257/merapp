@@ -64,4 +64,15 @@ to create a 8-site one-dimensional binary periodic MERA truncated to 10 states.
 	(b) All energies $E_l$ for $l=0,\cdots,n-1$ for a 2-local Hamiltonian shown as the tensor in shaded rectangles.
 	(c) Causal cone simplification of $E_0$. (d) Causal cone simplification of $B_{0,0}$.}
 \end{figure}
+
+\section{Work Needed for the Symbolic Driver}
+\begin{enumerate}
+	\item Implement more geometries like dimension 3 hyper-rectangular, triangular lattices. Note that dimension 2 rectangular has already been implemented.
+	Difficulty: medium to hard.
+	\item Implement more arities like ternary MERA. Only binary MERA has been implemented so far. 	Difficulty: medium to hard.
+	\item Implement more Models. Only Heisenberg spin one-half has been implemented so far. 	Difficulty: medium to hard for bosonic models, very hard for
+	fermionic models.
+	\item The symbolic driver \code{merapp} should be able to specify local symmetries. Difficulty level: hard.
+	\item The symbolic driver should be able to handle fermionic models via ``diamond'' tensors: Difficult level: very hard.
+\end{enumerate}
 \end{document}
