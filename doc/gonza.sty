@@ -1,0 +1,132 @@
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{gonza}[2013/01/13 Custom Package]
+\RequirePackage{ifxetex,ifluatex}
+
+\RequirePackage{amsmath}
+\RequirePackage{amsthm}
+\RequirePackage{mathtools}
+\RequirePackage{ifthen}
+
+\ifxetex
+\RequirePackage{xltxtra}
+\else
+\ifluatex
+\RequirePackage{luatextra}
+\RequirePackage{amssymb}
+\RequirePackage[english]{babel}
+\else
+\RequirePackage{amssymb}
+\RequirePackage[english]{babel}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{rotating}
+\RequirePackage[usenames,dvipsnames,pdftex]{xcolor}
+\newcommand{\liningnumbers}[1]{#1}
+%% Trick to skip XeTeX/LuaTeX code (from LaTeX3)
+\csname else\expandafter\endcsname
+\romannumeral -`0% no space till \relax
+\fi
+\fi
+\iftrue\relax%
+%% XeTeX/LuaTeX
+\RequirePackage{fontspec}
+\RequirePackage[math-style=TeX, vargreek-shape=TeX]{unicode-math}
+%\setromanfont[Ligatures=TeX,Numbers={Proportional, OldStyle}]{Latin Modern Roman}
+%\setsansfont[Ligatures=TeX,Numbers={Proportional, OldStyle}]{Latin Modern Sans}
+%\setmonofont{CMU Typewriter Text}
+%\RequirePackage[osf]{libertine}
+%
+\setromanfont[Ligatures=TeX,Numbers={Proportional, OldStyle}]{Libertinus Serif}
+\setsansfont[Ligatures=TeX,Numbers={Proportional, OldStyle}]{Libertinus Sans}
+\setmonofont{Libertinus Mono}
+\setmathfont{Latin Modern Math}
+%
+%\setromanfont[Ligatures=TeX,Numbers={Proportional, OldStyle}]{LibreCaslonText}
+%\setmainfont{EB Garamond}
+\defaultfontfeatures{Ligatures=TeX,Numbers=OldStyle}
+\newcommand{\liningnumbers}[1]{{\addfontfeatures{Numbers=Lining}#1}}
+%\addfontfeatures{Numbers=OldStyle}}
+%\newcommand{\liningnumbers}[1]{#1}
+\fi
+
+\RequirePackage[protrusion=true,expansion]{microtype}
+\RequirePackage{eso-pic}
+\RequirePackage{fancyhdr}
+\RequirePackage{listings}
+\RequirePackage[letterpaper]{geometry}
+%\oddsidemargin=2pt
+%\evensidemargin=2pt
+%\marginparwidth=2pt
+
+\RequirePackage{lastpage}
+\RequirePackage{hyperref}
+
+\definecolor{gray1}{RGB}{240,   240,   240}
+\definecolor{gray2}{RGB}{150,   150,   150}
+\definecolor{myblue}{HTML}{0074D9}
+\definecolor{mynavy}{HTML}{001F3F}
+\hypersetup{colorlinks=true,
+citecolor=Orange,linkcolor=teal,urlcolor=myblue}
+\newcommand{\NotForDistribution}[1]{\textcolor{white}{\Huge  \hfill \textsf{\textbf{#1}\hfill}}}
+\newcommand{\Sidebar}[2]{\rotatebox{#1}{\colorbox{gray1}{\begin{minipage}{\paperheight}%
+	\vspace{0.5cm}\centering\NotForDistribution{#2}\vspace{0.5cm}\\%
+		\end{minipage}}%
+	}%
+}
+
+\newcommand{\footerAndHeader}{
+\cfoot{}
+\rfoot{\thepage~of~\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0pt}
+}
+\newlength{\bwidth}
+\setlength\bwidth{\paperwidth}
+
+\newcommand\AtPageCustom[1]{%
+	\put(\LenToUnit{\bwidth},\LenToUnit{-\ESO@yoffsetI}){#1}%
+}
+
+\newcommand\WithSidebar[1]{
+%\if@twoside
+\addtolength{\bwidth}{-1.6cm}
+\AddToShipoutPicture{%
+	\ifthenelse{\isodd{\thepage}}{%
+		\AtPageLowerLeft{\Sidebar{90}{#1}}}{%
+			\AtPageCustom{\Sidebar{-90}{#1}}}%
+}
+%\else
+%\AddToShipoutPicture{\AtPageLowerLeft{\Sidebar{90}{#1}}}
+%\fi
+}
+
+\DeclareOption{businessSensitive}{
+\renewcommand{\footerAndHeader}{%
+\lfoot{\textcolor{gray2}{\textsf{Business Sensitive}}}
+\cfoot{\textcolor{gray2}{\textsf{Do not distribute}}}
+\rfoot{\thepage}}
+}
+
+\DeclareOption{notForDistribution}{
+  \renewcommand{\footerAndHeader}{}
+}
+
+\DeclareOption{EmptyFooter}{
+  \renewcommand{\footerAndHeader}{}
+}
+
+%\ExecuteOptions{businessSensitive}
+
+\ProcessOptions\relax
+
+%% Traditional LaTeX or TeX follows...
+% ...
+
+\footerAndHeader
+\fancyhead{}
+\fancyhead[LE]{\leftmark}
+\fancyhead[RO]{\rightmark}
+\pagestyle{fancy}
+
+% ...
+
+\endinput
