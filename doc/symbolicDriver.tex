@@ -16,21 +16,19 @@
 \end{center}
 
 \section{The MERA}
-	A MERA is a tensor network. The parameters that describe the MERA
-	are the number of sites \code{-n}, the arity \code{-a}, and the periodicity (-P).
-See figure 1(a) for a graphical description of each parameter.
-The MERA++ symbolic driver \code{merapp} inputs the parameters of the MERA and
-outputs a string representation of the MERA, or an sRep.
+Multiscale Entanglement Renormalization Ansatz (MERA) refers to a class of tensor networks where a linear mapping is repeatedly applied generate a rescaled quantum theory. 
+The main meta-parameters specifying MERA networks are: the dimension \code{-d}, number of renormalization layers \code{-l}, the isometry arity \code{-a}, and the periodicity \code{-P}. 
+These parameters, along with a geometric tiling, induce an underlying graph structure which fixes the number of physical sites \code{-n}. 
+See figure 1(a) for a graphical description the parameters.
+The MERA++ symbolic driver \code{merapp} inputs the parameters of the MERA and outputs a string representation of the MERA, or an sRep.
 
-For practical reasons, \code{merapp} expects ``meta-parameters'' of the MERA, and these
-are now described. Each tensor of the MERA needs to be introduced in what is called a dRep, which
-is a special kind of sRep that instead of describing a tensor network, declares
-the tensors and its dimensions. The dimensions of the free indices of the MERA
+Along with the meta- parameters each tensor of the MERA needs to be specified. 
+This is done by a dRep, a special kind of sRep, which declares the tensor's dimensions and any additional structure (e.g. symmetries). 
+The dimensions of the free indices of the MERA
 can be learned from the model used that must be specified with \code{-M}, and if there is no truncation, the indices of all
 other tensors can be inferred from those dimensions and the MERA itself. 
-But when there is truncation, we need to specify the maximum dimension  \code{-m} $m$
-of any single tensor (or rather
-the dimension of its legs). In preparation for the numerical stage, the evaluator \code{-e} can be specified;
+But when there is truncation, we need to specify the maximum dimension \code{-m} $m$
+of any tensor legs. In preparation for the numerical stage, the evaluator \code{-e} can be specified;
 the evaluator will be used in the numerical stage and will have as its backend the ExaTN library.
 The tolerance \code{-t} for the evaluator can also be specified as a floating point number.
 
