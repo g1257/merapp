@@ -32,6 +32,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Parallelizer.h"
 #include "ParametersForMera.h"
 #include "Random48.h"
+#include "Svd.h"
 
 namespace Mera {
 
@@ -357,6 +358,7 @@ private:
 		if (verbose_)
 			std::cerr<<"About to do svd matrix with norm2= "<<tmp<<"\n";
 		MatrixType vt;
+		PsimagLite::Svd<ComplexOrRealType> svd;
 		svd('S',m,s,vt);
 		page14StepL3(m,vt);
 		RealType result = 0.0;
