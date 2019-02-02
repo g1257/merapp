@@ -286,13 +286,13 @@ private:
 		for (SizeType i = 0; i < n - 1; ++i) {
 			SizeType j = n - i - 1;
 			div_t x = div(tmp, dim[j - 1]);
-			coordinates[j] = x.rem;
-			assert(coordinates[j] < dim[j]);
+			coordinates[i] = x.rem;
+			assert(coordinates[i] < dim[i]);
 			tmp = x.quot;
 		}
 
-		coordinates[0] = tmp;
-		assert(coordinates[0] < dim[0]);
+		coordinates[n - 1] = tmp;
+		assert(coordinates[n - 1] < dim[n - 1]);
 	}
 
 	void truncateVector(VectorSizeType& qq, SizeType m) const
