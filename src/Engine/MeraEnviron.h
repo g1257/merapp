@@ -90,7 +90,7 @@ private:
 			if (params_.hamiltonianConnection[c] == 0.0) continue;
 			TensorSrep tmp = environForTensorOneSite(ind, c);
 			vstr[c] = tmp.sRep();
-			argForOutput[c] = calcArgForOutput(vdsrep[c],tmp);
+			argForOutput[c] = calcArgForOutput(vdsrep[c], tmp, ind);
 			if (vstr[c] != "") ++terms;
 		}
 
@@ -123,16 +123,16 @@ private:
 	{
 		const TensorSrep& energySrep = builder_.energy(site);
 		TensorSrep tensorSrep4(energySrep);
-		tensorSrep4.eraseTensor(irreducibleIdentity_,ind,0);
+		tensorSrep4.eraseTensor(irreducibleIdentity_, ind, 0);
 		bool verbose = false;
 		if (!tensorSrep4.isValid(verbose))
-			throw PsimagLite::RuntimeError("Invalid tensor\n");
+			err("Invalid tensor\n");
 		SizeType jnd = tensorSrep4.findConjugate(ind);
 		bool hasConjugate = (jnd < tensorSrep4.size());
 		bool isRootTensor = (tensorSrep_(ind).name() == "r");
 		if (!hasConjugate) {
 			if (isRootTensor) {
-				throw PsimagLite::RuntimeError("Environ for root: INTERNAL ERROR\n");
+				err("Environ for root: INTERNAL ERROR\n");
 			} else {
 				std::cerr<<"EMPTY_ENVIRON="<<tensorSrep4.sRep()<<"\n";
 				return TensorSrep("");
@@ -142,14 +142,15 @@ private:
 			// use energySrep to compute r size
 			//
 			if (!tensorSrep4.isValid(verbose))
-				throw PsimagLite::RuntimeError("Invalid tensor\n");
+				err("Invalid tensor\n");
 		}
 
 		return tensorSrep4;
 	}
 
 	PsimagLite::String calcArgForOutput(PsimagLite::String& dsrep,
-	                                    const TensorSrep& srep) const
+	                                    const TensorSrep& srep,
+	                                    SizeType ind) const
 	{
 		VectorStringType ins;
 		VectorStringType outs;
@@ -157,11 +158,26 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i)
 			calcArgForOutput(ins,outs,srep(i));
 
+		VectorSizeType inSizes;
+		VectorSizeType outSizes;
+		findSizeOfLegOut(inSizes, outSizes, ind);
+		if (inSizes.size() == outs.size() && outSizes.size() == ins.size()) {
+			VectorSizeType tmpV = inSizes;
+			inSizes = outSizes;
+			outSizes = tmpV;
+		}
+
+		if (inSizes.size() != ins.size() || outSizes.size() != outs.size()) {
+			inSizes.resize(ins.size(), 1);
+			outSizes.resize(outs.size(), 1);
+		}
+
 		PsimagLite::String ret = "(";
 		dsrep = "(";
 		for (SizeType i = 0; i < ins.size(); ++i) {
 			ret += ins[i];
-			dsrep += "D1";
+			assert(i < inSizes.size());
+			dsrep += "D" + ttos(inSizes[i]);
 			if (i + 1 >= ins.size()) continue;
 			ret += ",";
 			dsrep += ",";
@@ -174,7 +190,8 @@ private:
 
 		for (SizeType i = 0; i < outs.size(); ++i) {
 			ret += outs[i];
-			dsrep += "D1";
+			assert(i < outSizes.size());
+			dsrep += "D" + ttos(outSizes[i]);
 			if (i + 1 >= outs.size()) continue;
 			ret += ",";
 			dsrep += ",";
@@ -182,6 +199,69 @@ private:
 
 		dsrep += ")";
 		return ret + ")";
+	}
+
+	void findSizeOfLegOut(VectorSizeType& legInSizes,
+	                      VectorSizeType& legOutSizes,
+	                      SizeType ind) const
+	{
+		PsimagLite::String str = tensorSrep_(ind).name();
+		str += ttos(tensorSrep_(ind).id()) + "(";
+		PsimagLite::String buffer("");
+		const SizeType l = dimensionSrep_.sRep().length();
+		bool flag = false;
+		for (SizeType i = 0; i < l; ++i) {
+			const char letter = dimensionSrep_.sRep()[i];
+			buffer += letter;
+			if (letter != '(' && letter != ')') continue;
+			if (letter == '(') {
+				if (str == buffer) {
+					flag = true;
+				}
+
+				buffer = "";
+				continue;
+			}
+
+			assert(letter == ')');
+			if (!flag) {
+				buffer  = "";
+				continue;
+			}
+
+			break;
+		}
+
+		fromArgToLegSizes(legInSizes, legOutSizes, buffer);
+	}
+
+	void fromArgToLegSizes(VectorSizeType& legInSizes,
+	                       VectorSizeType& legOutSizes,
+	                       PsimagLite::String arg) const
+	{
+		if (arg.length() < 3 || arg[arg.length() - 1] != ')')
+			err("fromArgToLegSizes(): " + arg + "\n");
+
+		const SizeType l = arg.length();
+		bool flag = false;
+		PsimagLite::String buffer("");
+		for (SizeType i = 0; i < l; ++i) {
+			const char letter = arg[i];
+			if (letter == ',' || letter == ')') {
+				if (flag)
+					legOutSizes.push_back(atoi(buffer.c_str()));
+				else
+					legInSizes.push_back(atoi(buffer.c_str()));
+				buffer = "";
+			} else if (letter == '|') {
+				legInSizes.push_back(atoi(buffer.c_str()));
+				buffer = "";
+				flag = true;
+			} else {
+				if (letter != 'D')
+					buffer += letter;
+			}
+		}
 	}
 
 	void calcArgForOutput(VectorStringType& ins,
