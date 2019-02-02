@@ -33,6 +33,20 @@ public:
 
 	const SymmetryLocalType& symmLocal() const { return symmLocal_; }
 
+	static void printOnePerLine(std::ostream& os,
+	                            PsimagLite::String str,
+	                            PsimagLite::String prolog)
+	{
+		const SizeType l = str.length();
+		PsimagLite::String buffer("");
+		for (SizeType i = 0; i < l; ++i) {
+			buffer += str[i];
+			if (str[i] != ')') continue;
+			os<<prolog<<buffer<<"\n";
+			buffer="";
+		}
+	}
+
 private:
 
 	void alterFrees(SizeType d)
