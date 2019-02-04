@@ -62,37 +62,41 @@ make, perl, and git if you don't have them.
 
 2. Issue
 
-    cd someDirectory/
-
-    git clone https://github.com/g1257/PsimagLite.git
-
-    git clone https://github.com/g1257/merapp.git
+```BASH
+    $ cd someDirectory/
+    $ git clone https://github.com/g1257/PsimagLite.git
+    $ git clone https://github.com/g1257/merapp.git
+```
 
 3. Compile PsimagLite
 
-    cd PsimagLite/lib/
-
-    make -f Makefile.sample
-
-    cd ../../
+```BASH
+    $ cd PsimagLite/lib/
+    $ ./configure.pl
+    $ make -j something 
+    $ d ../../
+```
 
 4. Now issue
 
-    cd merapp/src
-
-    cp Config.make.sample Config.make
-    (edit Config.make if needed)
-
-    make
+```BASH
+    $ cd merapp/src
+    $ cp Config.make.sample Config.make
+```
+(edit Config.make if needed)
+and then make.
 
 5. You can run it with
 
-    ./merapp -h 2 -n 4 > n4.txt
-    ./meranpp -f n4.txt
+```BASH
+    $ ./merapp -n 8 -m 6  -a 2 -d 1  > out8sites
+    $ ./meranpp -f out8sites.txt
+```
 
     or run from the TestSuite
-
+```BASH
     ./meranpp -f ../TestSuite/inputs/meraEnviron1.txt
-    etc.
+```
+	etc.
 
 
