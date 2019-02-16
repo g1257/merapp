@@ -67,13 +67,17 @@ private:
 		VectorRealType x(ntensors);
 		VectorRealType y(ntensors);
 		computeCoordinates(x,y,dx,tensorSrep);
-
+		SizeType layer = 0;
+		PsimagLite::String lastSeen = "u";
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType ins = tensorSrep(i).ins();
 			SizeType outs = tensorSrep(i).outs();
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			RealType dy = ysign*dy0;
 			PsimagLite::String label = tensorSrep(i).name();
+
+			if (lastSeen != label) ++layer;
+			lastSeen = label;
 
 			if (label == "u" || label == "h") {
 				RealType factor = (label == "u") ? 1.0 : 0.5;
@@ -186,7 +190,7 @@ private:
 	                        const TensorSrep& tensorSrep) const
 	{
 		SizeType ntensors = tensorSrep.size();
-//		RealType xwoffset = 1.5*dx;
+
 		SizeType yoffset0 = dx;
 		VectorRealType savedXForR(2,0);
 		SizeType modeForSavingForR = 0;
@@ -200,6 +204,9 @@ private:
 			SizeType tensorX = tensorXY.first;
 			SizeType tensorY = tensorXY.second;
 
+			RealType xwoffset = 0.5*dx - tensorY*dx*1.2;
+			if (tensorY >= 2) xwoffset -= 1.1*tensorX*dx + 3*dx;
+			RealType xuoffset = (tensorY >= 2) ? -6*dx + 3*dx*tensorX : 0.0;
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			RealType xsep = 3.0*dx*(1+tensorY);
 			RealType xwsign = (tensorY & 1) ? -1 : 1;
@@ -212,10 +219,10 @@ private:
 			}
 
 			if (name == "u") {
-				x[i] = xsep*dx*tensorX + xoffset;
+				x[i] = xsep*dx*tensorX + xoffset + xuoffset;
 				y[i] = 3.5*tensorY*ysign + yoffset0*ysign;
 			} else if (name == "w") {
-				x[i] = xsep*dx*tensorX  + xoffset + pow(2,tensorY)*xwsign;
+				x[i] = xsep*dx*tensorX  + xoffset + pow(2,tensorY)*xwsign + xwoffset;
 				y[i] = ysign*(3.5*tensorY + 1.5) + yoffset0*ysign;
 				savedXForR[modeForSavingForR] = x[i];
 				modeForSavingForR = (modeForSavingForR == 0) ? 1 : 0;
