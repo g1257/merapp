@@ -69,6 +69,7 @@ private:
 		computeCoordinates(x,y,dx,tensorSrep);
 		SizeType layer = 0;
 		PsimagLite::String lastSeen = "u";
+		SizeType fcounter = 0; // counter of free
 		for (SizeType i = 0; i < ntensors; ++i) {
 			SizeType ins = tensorSrep(i).ins();
 			SizeType outs = tensorSrep(i).outs();
@@ -103,6 +104,9 @@ private:
 						buffer_ += ttos(y[i]-0.5*dy) + ");\n";
 						buffer_ += "\\draw[myfreelink] (I" + label + ttos(k);
 						buffer_ += ") -- (I" + label + "F" + ttos(k) + ");\n";
+						buffer_ += "\\node at ($(I" + label + "F" + ttos(k) +
+						        ") + (0, -0.5)$) {\\large $\\sigma_{" +
+						        ttos(fcounter++) + "}$};";
 					}
 				}
 
@@ -112,8 +116,9 @@ private:
 				a = dx/divisor;
 				RealType doy = (label == "u") ? dy : 0.5*dy;
 				for (SizeType j = 0; j < outs; ++j) {
-					SizeType k = absoluteLegNumber(i,j,ntensors);
+					SizeType k = absoluteLegNumber(i, j, ntensors);
 					RealType xtmp = a*j + x[i];
+					if (i == 0) xtmp += dx;
 					buffer_ += "\\coordinate (O" + label;
 					buffer_ += ttos(k) + ") at (" + ttos(xtmp) + ",";
 					buffer_ += ttos(y[i] + doy) + ");\n";
@@ -177,8 +182,8 @@ private:
 				}
 			}
 
-			buffer_ += "\\node at (A" + ttos(i) + ") {" + ttos(i) + ",";
-			buffer_ += ttos(tensorSrep(i).id()) + "};\n";
+			//buffer_ += "\\node at (A" + ttos(i) + ") {" + ttos(i) + ",";
+			//buffer_ += ttos(tensorSrep(i).id()) + "};\n";
 		}
 
 		drawConnections(tensorSrep);
@@ -294,7 +299,7 @@ private:
 					label2 += tensorSrep(k.first).name();
 					SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
 					label2 += ttos(k2) + ")";
-					buffer_ += "\\draw " + label1 + " -- " + label2 + ";\n";
+					buffer_ += "\\draw[mycon] " + label1 + " -- " + label2 + ";\n";
 				}
 
 				k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_IN);
@@ -303,7 +308,7 @@ private:
 				label2 += tensorSrep(k.first).name();
 				SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
 				label2 += ttos(k2) + ")";
-				buffer_ += "\\draw " + label1 + " -- " + label2 + ";\n";
+				buffer_ += "\\draw[mycon] " + label1 + " -- " + label2 + ";\n";
 			}
 		}
 	}
@@ -398,6 +403,7 @@ private:
 		str += "\\usepackage{tikz}\n";
 		str += "\\usepackage{pgfplots}\n";
 		str += "\\pgfplotsset{width=7cm,compat=1.8}\n";
+		str += "\\usetikzlibrary{calc}\n";
 		str += "\\usetikzlibrary{positioning}\n";
 		str += "\\usetikzlibrary{shadows}\n";
 		str += "\\usetikzlibrary{shapes}\n";
@@ -407,11 +413,20 @@ private:
 		str += "\\definecolor{myblue}{HTML}{0074D9}\n";
 		str += "\\definecolor{mygreen}{HTML}{2ECC40}\n";
 		str += "\\definecolor{myyellow}{HTML}{FFDC00}\n";
+		str += "\\definecolor{mygray}{HTML}{AAAAAA}\n";
+		str += "\\definecolor{notbisque}{HTML}{007733}\n";
+		str += "\\definecolor{notdarksalmon}{HTML}{B0E97A}\n";
+		str += "\\definecolor{notcrimson}{HTML}{FF4136}\n";
+		str += "\\definecolor{notfirebrick}{HTML}{48B221}\n";
+		str += "\\definecolor{notdarkred}{HTML}{004000}\n";
+		str += "\\definecolor{notCoral}{HTML}{00C0C0}\n";
+
 		str += "\\begin{document}";
 		str += "\\begin{tikzpicture}[\n";
-		str += "disen/.style={fill=mygreen},\n";
-		str += "isom/.style={fill=myfuchsia},\n";
-		str += "myfreelink/.style={very thick,mygreen},\n";
+		str += "mycon/.style={draw=mygray,thick},\n";
+		str += "disen/.style={fill=notfirebrick,draw=notfirebrick},\n";
+		str += "isom/.style={fill=notcrimson,draw=notcrimson},\n";
+		str += "myfreelink/.style={very thick,notCoral},\n";
 		str += "ham/.style={fill=myyellow}\n";
 		str += "]";
 		os<<str<<"\n";
