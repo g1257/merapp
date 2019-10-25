@@ -26,30 +26,25 @@ public:
 
 		io.read(qOne_,"qOne");
 
-		int total = 0;
+		SizeType total = 0;
 		io.readline(total, "SymmTensors=");
-		if (total < 1)
-			throw PsimagLite::RuntimeError("SymmetryLocal: reading SymmTensors failed\n");
 
 		nameId_.resize(total);
 
-		int maxLegs = 0;
+		SizeType maxLegs = 0;
 		io.readline(maxLegs, "MaxLegs=");
-		if (maxLegs < 1)
-			throw PsimagLite::RuntimeError("SymmetryLocal: reading maxLegs failed\n");
 
-		matrix_.setTo(0);
+		matrix_.setTo(nullptr);
 		matrix_.resize(total, maxLegs);
-		for (int i = 0; i < total; ++i) {
+		for (SizeType i = 0; i < total; ++i) {
 			PsimagLite::String tmp;
 			io.readline(tmp, "SymmForTensor=");
 			nameId_[i] = tmp;
 
-			int x = 0;
+			SizeType x = 0;
 			io.readline(x, "Total=");
-			if (x < 1)
-				throw PsimagLite::RuntimeError("SymmetryLocal: reading file failed\n");
-			for (int j = 0; j < x; ++j) {
+
+			for (SizeType j = 0; j < x; ++j) {
 				VectorSizeType* v = new VectorSizeType;
 				io.read(*v, "Leg" + ttos(j));
 				matrix_(i,j) = v;
@@ -62,7 +57,7 @@ public:
 	{
 		for (SizeType i = 0; i < garbage_.size(); ++i) {
 			delete garbage_[i];
-			garbage_[i] = 0;
+			garbage_[i] = nullptr;
 		}
 	}
 
@@ -79,7 +74,10 @@ public:
 			PsimagLite::String str("");
 			SizeType count = 0;
 			for (SizeType j = 0; j < m; ++j) {
-				if (matrix_(i,j) == 0) continue;
+				if (matrix_(i,j) == nullptr) {
+					continue;
+				}
+
 				const VectorSizeType& v = *(matrix_(i,j));
 				if (v.size() == 0) continue;
 				str += "Leg" + ttos(j) + " ";
@@ -149,7 +147,7 @@ public:
 
 	void addIdentity(SizeType id, SizeType dim)
 	{
-		VectorVectorSizeType q(2, static_cast<VectorSizeType*>(0));
+		VectorVectorSizeType q(2, static_cast<VectorSizeType*>(nullptr));
 		VectorSizeType* qq = new VectorSizeType(dim, 0);
 		PsimagLite::String str("i");
 		str += ttos(id);
@@ -213,7 +211,7 @@ private:
 		for (SizeType i = 0; i < n; ++i) {
 			SizeType count = 0;
 			for (SizeType j = 0; j < m; ++j) {
-				if (matrix_(i,j) == 0) continue;
+				if (matrix_(i,j) == nullptr) continue;
 				const VectorSizeType& v = *(matrix_(i,j));
 				if (v.size() == 0) continue;
 				++count;

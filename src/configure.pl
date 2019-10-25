@@ -60,7 +60,6 @@ sub createMakefile
 	my ($drivers, $args) = @_;
 	unlink("Makefile.dep");
 	NewMake::backupMakefile();
-	$args->{"additional3"} = "operator";
 
 	my $fh;
 	open($fh, ">", "Makefile") or die "Cannot open Makefile for writing: $!\n";
@@ -69,10 +68,10 @@ sub createMakefile
 	local *FH = $fh;
 print FH<<EOF;
 
-#.PHONY: GitRevision.h
+.PHONY: GitRevision.h
 
-#GitRevision.h:
-#	./createGitRevision.pl GitRevision.h
+GitRevision.h:
+	./createGitRevision.pl GitRevision.h
 
 EOF
 
