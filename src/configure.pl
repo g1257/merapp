@@ -42,8 +42,20 @@ my %driver5 = (name => 'tensorEval');
 
 my @drivers = (\%driver1, \%driver2, \%driver3, \%driver4, \%driver5);
 
+my $absoluteExaTN = $ENV{"HOME"}."/programs/exatn";
+
+my $aInc = "-I $absoluteExaTN/tpls/cppmicroservices/framework/include ";
+$aInc .= " -I  $absoluteExaTN/build/tpls/cppmicroservices/include ";
+$aInc .= " -I $absoluteExaTN/build/tpls/cppmicroservices/framework/include ";
+$aInc .= " -I $absoluteExaTN/src/numerics ";
+$aInc .= " -I $absoluteExaTN/src/exatn ";
+$aInc .= " -I $absoluteExaTN/tpls/ExaTensor/include ";
+$aInc .= " -I $absoluteExaTN/src/runtime ";
+$aInc .= " -I $absoluteExaTN/src/runtime/executor ";
+$aInc .= " -I $absoluteExaTN/src/runtime/graph ";
+
 my %args;
-$args{"CPPFLAGS"} = $lto;
+$args{"CPPFLAGS"} = $lto." $aInc";
 $args{"LDFLAGS"} = $lto;
 $args{"flavor"} = $flavor;
 $args{"code"} = "DMRG++";
