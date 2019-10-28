@@ -21,7 +21,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "ProgramGlobals.h"
 #include "Matrix.h"
 #include "RandomForTests.h"
-#include "../../exatn/src/exatn/exatn.hpp"
+#include "exatn.hpp"
 
 namespace Mera {
 
@@ -204,7 +204,7 @@ public:
 
 private:
 
-	static auto* opFactory_;
+	static exatn::numerics::TensorOpFactory* opFactory_;
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
 	VectorSizeType dimensions_;
 	VectorComplexOrRealType data_;
@@ -215,7 +215,7 @@ template<typename ComplexOrRealType>
 PsimagLite::RandomForTests<ComplexOrRealType> Tensor<ComplexOrRealType>::rng_(1234);
 
 template<typename ComplexOrRealType>
-auto* Tensor<ComplexOrRealType>::opFactory_ = exatn::numerics::TensorOpFactory::get();
+exatn::numerics::TensorOpFactory* Tensor<ComplexOrRealType>::opFactory_ = exatn::numerics::TensorOpFactory::get();
 
 }
 #endif // TENSOR_H
