@@ -38,32 +38,23 @@ int main(int argc, char **argv)
 	typedef TensorEvalBaseType::TensorType TensorType;
 	TensorEvalBaseType::VectorTensorType vt(3);
 
-	TensorEvalBaseType::VectorSizeType d(2,dim0);
+	TensorEvalBaseType::VectorSizeType d(2, dim0);
 	d[0] = 3;
-	vt[0] = new TensorType(d,1);
-	vt[1] = new TensorType(dim0,1);
-	vt[2] = new TensorType(3,1);
+	vt[0] = new TensorType("u0", d, 1);
+	vt[1] = new TensorType("u1", dim0, 1);
+	vt[2] = new TensorType("r0", 3, 1);
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		vt[i]->setToIdentity(1.0);
 	}
 
 	vt[1]->setToConstant(1.5);
 
-	typedef TensorEvalBaseType::PairStringSizeType PairStringSizeType;
-	PsimagLite::Vector<PairStringSizeType>::Type idNames;
-	idNames.push_back(TensorEvalBaseType::PairStringSizeType("u",0));
-	idNames.push_back(TensorEvalBaseType::PairStringSizeType("u",1));
-	idNames.push_back(TensorEvalBaseType::PairStringSizeType("r",0));
-	TensorEvalBaseType::MapPairStringSizeType nameIdTensor;
-	for (SizeType i = 0; i < vt.size(); ++i)
-		nameIdTensor[idNames[i]] = i;
-
 	Mera::SrepStatement<double> srepEq(str);
 	TensorEvalBaseType* tensorEval = 0;
 	if (evaluator == "slow") {
-		tensorEval = new TensorEvalSlowType(srepEq,vt,idNames,nameIdTensor,0,false);
+		tensorEval = new TensorEvalSlowType(srepEq, vt, 0,false);
 	} else if(evaluator == "new") {
-		tensorEval = new TensorEvalNewType(srepEq,vt,idNames,nameIdTensor);
+		tensorEval = new TensorEvalNewType(srepEq, vt);
 	} else {
 		throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
 	}

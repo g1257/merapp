@@ -43,20 +43,18 @@ public:
 
 	virtual void printResult(std::ostream& os) const = 0;
 
-	static SizeType indexOfOutputTensor(const SrepStatementType& eq,
-	                                    const VectorPairStringSizeType& tensorNameIds,
-	                                    MapPairStringSizeType& nameIdsTensor)
-	{
-		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
-		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
-			PsimagLite::String msg("TensorEvalBase: Could not find ");
-			msg += "output tensor " + eq.nameIdOfOutput().first;
-			msg += ttos(eq.nameIdOfOutput().second) + "\n";
-			throw PsimagLite::RuntimeError(msg);
-		}
+//	static SizeType indexOfOutputTensor(const SrepStatementType& eq)
+//	{
+//		SizeType ret = nameIdsTensor[eq.nameIdOfOutput()];
+//		if (tensorNameIds[ret] != eq.nameIdOfOutput()) {
+//			PsimagLite::String msg("TensorEvalBase: Could not find ");
+//			msg += "output tensor " + eq.nameIdOfOutput().first;
+//			msg += ttos(eq.nameIdOfOutput().second) + "\n";
+//			throw PsimagLite::RuntimeError(msg);
+//		}
 
-		return ret;
-	}
+//		return ret;
+//	}
 };
 } // namespace Mera
 #endif // TENSOREVALBASE_H

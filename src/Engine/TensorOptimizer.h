@@ -215,7 +215,7 @@ public:
 	{
 		if (stack_.size() == 0)
 			throw PsimagLite::RuntimeError("restoreTensor: stack is empty\n");
-		tensors_[indToOptimize_]->data() = stack_.top();
+		tensors_[indToOptimize_]->setData(stack_.top());
 		stack_.pop();
 	}
 
@@ -224,7 +224,7 @@ public:
 	void copyFirstOfLayer(PsimagLite::String name, SizeType id)
 	{
 		SizeType ind = nameIdsTensor_[PairStringSizeType(name, id)];
-		tensors_[indToOptimize_]->data() = tensors_[ind]->data();
+		tensors_[indToOptimize_]->setData(tensors_[ind]->data());
 	}
 
 private:

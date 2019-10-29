@@ -37,9 +37,7 @@ class TensorEvalNew : public TensorEvalBase<ComplexOrRealType> {
 public:
 
 	TensorEvalNew(const SrepStatementType& tSrep,
-	              const VectorTensorType& vt,
-	              const VectorPairStringSizeType& tensorNameIds,
-	              MapPairStringSizeType& nameIdsTensor)
+	              const VectorTensorType& vt)
 	{}
 
 	HandleType operator()()

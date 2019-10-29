@@ -54,20 +54,15 @@ public:
 
 	TensorEvalSlow(const SrepStatementType& tSrep,
 	               const VectorTensorType& vt,
-	               const VectorPairStringSizeType& tensorNameIds,
-	               MapPairStringSizeType& nameIdsTensor,
 	               SymmetryLocalType* symmLocal,
 	               bool modify = EVAL_BREAKUP)
 	    : srepStatement_(tSrep),
 	      data_(vt), // deep copy
-	      tensorNameIds_(tensorNameIds), // deep copy
-	      nameIdsTensor_(nameIdsTensor), // deep copy
 	      symmLocal_(symmLocal),
 	      modify_(modify)
 	{
-		indexOfOutputTensor_ = TensorEvalBaseType::indexOfOutputTensor(tSrep,
-		                                                               tensorNameIds,
-		                                                               nameIdsTensor);
+		indexOfOutputTensor_ = idNameToIndex(tSrep.nameIdOfOutput().first,
+		                                     tSrep.nameIdOfOutput().second);
 
 		if (!modify_) return;
 
@@ -90,17 +85,11 @@ public:
 			}
 
 			if (temporaryName[0] != 't') continue;
-			PsimagLite::String str = temporaryName.substr(1,temporaryName.length());
-			SizeType temporaryId = atoi(str.c_str());
-			temporaryName = "t";
-			PairStringSizeType tmpPair = PairStringSizeType(temporaryName,temporaryId);
-			tensorNameIds_.push_back(tmpPair);
-			nameIdsTensor_[tmpPair] = tensorNameIds_.size() - 1;
 
 			// add this temporary, call setDimensions for output tensor later
 			TensorStanza tmpStanza(vstr[i]);
 			VectorSizeType args(1,1); // bogus
-			TensorType* t = new TensorType(args, tmpStanza.ins());
+			TensorType* t = new TensorType(temporaryName, args, tmpStanza.ins());
 			garbage_.push_back(t);
 			data_.push_back(t);
 		}
@@ -116,8 +105,6 @@ public:
 
 			TensorEvalSlow tEval(*(veqs[j]),
 			                     data_,
-			                     tensorNameIds_,
-			                     nameIdsTensor_,
 			                     symmLocal_,
 			                     false);
 
@@ -612,18 +599,18 @@ private:
 
 	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
 	{
-		typename MapPairStringSizeType::iterator it =
-		        nameIdsTensor_.find(PairStringSizeType(name,id));
-		if (it == nameIdsTensor_.end())
-			throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
-		return it->second;
+		PsimagLite::String fullId = name + ttos(id);
+		for (SizeType i = 0; i < data_.size(); ++i)
+			if (fullId == data_[i]->name()) return i;
+
+		throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
+
 	}
 
 	void setQnsForOutput(VectorVectorSizeType& q)
 	{
 		// remap tensor indexing into symm local indexing
-		PairStringSizeType p = tensorNameIds_[indexOfOutputTensor_];
-		PsimagLite::String str = p.first + ttos(p.second);
+		PsimagLite::String str = data_[indexOfOutputTensor_]->name();
 
 		SizeType legs = srepStatement_.lhs().legs();
 		VectorSizeType v(legs, 0);
@@ -659,8 +646,6 @@ private:
 
 	SrepStatementType srepStatement_;
 	VectorTensorType data_;
-	VectorPairStringSizeType tensorNameIds_;
-	mutable MapPairStringSizeType nameIdsTensor_;
 	SymmetryLocalType* symmLocal_;
 	bool modify_;
 	SizeType indexOfOutputTensor_;
