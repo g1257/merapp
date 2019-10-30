@@ -253,20 +253,6 @@ public:
 
 	PsimagLite::String name() const { return name_; }
 
-//	static SizeType idNameToIndex(const typename PsimagLite::Vector<Tensor*>::Type& data,
-//	                              const PairStringSizeType& p)
-//	{
-//		return idNameToIndex(data, p.first + ttos(p.second));
-
-//	}
-//	static SizeType idNameToIndex(const typename PsimagLite::Vector<Tensor*>::Type& data,
-//	                              PsimagLite::String nameAndId)
-//	{
-//		for (SizeType i = 0; i < data.size(); ++i)
-//			if (nameAndId == data[i]->name()) return i;
-
-//		throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
-//	}
 private:
 
 
