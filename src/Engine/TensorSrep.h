@@ -142,7 +142,7 @@ public:
 
 	const PsimagLite::String& sRep() const { return srep_; }
 
-	char& legTypeChar(SizeType i,
+	unsigned char& legTypeChar(SizeType i,
 	                  SizeType ind)
 	{
 		assert(i < data_.size());
@@ -271,7 +271,7 @@ public:
 		return ntensors;
 	}
 
-	bool hasLegType(char c) const
+	bool hasLegType(unsigned char c) const
 	{
 		SizeType ntensors = data_.size();
 		for (SizeType i = 0; i < ntensors; ++i)

@@ -27,7 +27,7 @@ public:
 
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<VectorSizeType>::Type VectorVectorSizeType;
-	typedef std::pair<char, SizeType> PairCharSizeType;
+	typedef std::pair<unsigned char, SizeType> PairCharSizeType;
 
 	enum IndexDirectionEnum {INDEX_DIR_IN, INDEX_DIR_OUT};
 
@@ -39,7 +39,7 @@ public:
 
 	const char name() const { return tag_.first; }
 
-	char& name() { return tag_.first; }
+	unsigned char& name() { return tag_.first; }
 
 	const SizeType& numericTag() const { return tag_.second; }
 

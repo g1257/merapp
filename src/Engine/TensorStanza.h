@@ -322,7 +322,7 @@ public:
 		return INDEX_TYPE_DUMMY;
 	}
 
-	char& legTypeChar(SizeType ind)
+	unsigned char& legTypeChar(SizeType ind)
 	{
 		assert(ind < legs_.size());
 		return legs_[ind].name();
@@ -362,7 +362,7 @@ public:
 		opaque_.maxSummed_ = maxIndex('s');
 	}
 
-	bool hasLegType(char c) const
+	bool hasLegType(unsigned char c) const
 	{
 		SizeType total = legs_.size();
 		for (SizeType i = 0; i < total; ++i) {
