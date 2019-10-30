@@ -53,6 +53,8 @@ class MeraSolver {
 	typedef ModelSelector<ModelBaseType> ModelType;
 	typedef typename TensorOptimizerType::SymmetryLocalType SymmetryLocalType;
 	typedef typename TensorOptimizerType::ParametersForMeraType ParametersForMeraType;
+	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
+	typedef TensorEvalNew<ComplexOrRealType> TensorEvalNewType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
@@ -66,6 +68,7 @@ public:
 	      iterMera_(1),
 	      iterTensor_(1),
 	      indexOfRootTensor_(0),
+	      nameToIndexLut_(0),
 	      model_(paramsForMera_.model, paramsForMera_.hamiltonianConnection),
 	      paramsForLanczos_(0)
 	{
@@ -107,6 +110,7 @@ public:
 
 		updateTensorSizes(noSymmLocal);
 
+		nameToIndexLut_ = new NameToIndexLut<TensorType>(tensors_);
 		bool rootTensorFound = false;
 		while (true) {
 			PsimagLite::String str("");
@@ -154,9 +158,8 @@ public:
 			tensorOptimizer_.push_back(new TensorOptimizerType(io,
 			                                                   name,
 			                                                   id,
-			                                                   tensorNameIds_,
-			                                                   nameIdsTensor_,
 			                                                   tensors_,
+			                                                   *nameToIndexLut_,
 			                                                   *paramsForLanczos_,
 			                                                   paramsForMera_,
 			                                                   symmLocal_));
@@ -269,15 +272,13 @@ private:
 
 		ParallelEnergyHelper(SymmetryLocalType* symmLocal,
 		                     VectorSrepStatementType& energyTerms,
-		                     const VectorPairStringSizeType& tensorNameAndIds,
-		                     MapPairStringSizeType& nameIdsTensor,
 		                     VectorTensorType& tensors,
+		                     NameToIndexLut<TensorType>& nameToIndexLut,
 		                     const ParametersForMeraType& paramsForMera)
 		    : symmLocal_(symmLocal),
 		      energyTerms_(energyTerms),
-		      tensorNameIds_(tensorNameAndIds),
-		      nameIdsTensor_(nameIdsTensor),
 		      tensors_(tensors),
+		      nameToIndexLut_(nameToIndexLut),
 		      paramsForMera_(paramsForMera),
 		      e_(PsimagLite::Concurrency::codeSectionParams.npthreads, 0.0)
 		{}
@@ -311,27 +312,28 @@ private:
 			assert(ind < energyTerms_.size());
 			SrepStatementType* ptr = energyTerms_[ind];
 			if (!ptr) return 0.0;
-			TensorEvalBaseType* tensorEval =
-			        TensorOptimizerType::getTensorEvalPtr(paramsForMera_.evaluator,
-			                                              *ptr,
-			                                              tensors_,
-			                                              tensorNameIds_,
-			                                              nameIdsTensor_,
-			                                              symmLocal_);
+			TensorEvalBaseType* tensorEval = TensorOptimizerType::ParallelEnvironHelperType::
+			        getTensorEvalPtr(paramsForMera_.evaluator,
+			                         *ptr,
+			                         tensors_,
+			                         nameToIndexLut_,
+			                         symmLocal_);
 
 			typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 			while (!handle.done());
+
+			VectorSizeType args(1,0);
+			const SizeType index = tensorEval->nameToIndexLut("e" + ttos(ind));
 			delete tensorEval;
 			tensorEval = 0;
-			VectorSizeType args(1,0);
-			return tensors_[nameIdsTensor_[PairStringSizeType("e",ind)]]->operator()(args);
+			assert(index < tensors_.size());
+			return tensors_[index]->operator()(args);
 		}
 
 		SymmetryLocalType* symmLocal_;
 		VectorSrepStatementType& energyTerms_;
-		const VectorPairStringSizeType& tensorNameIds_;
-		MapPairStringSizeType& nameIdsTensor_;
 		VectorTensorType& tensors_;
+		NameToIndexLut<TensorType>& nameToIndexLut_;
 		const ParametersForMeraType& paramsForMera_;
 		VectorRealType e_;
 	}; // class ParallelEnergyHelper
@@ -343,9 +345,8 @@ private:
 
 		ParallelEnergyHelper parallelEnergyHelper(symmLocal_,
 		                                          energyTerms_,
-		                                          tensorNameIds_,
-	                                              nameIdsTensor_,
 		                                          tensors_,
+		                                          *nameToIndexLut_,
 		                                          paramsForMera_);
 
 		threadedEnergies.loopCreate(parallelEnergyHelper);
@@ -353,22 +354,20 @@ private:
 		return parallelEnergyHelper.energy();
 	}
 
-	void initTensorNameIds()
+	void initTensorNameIds(VectorPairStringSizeType& tensorNameIds)
 	{
 		PsimagLite::Sort<VectorPairStringSizeType> sort;
-		VectorSizeType perm(tensorNameIds_.size(),0);
-		sort.sort(tensorNameIds_,perm);
-		SizeType end = (std::unique(tensorNameIds_.begin(),
-		                            tensorNameIds_.end()) -
-		                tensorNameIds_.begin());
-		tensorNameIds_.resize(end);
-		for (SizeType i = 0; i < tensorNameIds_.size(); ++i)
-			nameIdsTensor_[tensorNameIds_[i]] = i;
+		VectorSizeType perm(tensorNameIds.size(),0);
+		sort.sort(tensorNameIds,perm);
+		SizeType end = (std::unique(tensorNameIds.begin(),
+		                            tensorNameIds.end()) - tensorNameIds.begin());
+		tensorNameIds.resize(end);
 	}
 
-	void initTensors(const TensorSrep& td)
+	void initTensors(const VectorPairStringSizeType& tensorNameIds,
+	                 const TensorSrep& td)
 	{
-		tensors_.resize(tensorNameIds_.size());
+		tensors_.resize(tensorNameIds.size());
 		SizeType ntensors = tensors_.size();
 
 		if (td.size() != ntensors) {
@@ -380,16 +379,16 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			PsimagLite::String name = td(i).name();
 			SizeType id = td(i).id();
-			PairStringSizeType p(name,id);
-			typename VectorPairStringSizeType::iterator x = std::find(tensorNameIds_.begin(),
-			                                                          tensorNameIds_.end(),
-			                                                          p);
-			if (x == tensorNameIds_.end()) {
+			PairStringSizeType p(name, id);
+			typename VectorPairStringSizeType::const_iterator x = std::find(tensorNameIds.begin(),
+			                                                                tensorNameIds.end(),
+			                                                                p);
+			if (x == tensorNameIds.end()) {
 				std::cerr<<"WARNING: Unused tensor name= "<<name<<" id= "<<id<<"\n";
 				continue;
 			}
 
-			SizeType ind = x - tensorNameIds_.begin();
+			SizeType ind = x - tensorNameIds.begin();
 			assert(ind < tensors_.size());
 
 			SizeType legs = td(i).legs();
@@ -401,7 +400,7 @@ private:
 
 			SizeType ins = td(i).ins();
 			assert(ind < tensors_.size());
-			tensors_[ind] = new TensorType(dimensions,ins);
+			tensors_[ind] = new TensorType(name + ttos(id), dimensions, ins);
 			if (name == "h") {
 				tensors_[ind]->setToMatrix(model_().twoSiteHam(id));
 			} else {
@@ -410,14 +409,15 @@ private:
 		}
 	}
 
-	void findTensors(const TensorSrep& t)
+	void findTensors(VectorPairStringSizeType& tensorNameIds,
+	                 const TensorSrep& t)
 	{
 		SizeType ntensors = t.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			PsimagLite::String name = t(i).name();
 			SizeType id = t(i).id();
 			PairStringSizeType p(name,id);
-			tensorNameIds_.push_back(p);
+			tensorNameIds.push_back(p);
 		}
 	}
 
@@ -427,11 +427,7 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			PsimagLite::String name = srep(i).name();
 			SizeType id = srep(i).id();
-			PairStringSizeType p(name,id);
-			SizeType x = nameIdsTensor_[p];
-			if (tensorNameIds_[x] == p) continue;
-			PsimagLite::String msg("Not found tensor "+ name + ttos(id) + "\n");
-			throw PsimagLite::RuntimeError("allTensorsDefinedOrDie: " + msg);
+			nameToIndexLut_->operator()(name + ttos(id));
 		}
 	}
 
@@ -449,12 +445,11 @@ private:
 			symmLocal_ = symmLocal;
 
 		TensorSrep tdstr(dsrep);
-		if (tensorNameIds_.size() == 0) {
-			findTensors(tdstr);
-			initTensorNameIds();
-		}
+		VectorPairStringSizeType tensorNameIds;
+		findTensors(tensorNameIds,  tdstr);
+		initTensorNameIds(tensorNameIds);
 
-		initTensors(tdstr);
+		initTensors(tensorNameIds, tdstr);
 	}
 
 	MeraSolver(const MeraSolver&);
@@ -469,9 +464,8 @@ private:
 	SizeType iterMera_;
 	SizeType iterTensor_;
 	SizeType indexOfRootTensor_;
-	VectorPairStringSizeType tensorNameIds_;
-	MapPairStringSizeType nameIdsTensor_;
 	VectorTensorType tensors_;
+	NameToIndexLut<TensorType>* nameToIndexLut_;
 	ModelType model_;
 	VectorTensorOptimizerType tensorOptimizer_;
 	ParametersForSolverType* paramsForLanczos_;

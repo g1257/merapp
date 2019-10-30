@@ -42,10 +42,10 @@ class TensorOptimizer {
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
-	typedef ParallelEnvironHelper<ComplexOrRealType> ParallelEnvironHelperType;
 
 public:
 
+	typedef ParallelEnvironHelper<ComplexOrRealType> ParallelEnvironHelperType;
 	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
 	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
 	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
@@ -71,17 +71,15 @@ public:
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
 	                SizeType idToOptimize,
-	                const VectorPairStringSizeType& tensorNameAndIds,
-	                MapPairStringSizeType& nameIdsTensor,
 	                VectorTensorType& tensors,
+	                NameToIndexLut<TensorType>& nameToIndexLut,
 	                const ParametersForSolverType& params,
 	                const ParametersForMeraType& paramsForMera,
 	                SymmetryLocalType* symmLocal)
 	    : tensorToOptimize_(nameToOptimize,idToOptimize),
-	      tensorNameIds_(tensorNameAndIds),
-	      nameIdsTensor_(nameIdsTensor),
 	      tensors_(tensors),
-	      indToOptimize_(nameIdsTensor_[tensorToOptimize_]),
+	      nameToIndexLut_(nameToIndexLut),
+	      indToOptimize_(nameToIndexLut_(nameToOptimize + ttos(idToOptimize))),
 	      layer_(0),
 	      firstOfLayer_(0),
 	      indexOfRootTensor_(0),
@@ -116,8 +114,8 @@ public:
 		}
 
 		bool flag = false;
-		for (SizeType i = 0; i < tensorNameIds_.size(); ++i) {
-			if (tensorNameIds_[i].first == "r") {
+		for (SizeType i = 0; i < tensors_.size(); ++i) {
+			if (tensors_[i]->name()[0] == 'r') {
 				indexOfRootTensor_ = i;
 				flag = true;
 				break;
@@ -178,9 +176,8 @@ public:
 			ParallelEnvironHelperType parallelEnvironHelper(tensorSrep_,
 			                                                evaluator,
 			                                                ignore_,
-			                                                tensorNameIds_,
-			                                                nameIdsTensor_,
 			                                                tensors_,
+			                                                nameToIndexLut_,
 			                                                symmLocal_);
 
 			MatrixType condMatrix;
@@ -196,21 +193,6 @@ public:
 
 	SizeType layer() const { return layer_; }
 
-	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
-	                                            const SrepStatementType& srep,
-	                                            VectorTensorType& tensors,
-	                                            const VectorPairStringSizeType& tensorNameIds,
-	                                            MapPairStringSizeType& nameIdsTensor,
-	                                            SymmetryLocalType* symmLocal)
-	{
-		return ParallelEnvironHelperType::getTensorEvalPtr(evaluator,
-		                                                   srep,
-		                                                   tensors,
-		                                                   tensorNameIds,
-		                                                   nameIdsTensor,
-		                                                   symmLocal);
-	}
-
 	void restoreTensor()
 	{
 		if (stack_.size() == 0)
@@ -223,7 +205,7 @@ public:
 
 	void copyFirstOfLayer(PsimagLite::String name, SizeType id)
 	{
-		SizeType ind = nameIdsTensor_[PairStringSizeType(name, id)];
+		SizeType ind = nameToIndexLut_(name + ttos(id));
 		tensors_[indToOptimize_]->setData(tensors_[ind]->data());
 	}
 
@@ -293,9 +275,8 @@ private:
 		ParallelEnvironHelperType parallelEnvironHelper(tensorSrep_,
 		                                                evaluator,
 		                                                ignore_,
-		                                                tensorNameIds_,
-		                                                nameIdsTensor_,
 		                                                tensors_,
+		                                                nameToIndexLut_,
 		                                                symmLocal_);
 
 		threadedEnviron.loopCreate(parallelEnvironHelper);
@@ -462,9 +443,8 @@ private:
 
 	PairStringSizeType tensorToOptimize_;
 	VectorSrepStatementType tensorSrep_;
-	const VectorPairStringSizeType& tensorNameIds_;
-	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;
+	NameToIndexLut<TensorType>& nameToIndexLut_;
 	SizeType indToOptimize_;
 	SizeType ignore_;
 	SizeType layer_;

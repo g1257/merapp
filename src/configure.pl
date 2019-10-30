@@ -42,14 +42,13 @@ my %driver5 = (name => 'tensorEval');
 
 my @drivers = (\%driver1, \%driver2, \%driver3, \%driver4, \%driver5);
 
-my $absoluteExaTN = $ENV{"HOME"}."/programs/exatn";
 
 my $aInc = " -I/home/mera/.exatn/include/exatn -I/home/mera/.exatn/include -I/home/mera/.exatn/include/cppmicroservices4 -std=gnu++11 -fPIC  -DPATH_MAX=4096 -Wno-attributes -DNO_GPU -DEXATN_SERVICE ";
 my $aLibs = " -rdynamic -Wl,-rpath,/home/mera/.exatn/lib -L /home/mera/.exatn/lib -lCppMicroServices -ltalsh -lexatn -lexatn-numerics -lexatn-runtime -lexatn-runtime-graph -ldl -lpthread ";
 
 my %args;
-$args{"CPPFLAGS"} = $lto." $aInc";
-$args{"LDFLAGS"} = $lto." $aLibs";
+#$args{"CPPFLAGS"} = $lto." $aInc";
+#$args{"LDFLAGS"} = $lto." $aLibs";
 $args{"flavor"} = $flavor;
 $args{"code"} = "DMRG++";
 $args{"configFiles"} = \@configFiles;

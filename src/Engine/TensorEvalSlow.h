@@ -25,6 +25,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "SymmetryLocal.h"
 #include "BLAS.h"
 #include "PsimagLite.h"
+#include "NameToIndexLut.h"
 
 namespace Mera {
 
@@ -54,16 +55,15 @@ public:
 
 	TensorEvalSlow(const SrepStatementType& tSrep,
 	               const VectorTensorType& vt,
+	               NameToIndexLut<TensorType>& nameToIndexLUT,
 	               SymmetryLocalType* symmLocal,
 	               bool modify = EVAL_BREAKUP)
 	    : srepStatement_(tSrep),
 	      data_(vt), // deep copy
+	      nameToIndexLUT_(nameToIndexLUT),
 	      symmLocal_(symmLocal),
 	      modify_(modify)
 	{
-		indexOfOutputTensor_ = idNameToIndex(tSrep.nameIdOfOutput().first,
-		                                     tSrep.nameIdOfOutput().second);
-
 		if (!modify_) return;
 
 		TensorBreakup tensorBreakup(srepStatement_.lhs(), srepStatement_.rhs());
@@ -89,9 +89,11 @@ public:
 			// add this temporary, call setDimensions for output tensor later
 			TensorStanza tmpStanza(vstr[i]);
 			VectorSizeType args(1,1); // bogus
-			TensorType* t = new TensorType(temporaryName, args, tmpStanza.ins());
+			const PsimagLite::String nameAndId = upToParens(temporaryName);
+			TensorType* t = new TensorType(nameAndId, args, tmpStanza.ins());
 			garbage_.push_back(t);
 			data_.push_back(t);
+			nameToIndexLUT.push(nameAndId);
 		}
 
 		VectorSrepStatementType veqs;
@@ -105,6 +107,7 @@ public:
 
 			TensorEvalSlow tEval(*(veqs[j]),
 			                     data_,
+			                     nameToIndexLUT_,
 			                     symmLocal_,
 			                     false);
 
@@ -127,6 +130,11 @@ public:
 		}
 	}
 
+	SizeType nameToIndexLut(PsimagLite::String name)
+	{
+		return nameToIndexLUT_(name);
+	}
+
 	HandleType operator()()
 	{
 		HandleType handle(HandleType::STATUS_DONE);
@@ -140,10 +148,11 @@ public:
 		VectorSizeType dimensions(total, 0);
 		VectorVectorSizeType q(total, 0);
 
+		SizeType indexOfOutputTensor = nameToIndexLUT_(nameOfOutputTensor_);
 		bool hasFree = srepStatement_.lhs().hasLegType('f');
 		if (hasFree) {
 			prepare(dimensions,q,srepStatement_.rhs(),TensorStanza::INDEX_TYPE_FREE);
-			setQnsForOutput(q);
+			setQnsForOutput(q, indexOfOutputTensor);
 		} else {
 			assert(dimensions.size() == 1);
 			dimensions[0] = 1;
@@ -153,10 +162,10 @@ public:
 
 		if (dimensions.size() == 1 && dimensions[0] == 0)
 			dimensions[0] = 1;
-		outputTensor().setSizes(dimensions);
+		outputTensor(indexOfOutputTensor).setSizes(dimensions);
 
 		do {
-			outputTensor()(free) = slowEvaluator(free,srepStatement_.rhs());
+			outputTensor(indexOfOutputTensor)(free) = slowEvaluator(free,srepStatement_.rhs());
 		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 
 		return handle;
@@ -164,20 +173,21 @@ public:
 
 	void printResult(std::ostream& os) const
 	{
-		SizeType total = outputTensor().args();
+		SizeType indexOfOutputTensor = nameToIndexLUT_(nameOfOutputTensor_);
+		SizeType total = outputTensor(indexOfOutputTensor).args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
 
 		for (SizeType i = 0; i < total; ++i)
-			dimensions[i] = outputTensor().argSize(i);
+			dimensions[i] = outputTensor(indexOfOutputTensor).argSize(i);
 
 		static VectorSizeType free;
 		if (total > free.size()) free.resize(total,0);
 		else std::fill(free.begin(), free.end(), 0);
 
 		do {
-			SizeType index = outputTensor().index(free);
-			std::cout<<index<<" "<<outputTensor()(free)<<"\n";
+			SizeType index = outputTensor(indexOfOutputTensor).index(free);
+			std::cout<<index<<" "<<outputTensor(indexOfOutputTensor)(free)<<"\n";
 		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 	}
 
@@ -225,7 +235,7 @@ private:
 	                   TensorStanza::IndexTypeEnum type) const
 	{
 		SizeType id = stanza.id();
-		SizeType mid = idNameToIndex(stanza.name(),id);
+		SizeType mid = nameToIndexLUT_(stanza.name() + ttos(id));
 		SizeType tensorIndex = (symmLocal_) ?
 		            symmLocal_->nameIdToIndex(stanza.name() + ttos(id)) : 0;
 		if (symmLocal_ && tensorIndex >= symmLocal_->size())
@@ -274,7 +284,7 @@ private:
 	                                  const VectorSizeType& free) const
 	{
 		SizeType id = ts.id();
-		SizeType mid = idNameToIndex(ts.name(),id);
+		SizeType mid = nameToIndexLUT_(ts.name() + ttos(id));
 		SizeType legs = ts.legs();
 		assert(legs == 0 || data_[mid]->args() == legs);
 
@@ -597,20 +607,11 @@ private:
 		return sum;
 	}
 
-	SizeType idNameToIndex(PsimagLite::String name, SizeType id) const
-	{
-		PsimagLite::String fullId = name + ttos(id);
-		for (SizeType i = 0; i < data_.size(); ++i)
-			if (fullId == data_[i]->name()) return i;
-
-		throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
-
-	}
-
-	void setQnsForOutput(VectorVectorSizeType& q)
+	void setQnsForOutput(VectorVectorSizeType& q,
+	                     SizeType indexOfOutputTensor)
 	{
 		// remap tensor indexing into symm local indexing
-		PsimagLite::String str = data_[indexOfOutputTensor_]->name();
+		PsimagLite::String str = data_[indexOfOutputTensor]->name();
 
 		SizeType legs = srepStatement_.lhs().legs();
 		VectorSizeType v(legs, 0);
@@ -628,16 +629,28 @@ private:
 			symmLocal_->addTensor(str, q, iperm);
 	}
 
-	TensorType& outputTensor()
+	TensorType& outputTensor(SizeType indexOfOutputTensor)
 	{
-		assert(indexOfOutputTensor_ < data_.size());
-		return *(data_[indexOfOutputTensor_]);
+		assert(indexOfOutputTensor < data_.size());
+		return *(data_[indexOfOutputTensor]);
 	}
 
-	const TensorType& outputTensor() const
+	const TensorType& outputTensor(SizeType indexOfOutputTensor) const
 	{
-		assert(indexOfOutputTensor_ < data_.size());
-		return *(data_[indexOfOutputTensor_]);
+		assert(indexOfOutputTensor < data_.size());
+		return *(data_[indexOfOutputTensor]);
+	}
+
+	static PsimagLite::String upToParens(PsimagLite::String str)
+	{
+		const SizeType l = str.length();
+		PsimagLite::String buffer = "";
+		for (SizeType i = 0; i < l; ++i) {
+			if (str[i] == '(') return buffer;
+			buffer += str[i];
+		}
+
+		return buffer;
 	}
 
 	TensorEvalSlow(const TensorEvalSlow& other);
@@ -646,9 +659,9 @@ private:
 
 	SrepStatementType srepStatement_;
 	VectorTensorType data_;
+	NameToIndexLut<TensorType>& nameToIndexLUT_;
 	SymmetryLocalType* symmLocal_;
 	bool modify_;
-	SizeType indexOfOutputTensor_;
 	VectorTensorType garbage_;
 };
 }

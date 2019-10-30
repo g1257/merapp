@@ -40,6 +40,11 @@ public:
 	              const VectorTensorType& vt)
 	{}
 
+	SizeType nameToIndexLut(PsimagLite::String name)
+	{
+		throw PsimagLite::RuntimeError("Not implemented yet\n");
+	}
+
 	HandleType operator()()
 	{
 		throw PsimagLite::RuntimeError("Not implemented yet\n");

@@ -51,8 +51,9 @@ int main(int argc, char **argv)
 
 	Mera::SrepStatement<double> srepEq(str);
 	TensorEvalBaseType* tensorEval = 0;
+	Mera::NameToIndexLut<TensorType> nameToIndexLut(vt);
 	if (evaluator == "slow") {
-		tensorEval = new TensorEvalSlowType(srepEq, vt, 0,false);
+		tensorEval = new TensorEvalSlowType(srepEq, vt, nameToIndexLut, 0,false);
 	} else if(evaluator == "new") {
 		tensorEval = new TensorEvalNewType(srepEq, vt);
 	} else {

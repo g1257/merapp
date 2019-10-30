@@ -36,6 +36,7 @@ public:
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
+	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
 
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
@@ -252,6 +253,20 @@ public:
 
 	PsimagLite::String name() const { return name_; }
 
+//	static SizeType idNameToIndex(const typename PsimagLite::Vector<Tensor*>::Type& data,
+//	                              const PairStringSizeType& p)
+//	{
+//		return idNameToIndex(data, p.first + ttos(p.second));
+
+//	}
+//	static SizeType idNameToIndex(const typename PsimagLite::Vector<Tensor*>::Type& data,
+//	                              PsimagLite::String nameAndId)
+//	{
+//		for (SizeType i = 0; i < data.size(); ++i)
+//			if (nameAndId == data[i]->name()) return i;
+
+//		throw PsimagLite::RuntimeError("idNameToIndex: key not found\n");
+//	}
 private:
 
 

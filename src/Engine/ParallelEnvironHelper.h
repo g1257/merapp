@@ -52,16 +52,14 @@ public:
 	ParallelEnvironHelper(VectorSrepStatementType& tensorSrep,
 	                      PsimagLite::String evaluator,
 	                      SizeType ignore,
-	                      const VectorPairStringSizeType& tensorNameAndIds,
-	                      MapPairStringSizeType& nameIdsTensor,
 	                      VectorTensorType& tensors,
+	                      NameToIndexLut<TensorType>& nameToIndexLut,
 	                      SymmetryLocalType* symmLocal)
 	    : tensorSrep_(tensorSrep),
 	      evaluator_(evaluator),
 	      ignore_(ignore),
-	      tensorNameIds_(tensorNameAndIds),
-	      nameIdsTensor_(nameIdsTensor),
 	      tensors_(tensors),
+	      nameToIndexLut_(nameToIndexLut),
 	      symmLocal_(symmLocal),
 	      m_(PsimagLite::Concurrency::codeSectionParams.npthreads, 0)
 	{
@@ -100,32 +98,6 @@ public:
 			checkAndAccumulate(*(m_[i]));
 	}
 
-	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
-	                                            const SrepStatementType& srep,
-	                                            VectorTensorType& tensors,
-	                                            const VectorPairStringSizeType& tensorNameIds,
-	                                            MapPairStringSizeType& nameIdsTensor,
-	                                            SymmetryLocalType* symmLocal)
-	{
-		TensorEvalBaseType* tensorEval = 0;
-		if (evaluator == "slow") {
-			tensorEval = new TensorEvalSlowType(srep,
-			                                    tensors,
-			                                    tensorNameIds,
-			                                    nameIdsTensor,
-			                                    symmLocal);
-		} else if (evaluator == "new") {
-			tensorEval = new TensorEvalNewType(srep,
-			                                   tensors,
-			                                   tensorNameIds,
-			                                   nameIdsTensor);
-		} else {
-			throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
-		}
-
-		return tensorEval;
-	}
-
 	void appendToMatrix(MatrixType& m,
 	                    SrepStatementType& eq,
 	                    PsimagLite::String evaluator)
@@ -152,12 +124,11 @@ public:
 		outputTensor(eq).setSizes(dimensions);
 
 		// evaluate environment
-		TensorEvalBaseType* tensorEval = getTensorEvalPtr(evaluator,
-		                                                  eq,
-		                                                  tensors_,
-		                                                  tensorNameIds_,
-		                                                  nameIdsTensor_,
-		                                                  symmLocal_);
+		TensorEvalBaseType* tensorEval =  getTensorEvalPtr(evaluator,
+		                                                   eq,
+		                                                   tensors_,
+		                                                   nameToIndexLut_,
+		                                                   symmLocal_);
 
 		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 		while (!handle.done());
@@ -175,6 +146,24 @@ public:
 		} while (ProgramGlobals::nextIndex(freeIndices,dimensions,total));
 	}
 
+	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
+	                                            const SrepStatementType& srep,
+	                                            VectorTensorType& tensors,
+	                                            NameToIndexLut<TensorType>& nameToIndexLut,
+	                                            SymmetryLocalType* symmLocal)
+	{
+		TensorEvalBaseType* tensorEval = 0;
+		if (evaluator == "slow") {
+			tensorEval = new TensorEvalSlowType(srep, tensors, nameToIndexLut, symmLocal);
+		} else if (evaluator == "new") {
+			tensorEval = new TensorEvalNewType(srep, tensors);
+		} else {
+			throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
+		}
+
+		return tensorEval;
+	}
+
 private:
 
 	void prepareFreeIndices(VectorDirType& directions,
@@ -189,9 +178,8 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			PsimagLite::String name = t(i).name();
 			SizeType id = t(i).id();
-			PairStringSizeType p(name,id);
 
-			SizeType ind = nameIdsTensor_[p];
+			SizeType ind = nameToIndexLut_(name + ttos(id));
 			assert(ind < tensors_.size());
 
 			SizeType ins = t(i).ins();
@@ -278,9 +266,7 @@ private:
 
 	TensorType& outputTensor(const SrepStatementType& eq)
 	{
-		SizeType indexOfOutputTensor = TensorEvalBaseType::indexOfOutputTensor(eq,
-		                                                                       tensorNameIds_,
-		                                                                       nameIdsTensor_);
+		SizeType indexOfOutputTensor = nameToIndexLut_(eq.nameIdOfOutput());
 		assert(indexOfOutputTensor < tensors_.size());
 		return *(tensors_[indexOfOutputTensor]);
 	}
@@ -303,9 +289,8 @@ private:
 	VectorSrepStatementType& tensorSrep_;
 	PsimagLite::String evaluator_;
 	SizeType ignore_;
-	const VectorPairStringSizeType& tensorNameIds_;
-	MapPairStringSizeType& nameIdsTensor_;
 	VectorTensorType& tensors_;
+	NameToIndexLut<TensorType>& nameToIndexLut_;
 	SymmetryLocalType* symmLocal_;
 	VectorMatrixType m_;
 }; // class ParallelEnvironHelper
