@@ -81,6 +81,16 @@ dependency Boost = (
 CPPFLAGS += -DUSE_BOOST
 )
 
+#Location of exatn
+location exatn = ( EXATN= .exatn )
+
+#Dependency exatn
+dependency exatn = (
+< location exatn
+CPPFLAGS +=   -I$(EXATN)/include/exatn -I$(EXATN)/include -I$(EXATN)/include/cppmicroservices4 -std=gnu++11 -fPIC  -DPATH_MAX=4096 -Wno-attributes -DNO_GPU -DEXATN_SERVICE
+LDFLAGS +=   -rdynamic -Wl,-rpath,$(EXATN)/lib -L $(EXATN)/lib -lCppMicroServices -ltalsh -lexatn -lexatn-numerics -lexatn-runtime -lexatn-runtime-graph -ldl -lpthread
+)
+
 # This disables debugging
 compilerCPPOptions NDEBUG = CPPFLAGS += -DNDEBUG
 
@@ -123,6 +133,7 @@ group basics = (
 < dependency LAPACK
 < dependency BLAS
 < dependency Boost
+< dependency exatn
 STRIP_COMMAND = strip
 )
 

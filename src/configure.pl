@@ -43,12 +43,9 @@ my %driver5 = (name => 'tensorEval');
 my @drivers = (\%driver1, \%driver2, \%driver3, \%driver4, \%driver5);
 
 
-my $aInc = " -I/home/gonza/.exatn/include/exatn -I/home/gonza/.exatn/include -I/home/gonza/.exatn/include/cppmicroservices4 -std=gnu++11 -fPIC  -DPATH_MAX=4096 -Wno-attributes -DNO_GPU -DEXATN_SERVICE ";
-my $aLibs = " -rdynamic -Wl,-rpath,/home/gonza/.exatn/lib -L /home/gonza/.exatn/lib -lCppMicroServices -ltalsh -lexatn -lexatn-numerics -lexatn-runtime -lexatn-runtime-graph -ldl -lpthread ";
-
 my %args;
-$args{"CPPFLAGS"} = $lto." $aInc";
-$args{"LDFLAGS"} = $lto." $aLibs";
+$args{"CPPFLAGS"} = $lto;
+$args{"LDFLAGS"} = $lto;
 $args{"flavor"} = $flavor;
 $args{"code"} = "DMRG++";
 $args{"configFiles"} = \@configFiles;
