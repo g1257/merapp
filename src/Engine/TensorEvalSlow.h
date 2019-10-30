@@ -93,7 +93,7 @@ public:
 			TensorType* t = new TensorType(nameAndId, args, tmpStanza.ins());
 			garbage_.push_back(t);
 			data_.push_back(t);
-			nameToIndexLUT.push(nameAndId);
+			nameToIndexLUT_.push(nameAndId);
 		}
 
 		VectorSrepStatementType veqs;
@@ -148,7 +148,7 @@ public:
 		VectorSizeType dimensions(total, 0);
 		VectorVectorSizeType q(total, 0);
 
-		SizeType indexOfOutputTensor = nameToIndexLUT_(nameOfOutputTensor_);
+		SizeType indexOfOutputTensor = nameToIndexLUT_(srepStatement_.nameIdOfOutput());
 		bool hasFree = srepStatement_.lhs().hasLegType('f');
 		if (hasFree) {
 			prepare(dimensions,q,srepStatement_.rhs(),TensorStanza::INDEX_TYPE_FREE);
@@ -173,7 +173,7 @@ public:
 
 	void printResult(std::ostream& os) const
 	{
-		SizeType indexOfOutputTensor = nameToIndexLUT_(nameOfOutputTensor_);
+		SizeType indexOfOutputTensor = nameToIndexLUT_(srepStatement_.nameIdOfOutput());
 		SizeType total = outputTensor(indexOfOutputTensor).args();
 		static VectorSizeType dimensions;
 		if (total > dimensions.size()) dimensions.resize(total,0);
@@ -659,7 +659,7 @@ private:
 
 	SrepStatementType srepStatement_;
 	VectorTensorType data_;
-	NameToIndexLut<TensorType>& nameToIndexLUT_;
+	mutable NameToIndexLut<TensorType> nameToIndexLUT_;
 	SymmetryLocalType* symmLocal_;
 	bool modify_;
 	VectorTensorType garbage_;
