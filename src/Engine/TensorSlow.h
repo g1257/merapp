@@ -37,6 +37,7 @@ public:
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
+	typedef VectorComplexOrRealType TensorBlobType;
 
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)

@@ -35,7 +35,7 @@ public:
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
-	typedef std::shared_ptr<exatn::numerics::Tensor> ExatnTensorBlobType;
+	typedef std::shared_ptr<exatn::numerics::Tensor> TensorBlobType;
 
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
@@ -214,12 +214,12 @@ public:
 //		return index;
 //	}
 
-	const ExatnTensorBlobType& data() const
+	const TensorBlobType& data() const
 	{
 		return data_;
 	}
 
-	void setData(const ExatnTensorBlobType& data)
+	void setData(const TensorBlobType& data)
 	{
 		data_ = data;
 	}
@@ -232,7 +232,7 @@ private:
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
 	PsimagLite::String name_;
 	VectorSizeType dimensions_;
-	ExatnTensorBlobType data_;
+	TensorBlobType data_;
 	SizeType ins_;
 };
 
