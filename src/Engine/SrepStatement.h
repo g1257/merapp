@@ -47,7 +47,7 @@ public:
 		lhs_ = new TensorStanza(vstr[0]);
 		rhs_ = new TensorSrepType(vstr[1]);
 
-		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
+		nameIdOfOutput_ = lhs_->fullName();
 	}
 
 	SrepStatement(const SrepStatement& other)
@@ -55,7 +55,7 @@ public:
 	{
 		lhs_ = new TensorStanza(*(other.lhs_));
 		rhs_ = new TensorSrepType(*(other.rhs_));
-		nameIdOfOutput_ = PairStringSizeType(lhs_->name(), lhs_->id());
+		nameIdOfOutput_ = lhs_->fullName();
 	}
 
 	~SrepStatement()
@@ -93,7 +93,7 @@ public:
 		return *rhs_;
 	}
 
-	const PairStringSizeType& nameIdOfOutput() const
+	const PsimagLite::String& nameIdOfOutput() const
 	{
 		return nameIdOfOutput_;
 	}
@@ -122,7 +122,7 @@ private:
 
 	TensorStanza* lhs_;
 	TensorSrepType* rhs_;
-	PairStringSizeType nameIdOfOutput_;
+	PsimagLite::String nameIdOfOutput_;
 }; // class SrepStatement
 
 } // namespace Mera

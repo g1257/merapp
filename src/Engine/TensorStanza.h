@@ -51,19 +51,17 @@ public:
 
 	struct NonPointerOpaque {
 		NonPointerOpaque(PsimagLite::String srep)
-		    : id_(0),
-		      conjugate_(false),
+		    : conjugate_(false),
 		      srep_(srep),
-		      name_(""),
+		      fullName_(""),
 		      type_(TENSOR_TYPE_GP),
 		      maxSummed_(0),
 		      maxFree_(0)
 		{}
 
-		SizeType id_;
 		bool conjugate_;
 		PsimagLite::String srep_;
-		PsimagLite::String name_;
+		PsimagLite::String fullName_;
 		TensorTypeEnum type_;
 		SizeType maxSummed_;
 		SizeType maxFree_;
@@ -110,12 +108,7 @@ public:
 		assert(l > 0);
 		index = nameAndId.find_first_of("0123456789");
 
-		opaque_.name_ = nameAndId.substr(0,index);
-
-		if (index == PsimagLite::String::npos)
-			opaque_.id_ = 0;
-		else
-			opaque_.id_ = atoi(nameAndId.substr(index,l-index).c_str());
+		opaque_.fullName_ = nameAndId;
 
 		if (index == PsimagLite::String::npos) {
 			PsimagLite::String str("TensorStanza: no digit for token ");
@@ -310,9 +303,7 @@ public:
 
 	const PsimagLite::String& sRep() const { return opaque_.srep_; }
 
-	const PsimagLite::String& name() const { return opaque_.name_; }
-
-	SizeType id() const { return opaque_.id_; }
+	const PsimagLite::String& fullName() const { return opaque_.fullName_; }
 
 	SizeType legs() const { return legs_.size(); }
 
@@ -402,8 +393,7 @@ private:
 
 	PsimagLite::String srepFromObject() const
 	{
-		PsimagLite::String srep = opaque_.name_;
-		srep += ttos(opaque_.id_);
+		PsimagLite::String srep = opaque_.fullName_;
 		if (opaque_.conjugate_) srep += "*";
 		srep += "(";
 		SizeType nins = countLegsWithDir(INDEX_DIR_IN);

@@ -35,6 +35,7 @@ public:
 	typedef PsimagLite::Vector<PairSizeType>::Type VectorPairSizeType;
 	typedef TensorStanza::VectorSizeType VectorSizeType;
 	typedef TensorStanza TensorStanzaType;
+	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
 
 	explicit TensorSrep(PsimagLite::String srep)
 	    : srep_(srep)
@@ -107,7 +108,7 @@ public:
 		assert(index < data_.size());
 
 		bool identityIdIncreased = false;
-		if (data_[index]->name() == "r")
+		if (data_[index]->fullName()[0] == 'r')
 			identityIdIncreased = addIrreducibleIdentity(irrIdentity);
 		if (identityIdIncreased) irrIdentity.increase();
 
@@ -259,12 +260,11 @@ public:
 	SizeType findConjugate(SizeType ind) const
 	{
 		SizeType ntensors = data_.size();
-		SizeType id = data_[ind]->id();
-		PsimagLite::String name = data_[ind]->name();
+		PsimagLite::String fullName = data_[ind]->fullName();
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (data_[i]->type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
-			if (data_[i]->isConjugate() && data_[i]->name()==name && data_[i]->id() == id)
+			if (data_[i]->isConjugate() && data_[i]->fullName()==fullName)
 				return i;
 		}
 
@@ -278,6 +278,25 @@ public:
 			if (data_[i]->hasLegType(c)) return true;
 
 		return false;
+	}
+
+	static PairStringSizeType splitIntoNameAndId(PsimagLite::String str)
+	{
+		PairStringSizeType p("", 0);
+
+		SizeType l = str.length();
+		if (l == 0) return p;
+
+		SizeType index = str.find_first_of("0123456789");
+
+		p.first = str.substr(0, index);
+
+		if (index == PsimagLite::String::npos)
+			p.second = 0;
+		else
+			p.second = atoi(str.substr(index, l - index).c_str());
+
+		return p;
 	}
 
 private:
@@ -573,7 +592,7 @@ private:
 		SizeType flag1 = 0;
 		SizeType loc0 = 0;
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (data_[i]->name() != "r") continue;
+			if (data_[i]->fullName()[0] != 'r') continue;
 			bool b = data_[i]->isConjugate();
 			if (b) {
 				flag0++;

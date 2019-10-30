@@ -78,8 +78,10 @@ private:
 	                          SizeType counterForOutput,
 	                          const VectorSizeType& limits)
 	{
-		SizeType id = tensorSrep_(ind).id();
-		PsimagLite::String name = tensorSrep_(ind).name();
+		TensorSrep::PairStringSizeType mypair = TensorSrep::
+		        splitIntoNameAndId(tensorSrep_(ind).fullName());
+		SizeType id = mypair.second;
+		PsimagLite::String name = mypair.first;
 		SizeType connections = params_.hamiltonianConnection.size();
 		VectorStringType vstr(connections,"");
 		VectorStringType argForOutput(connections,"");
@@ -102,7 +104,7 @@ private:
 		PairSizeType layer = findLayerNumber(name, id, limits);
 		thisEnv += "Layer=" + ttos(layer.first) + "\n";
 		thisEnv += "FirstOfLayer=" + ttos(layer.second) + "\n";
-		bool isRootTensor = (tensorSrep_(ind).name() == "r");
+		bool isRootTensor = (tensorSrep_(ind).fullName()[0] == 'r');
 		for (SizeType c = 0; c < connections; ++c) {
 			if (vstr[c] == "") continue;
 			PsimagLite::String tmp = "u" + ttos(counterForOutput++);
@@ -129,7 +131,7 @@ private:
 			err("Invalid tensor\n");
 		SizeType jnd = tensorSrep4.findConjugate(ind);
 		bool hasConjugate = (jnd < tensorSrep4.size());
-		bool isRootTensor = (tensorSrep_(ind).name() == "r");
+		bool isRootTensor = (tensorSrep_(ind).fullName()[0] == 'r');
 		if (!hasConjugate) {
 			if (isRootTensor) {
 				err("Environ for root: INTERNAL ERROR\n");
@@ -205,8 +207,8 @@ private:
 	                      VectorSizeType& legOutSizes,
 	                      SizeType ind) const
 	{
-		PsimagLite::String str = tensorSrep_(ind).name();
-		str += ttos(tensorSrep_(ind).id()) + "(";
+		PsimagLite::String str = tensorSrep_(ind).fullName();
+		str += "(";
 		PsimagLite::String buffer("");
 		const SizeType l = dimensionSrep_.sRep().length();
 		bool flag = false;
@@ -294,7 +296,7 @@ private:
 		SizeType ntensors = rightSrep.size();
 		int indexOfIdentity = -1;
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (rightSrep(i).name() == "i") {
+			if (rightSrep(i).fullName()[0] == 'i') {
 				indexOfIdentity = i;
 				break;
 			}
@@ -332,7 +334,9 @@ private:
 			throw PsimagLite::RuntimeError("irreducibleIdentityDsrep\n");
 
 		SizeType tmp = sizeOfRoot_/sizeWithoutIrrIdentity;
-		SizeType id = rightSrep(indexOfIdentity).id();
+		TensorSrep::PairStringSizeType mypair = TensorSrep::
+		        splitIntoNameAndId(rightSrep(indexOfIdentity).fullName());
+		SizeType id =  mypair.second;
 		dsrep_ += "i" + ttos(id) + "(D" + ttos(tmp) + "|D" + ttos(tmp) + ")";
 		symmLocal_.addIdentity(id, tmp);
 
@@ -348,21 +352,19 @@ private:
 					continue;
 				if (srep(i).legTag(j) != indexOfFree)
 					continue;
-				return findDimension(srep(i).name(), srep(i).id(), j);
+				return findDimension(srep(i).fullName(), j);
 			}
 		}
 
 		throw PsimagLite::RuntimeError("findDimension(1)\n");
 	}
 
-	SizeType findDimension(PsimagLite::String name,
-	                       SizeType id,
+	SizeType findDimension(PsimagLite::String fullName,
 	                       SizeType legIndex) const
 	{
 		SizeType ntensors = dimensionSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (dimensionSrep_(i).name() != name) continue;
-			if (dimensionSrep_(i).id() != id) continue;
+			if (dimensionSrep_(i).fullName() != fullName) continue;
 
 			return dimensionSrep_(i).legTag(legIndex);
 		}
@@ -374,7 +376,7 @@ private:
 	{
 		SizeType ntensors = dimensionSrep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (dimensionSrep_(i).name() != "r") continue;
+			if (dimensionSrep_(i).fullName()[0] != 'r') continue;
 
 			SizeType ins = dimensionSrep_(i).ins();
 			SizeType ret = 1;

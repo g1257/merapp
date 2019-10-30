@@ -57,7 +57,7 @@ private:
 			if (ts.type() == TensorStanzaType::TENSOR_TYPE_ERASED)
 				continue;
 
-			symmLocal_.setNameId(i, ts.name() + ttos(ts.id()));
+			symmLocal_.setNameId(i, ts.fullName());
 
 			SizeType legs = ts.legs();
 			for (SizeType j = 0; j < legs; ++j) {

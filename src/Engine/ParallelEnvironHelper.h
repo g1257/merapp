@@ -176,10 +176,7 @@ private:
 
 		SizeType ntensors = t.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = t(i).name();
-			SizeType id = t(i).id();
-
-			SizeType ind = nameToIndexLut_(name + ttos(id));
+			SizeType ind = nameToIndexLut_(t(i).fullName());
 			assert(ind < tensors_.size());
 
 			SizeType ins = t(i).ins();

@@ -97,8 +97,10 @@ private:
 		SizeType maxIdOfTtensors = 0;
 		SizeType ntensors = srep_.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (srep_(i).name() != "t") continue;
-			SizeType tmp = srep_(i).id();
+			TensorSrep::PairStringSizeType mypair = TensorSrep::
+			        splitIntoNameAndId(srep_(i).fullName());
+			if (mypair.first != "t") continue;
+			SizeType tmp = mypair.second;
 			if (tmp > maxIdOfTtensors) maxIdOfTtensors = tmp;
 		}
 
@@ -120,7 +122,7 @@ private:
 	                  const VectorSizeType& setS,
 	                  const TensorStanza& stanza) const
 	{
-		str = stanza.name() + ttos(stanza.id());
+		str = stanza.fullName();
 		if (stanza.isConjugate()) str += "*";
 		actualStr = str;
 		bool seen = false;
@@ -242,10 +244,10 @@ private:
 			std::cerr<<"We're going to break tensor ";
 		PsimagLite::String c = (stanza0.isConjugate()) ? "*" : "";
 		if (verbose_)
-			std::cerr<<stanza0.name()<<stanza0.id()<<c<<" and ";
+			std::cerr<<stanza0.fullName()<<c<<" and ";
 		c = (stanza1.isConjugate()) ? "*" : "";
 		if (verbose_) {
-			std::cerr<<stanza1.name()<<stanza1.id()<<c;
+			std::cerr<<stanza1.fullName()<<c;
 			std::cerr<<" from "<<srep_.sRep()<<"\n";
 		}
 
@@ -361,7 +363,7 @@ private:
 			const TensorStanza& stanza = srep_(i);
 			if (stanza.type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-			if (stanza.name() == "t" && test1) continue;
+			if (stanza.fullName()[0] == 't' && test1) continue;
 
 			if (counter == 0) {
 				pair.first = i;

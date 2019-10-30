@@ -234,10 +234,9 @@ private:
 	                   const TensorStanza& stanza,
 	                   TensorStanza::IndexTypeEnum type) const
 	{
-		SizeType id = stanza.id();
-		SizeType mid = nameToIndexLUT_(stanza.name() + ttos(id));
+		SizeType mid = nameToIndexLUT_(stanza.fullName());
 		SizeType tensorIndex = (symmLocal_) ?
-		            symmLocal_->nameIdToIndex(stanza.name() + ttos(id)) : 0;
+		            symmLocal_->nameIdToIndex(stanza.fullName()) : 0;
 		if (symmLocal_ && tensorIndex >= symmLocal_->size())
 			assert(false);
 
@@ -283,8 +282,7 @@ private:
 	                                  const VectorSizeType& summed,
 	                                  const VectorSizeType& free) const
 	{
-		SizeType id = ts.id();
-		SizeType mid = nameToIndexLUT_(ts.name() + ttos(id));
+		SizeType mid = nameToIndexLUT_(ts.fullName());
 		SizeType legs = ts.legs();
 		assert(legs == 0 || data_[mid]->args() == legs);
 
@@ -329,8 +327,8 @@ private:
 			// tensor r (root tensor) has no out legs, so different symmetry
 			// other tensors might have different symmetry also
 			// Therefore, symmetry as implemented only applies to u and w and h
-			PsimagLite::String name = tensorSrep(i).name();
-			if (name != "u" && name != "w" && name != "h")
+			unsigned char name = tensorSrep(i).fullName()[0];
+			if (name != 'u' && name != 'w' && name != 'h')
 				continue;
 			if (!symmetriesPass(tensorSrep(i),summed,free))
 				return false;
@@ -344,8 +342,7 @@ private:
 	                    const VectorSizeType& free) const
 	{
 		assert(symmLocal_);
-		PsimagLite::String tensorNameId = ts.name() + ttos(ts.id());
-		SizeType tensorIndex = symmLocal_->nameIdToIndex(tensorNameId);
+		SizeType tensorIndex = symmLocal_->nameIdToIndex(ts.fullName());
 		//if (ts.maxTag('f') == 0) return true;
 		if (tensorIndex >= symmLocal_->size())
 			assert(false);

@@ -36,6 +36,8 @@ class MeraToTikz {
 
 public:
 
+	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
+
 	MeraToTikz(PsimagLite::String srep, SizeType sites)
 	    : srep_(srep),tauMax_(ProgramGlobals::logBase2Strict(sites)-1)
 	{
@@ -75,7 +77,8 @@ private:
 			SizeType outs = tensorSrep(i).outs();
 			RealType ysign = (tensorSrep(i).isConjugate()) ? -1.0 : 1.0;
 			RealType dy = ysign*dy0;
-			PsimagLite::String label = tensorSrep(i).name();
+			PairStringSizeType mypair = TensorSrep::splitIntoNameAndId(tensorSrep(i).fullName());
+			PsimagLite::String label = mypair.first;
 
 			if (lastSeen != label) ++layer;
 			lastSeen = label;
@@ -202,10 +205,11 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			if (tensorSrep(i).type() == TensorStanza::TENSOR_TYPE_ERASED)
 				continue;
-			PsimagLite::String name = tensorSrep(i).name();
-			if (tensorSrep(i).id() >= unpackTimeAndSpace_.size())
+			PairStringSizeType mypair = TensorSrep::splitIntoNameAndId(tensorSrep(i).fullName());
+			PsimagLite::String name = mypair.first;
+			if (mypair.second >= unpackTimeAndSpace_.size())
 				continue;
-			PairSizeType tensorXY = unpackTimeAndSpace_[tensorSrep(i).id()];
+			PairSizeType tensorXY = unpackTimeAndSpace_[mypair.second];
 			SizeType tensorX = tensorXY.first;
 			SizeType tensorY = tensorXY.second;
 
@@ -217,8 +221,7 @@ private:
 			RealType xwsign = (tensorY & 1) ? -1 : 1;
 			RealType xoffset = 3.0*pow(2,tensorY);
 			if (tensorX == 0 && tensorY > 0 && name == "u") {
-				SizeType id = tensorSrep(i).id();
-				SizeType j = findTensor(tensorSrep, id, name);
+				SizeType j = findTensor(tensorSrep, tensorSrep(i).fullName());
 				if (tensorSrep(j).type() == TensorStanza::TENSOR_TYPE_ERASED)
 					continue;
 			}
@@ -252,8 +255,11 @@ private:
 		for (SizeType i = 0; i < ntensors; ++i) {
 			TensorStanza::TensorTypeEnum t = tensorSrep(i).type();
 			if (t != type) continue;
-			assert(tensorSrep(i).id() < unpackTimeAndSpace_.size());
-			PairSizeType layerXY = unpackTimeAndSpace_[tensorSrep(i).id()];
+			TensorSrep::PairStringSizeType mypair = TensorSrep::
+			        splitIntoNameAndId(tensorSrep(i).fullName());
+
+			assert(mypair.second < unpackTimeAndSpace_.size());
+			PairSizeType layerXY = unpackTimeAndSpace_[mypair.second];
 			if (layerXY.second != layer) continue;
 			counter++;
 		}
@@ -262,13 +268,11 @@ private:
 	}
 
 	SizeType findTensor(const TensorSrep& tensorSrep,
-	                    SizeType id,
-	                    PsimagLite::String name) const
+	                    PsimagLite::String fullName) const
 	{
 		SizeType ntensors = tensorSrep.size();
 		for (SizeType i = 0; i < ntensors; ++i) {
-			if (tensorSrep(i).name() != name) continue;
-			if (tensorSrep(i).id() != id) continue;
+			if (tensorSrep(i).fullName() != fullName) continue;
 			return i;
 		}
 
@@ -287,16 +291,20 @@ private:
 			SizeType ins = tensorSrep(i).ins();
 			for (SizeType j = 0; j < ins; ++j) {
 				if (tensorSrep(i).legType(j) != TensorStanza::INDEX_TYPE_SUMMED) continue;
+				TensorSrep::PairStringSizeType mypair = TensorSrep::
+				        splitIntoNameAndId(tensorSrep(i).fullName());
 				SizeType k1 = absoluteLegNumber(i,j,ntensors);
 				PsimagLite::String label1 = "(I";
-				label1 += tensorSrep(i).name();
+				label1 += mypair.first;
 				label1 += ttos(k1) + ")";
 
 				SizeType what = tensorSrep(i).legTag(j);
 				PairSizeType k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_OUT);
 				if (k.first < ntensors) {
 					PsimagLite::String label2 = "(O";
-					label2 += tensorSrep(k.first).name();
+					TensorSrep::PairStringSizeType mypair2 = TensorSrep::
+					        splitIntoNameAndId(tensorSrep(k.first).fullName());
+					label2 += mypair2.first;
 					SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
 					label2 += ttos(k2) + ")";
 					buffer_ += "\\draw[mycon] " + label1 + " -- " + label2 + ";\n";
@@ -304,8 +312,10 @@ private:
 
 				k = findTarget(tensorSrep,i,what,TensorStanza::INDEX_DIR_IN);
 				if (k.first >= ntensors) continue;
+				TensorSrep::PairStringSizeType mypair3 = TensorSrep::
+				        splitIntoNameAndId(tensorSrep(k.first).fullName());
 				PsimagLite::String label2 = "(I";
-				label2 += tensorSrep(k.first).name();
+				label2 +=  mypair3.first;
 				SizeType k2 = absoluteLegNumber(k.first,k.second,ntensors);
 				label2 += ttos(k2) + ")";
 				buffer_ += "\\draw[mycon] " + label1 + " -- " + label2 + ";\n";
@@ -359,7 +369,9 @@ private:
 		RealType summedIds = 0.0;
 		for (SizeType i = 0; i < legs.size(); ++i) {
 			SizeType index = findTensorWithSummedLeg(legs[i],indexOfH,tSrep);
-			SizeType tmp =  tSrep(index).id();
+			TensorSrep::PairStringSizeType mypair = TensorSrep::
+			        splitIntoNameAndId(tSrep(index).fullName());
+			SizeType tmp =  mypair.second;
 			summedIds += unpackTimeAndSpace_[tmp].first;
 		}
 

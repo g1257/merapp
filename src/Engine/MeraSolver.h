@@ -55,6 +55,7 @@ class MeraSolver {
 	typedef typename TensorOptimizerType::ParametersForMeraType ParametersForMeraType;
 	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
 	typedef TensorEvalNew<ComplexOrRealType> TensorEvalNewType;
+	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
 
@@ -354,9 +355,9 @@ private:
 		return parallelEnergyHelper.energy();
 	}
 
-	void initTensorNameIds(VectorPairStringSizeType& tensorNameIds)
+	void initTensorNameIds(VectorStringType& tensorNameIds)
 	{
-		PsimagLite::Sort<VectorPairStringSizeType> sort;
+		PsimagLite::Sort<VectorStringType> sort;
 		VectorSizeType perm(tensorNameIds.size(),0);
 		sort.sort(tensorNameIds,perm);
 		SizeType end = (std::unique(tensorNameIds.begin(),
@@ -364,7 +365,7 @@ private:
 		tensorNameIds.resize(end);
 	}
 
-	void initTensors(const VectorPairStringSizeType& tensorNameIds,
+	void initTensors(const VectorStringType& tensorNameIds,
 	                 const TensorSrep& td)
 	{
 		tensors_.resize(tensorNameIds.size());
@@ -377,14 +378,13 @@ private:
 		}
 
 		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = td(i).name();
-			SizeType id = td(i).id();
-			PairStringSizeType p(name, id);
-			typename VectorPairStringSizeType::const_iterator x = std::find(tensorNameIds.begin(),
-			                                                                tensorNameIds.end(),
-			                                                                p);
+			TensorSrep::PairStringSizeType mypair = TensorSrep::
+			        splitIntoNameAndId(td(i).fullName());
+			typename VectorStringType::const_iterator x = std::find(tensorNameIds.begin(),
+			                                                        tensorNameIds.end(),
+			                                                        td(i).fullName());
 			if (x == tensorNameIds.end()) {
-				std::cerr<<"WARNING: Unused tensor name= "<<name<<" id= "<<id<<"\n";
+				std::cerr<<"WARNING: Unused tensor fullname= "<< td(i).fullName()<<"\n";
 				continue;
 			}
 
@@ -400,35 +400,28 @@ private:
 
 			SizeType ins = td(i).ins();
 			assert(ind < tensors_.size());
-			tensors_[ind] = new TensorType(name + ttos(id), dimensions, ins);
-			if (name == "h") {
-				tensors_[ind]->setToMatrix(model_().twoSiteHam(id));
+			tensors_[ind] = new TensorType(td(i).fullName(), dimensions, ins);
+			if (td(i).fullName()[0] == 'h') {
+				tensors_[ind]->setToMatrix(model_().twoSiteHam(mypair.second));
 			} else {
 				tensors_[ind]->setToIdentity(1.0);
 			}
 		}
 	}
 
-	void findTensors(VectorPairStringSizeType& tensorNameIds,
+	void findTensors(VectorStringType& tensorNameIds,
 	                 const TensorSrep& t)
 	{
 		SizeType ntensors = t.size();
-		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = t(i).name();
-			SizeType id = t(i).id();
-			PairStringSizeType p(name,id);
-			tensorNameIds.push_back(p);
-		}
+		for (SizeType i = 0; i < ntensors; ++i)
+			tensorNameIds.push_back(t(i).fullName());
 	}
 
 	void allTensorsDefinedOrDie(const TensorSrep& srep)
 	{
 		SizeType ntensors = srep.size();
-		for (SizeType i = 0; i < ntensors; ++i) {
-			PsimagLite::String name = srep(i).name();
-			SizeType id = srep(i).id();
-			nameToIndexLut_->operator()(name + ttos(id));
-		}
+		for (SizeType i = 0; i < ntensors; ++i)
+			nameToIndexLut_->operator()(srep(i).fullName());
 	}
 
 	void updateTensorSizes(bool noSymmLocal)
@@ -445,7 +438,7 @@ private:
 			symmLocal_ = symmLocal;
 
 		TensorSrep tdstr(dsrep);
-		VectorPairStringSizeType tensorNameIds;
+		VectorStringType tensorNameIds;
 		findTensors(tensorNameIds,  tdstr);
 		initTensorNameIds(tensorNameIds);
 
