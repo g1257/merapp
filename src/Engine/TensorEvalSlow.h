@@ -145,8 +145,8 @@ public:
 		//if (srepStatement_.rhs().size() == 2 && total > 0 && !symmLocal_)
 		//	return operatorParensFast();
 
-		VectorSizeType dimensions(total, 0);
-		VectorVectorSizeType q(total, 0);
+		VectorSizeType dimensions(total);
+		VectorVectorSizeType q(total);
 
 		SizeType indexOfOutputTensor = nameToIndexLUT_(srepStatement_.nameIdOfOutput());
 		bool hasFree = srepStatement_.lhs().hasLegType('f');
@@ -165,7 +165,7 @@ public:
 		outputTensor(indexOfOutputTensor).setSizes(dimensions);
 
 		do {
-			outputTensor(indexOfOutputTensor)(free) = slowEvaluator(free,srepStatement_.rhs());
+			outputTensor(indexOfOutputTensor)(free) = slowEvaluator(free, srepStatement_.rhs());
 		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 
 		return handle;
@@ -186,7 +186,8 @@ public:
 		else std::fill(free.begin(), free.end(), 0);
 
 		do {
-			SizeType index = outputTensor(indexOfOutputTensor).index(free);
+			//SizeType index = outputTensor(indexOfOutputTensor).index(free);
+			SizeType index = 0;
 			std::cout<<index<<" "<<outputTensor(indexOfOutputTensor)(free)<<"\n";
 		} while (ProgramGlobals::nextIndex(free,dimensions,total));
 	}
@@ -395,7 +396,7 @@ private:
 		assert(srepStatement_.rhs().size() == 2 && total > 0);
 
 		VectorSizeType dimensions(total, 0);
-		VectorVectorSizeType q(total, 0);
+		VectorVectorSizeType q(total);
 
 		bool hasFree = srepStatement_.lhs().hasLegType('f');
 		if (hasFree) {

@@ -65,8 +65,9 @@ public:
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
 	LanczosSolverType;
+	typedef typename TensorType::ExatnTensorBlobType ExatnTensorBlobType;
 	typedef typename TensorEvalSlowType::SymmetryLocalType SymmetryLocalType;
-	typedef typename PsimagLite::Stack<VectorType>::Type StackVectorType;
+	typedef typename PsimagLite::Stack<ExatnTensorBlobType>::Type StackVectorType;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
