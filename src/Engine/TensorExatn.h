@@ -22,6 +22,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Matrix.h"
 #include "RandomForTests.h"
 #include "exatn.hpp"
+#include "../../exatn/tpls/ExaTensor/include/talshxx.hpp"
 
 namespace Mera {
 
@@ -41,16 +42,25 @@ public:
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
 	    : name_(name),
 	      dimensions_(1, dim0),
-	      data_(std::make_shared<exatn::numerics::Tensor>(name, exatn::numerics::TensorShape(dimensions_))),
+	      //data_(std::make_shared<exatn::numerics::Tensor>(name, exatn::numerics::TensorShape(dimensions_))),
 	      ins_(ins)
-	{}
+	{
+		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
+	}
 
 	Tensor(PsimagLite::String name, const VectorSizeType& d, SizeType ins)
 	    : name_(name),
 	      dimensions_(d),
-	      data_(std::make_shared<exatn::numerics::Tensor>(name, exatn::numerics::TensorShape(dimensions_))),
+	      //data_(std::make_shared<exatn::numerics::Tensor>(name, exatn::numerics::TensorShape(dimensions_))),
 	      ins_(ins)
-	{}
+	{
+		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
+	}
+
+	~Tensor()
+	{
+		exatn::destroyTensor(name_);
+	}
 
 	void setToIdentity(ComplexOrRealType value)
 	{
@@ -104,13 +114,47 @@ public:
 //		SizeType n = data_.size();
 //		for (SizeType i = 0; i < n; ++i)
 //			data_[i] = value;
+		exatn::initTensor(name_, value);
 	}
+
+	class SetToMatrix : public exatn::TensorMethod {
+	public:
+
+		SetToMatrix(const MatrixType& m) : m_(m)
+		{}
+
+		virtual void pack(BytePacket & packet) {}
+		virtual void unpack(BytePacket & packet) {}
+		virtual const std::string name() const {return "SetToMatrix";}
+		virtual const std::string description() const {return "SetToMatrixDescription"; }
+
+	    //Application-defined external tensor method:
+	    virtual int apply(talsh::Tensor& local_tensor)
+		{
+			const ComplexOrRealType* ptr = 0;
+			bool ret = local_tensor.getDataAccessHostConst(&ptr);
+			//if (!ret)
+				// check error
+			unsigned int numdims = 0;
+			const int* iptr = local_tensor.getDimExtents(numdims);
+
+			// ptr[i0 + i1*iptr[0] + i2*iptr[0]*iptr[1] ] = ...m_(i, j);
+			return 0;
+		}
+
+	private:
+
+		const MatrixType& m_;
+	};
 
 	void setToMatrix(const MatrixType& m)
 	{
 		if (ins_ == 0) return;
 		if (dimensions_.size() < ins_) return;
 
+		std::shared_ptr<SetToMatrix> setToMatrix1 = std::make_shared<SetToMatrix>(m);
+
+		exatn::transformTensor(name_, setToMatrix1);
 		// FIXME: Set tensor to matrix m as below:
 
 //		if (dimensions_.size() == ins_) {
@@ -124,7 +168,8 @@ public:
 
 //		SizeType dins = 1;
 //		for (SizeType i = 0; i < ins_; ++i)
-//			dins *= dimensions_[i];
+//			dins *= dimensions_[i];		return data_[0];
+
 
 //		SizeType douts = 1;
 //		for (SizeType i = ins_; i < dimensions_.size(); ++i)
@@ -134,19 +179,19 @@ public:
 //				data_[x + y*dins] = m(x,y);
 	}
 
-	void setSizes(const VectorSizeType& dimensions)
-	{
-		if (ins_ > dimensions.size())
-			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions < ins\n");
+//	void setSizes(const VectorSizeType& dimensions)
+//	{
+//		if (ins_ > dimensions.size())
+//			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions < ins\n");
 
-		dimensions_ = dimensions;
+//		dimensions_ = dimensions;
 
-		SizeType v = volume();
-		if (v == 0)
-			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions == 0\n");
+//		SizeType v = volume();
+//		if (v == 0)
+//			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions == 0\n");
 
-		data_ = std::make_shared<exatn::numerics::Tensor>(name_, exatn::numerics::TensorShape(dimensions_));
-	}
+//		//data_ = std::make_shared<exatn::numerics::Tensor>(name_, exatn::numerics::TensorShape(dimensions_));
+//	}
 
 	SizeType volume() const
 	{
@@ -185,17 +230,21 @@ public:
 		/* SizeType index = pack(args);
 		assert(index < data_.size());
 		return data_[index];*/
+
+
 	}
 
 	// FIXME: GIVES AWAY INTERNALS!!
-	ComplexOrRealType& operator()(const VectorSizeType& args)
-	{
-		// FIXME: Return tensor data_ at args, non const version
-		/*
-		SizeType index = pack(args);
-		assert(index < data_.size());
-		return data_[index];*/
-	}
+//	ComplexOrRealType& operator()(const VectorSizeType& args)
+//	{
+//		// FIXME: Return tensor data_ at args, non const version
+//		/*
+//		SizeType index = pack(args);
+//		assert(index < data_.size());
+//		return data_[index];*/
+
+
+//	}
 
 //	SizeType pack(const VectorSizeType& args) const
 //	{
@@ -216,31 +265,38 @@ public:
 
 	const TensorBlobType& data() const
 	{
-		return data_;
+
+		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
+		const ComplexOrRealType* ptr2 = 0;
+		bool ret = ptr->getDataAccessHostConst(&ptr2);
+		//if (!ret)
+			// check error
+		return *ptr2;
 	}
 
 	void setData(const TensorBlobType& data)
 	{
-		data_ = data;
+		// needs to be done as an add
+		// data_ = data;
 	}
 
 	PsimagLite::String name() const { return name_; }
 
 private:
 
-	static exatn::numerics::TensorOpFactory* opFactory_;
+	//static exatn::numerics::TensorOpFactory* opFactory_;
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
 	PsimagLite::String name_;
 	VectorSizeType dimensions_;
-	TensorBlobType data_;
+	//TensorBlobType data_;
 	SizeType ins_;
 };
 
 template<typename ComplexOrRealType>
 PsimagLite::RandomForTests<ComplexOrRealType> Tensor<ComplexOrRealType>::rng_(1234);
 
-template<typename ComplexOrRealType>
-exatn::numerics::TensorOpFactory* Tensor<ComplexOrRealType>::opFactory_ = exatn::numerics::TensorOpFactory::get();
+//template<typename ComplexOrRealType>
+//exatn::numerics::TensorOpFactory* Tensor<ComplexOrRealType>::opFactory_ = exatn::numerics::TensorOpFactory::get();
 
 }
 #endif // TENSOR_EXATN_H

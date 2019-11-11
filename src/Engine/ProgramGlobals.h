@@ -20,6 +20,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "Vector.h"
 #include "RandomForTests.h"
 #include "AllocatorCpu.h"
+#include <cassert>
 
 namespace Mera {
 

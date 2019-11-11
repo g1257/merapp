@@ -15,8 +15,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef NO_EXATN
 #include "TensorEvalSlow.h"
+typedef Mera::TensorEvalSlow<double> TensorEvalSlowType;
+#else
 #include "TensorEvalNew.h"
+typedef Mera::TensorEvalNew<double> TensorEvalNewType;
+#endif
 #include "Vector.h"
 #include "SrepStatement.h"
 
@@ -29,9 +34,6 @@ int main(int argc, char **argv)
 		evaluator = argv[1];
 
 	std::cout<<"Using evaluator "<<evaluator<<"\n";
-
-	typedef Mera::TensorEvalSlow<double> TensorEvalSlowType;
-	typedef Mera::TensorEvalNew<double> TensorEvalNewType;
 
 	SizeType dim0 = 5;
 	typedef Mera::TensorEvalBase<double> TensorEvalBaseType;
@@ -51,14 +53,12 @@ int main(int argc, char **argv)
 
 	Mera::SrepStatement<double> srepEq(str);
 	TensorEvalBaseType* tensorEval = 0;
+#ifdef NO_EXATN
 	Mera::NameToIndexLut<TensorType> nameToIndexLut(vt);
-	if (evaluator == "slow") {
-		tensorEval = new TensorEvalSlowType(srepEq, vt, nameToIndexLut, 0,false);
-	} else if(evaluator == "new") {
-		tensorEval = new TensorEvalNewType(srepEq, vt);
-	} else {
-		throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
-	}
+	tensorEval = new TensorEvalSlowType(srepEq, vt, nameToIndexLut, 0,false);
+#else
+	tensorEval = new TensorEvalNewType(srepEq, vt);
+#endif
 
 	TensorEvalBaseType::HandleType handle = tensorEval->operator()();
 

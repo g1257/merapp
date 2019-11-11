@@ -45,10 +45,10 @@ public:
 		throw PsimagLite::RuntimeError("Not implemented yet\n");
 	}
 
-	HandleType operator()()
-	{
-		throw PsimagLite::RuntimeError("Not implemented yet\n");
-	}
+//	HandleType operator()()
+//	{
+//		throw PsimagLite::RuntimeError("Not implemented yet\n");
+//	}
 
 	void printResult(std::ostream& os) const
 	{
