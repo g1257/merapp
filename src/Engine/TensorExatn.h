@@ -29,6 +29,10 @@ namespace Mera {
 template<typename ComplexOrRealType>
 class Tensor {
 
+	Tensor(const Tensor&) = delete;
+
+	Tensor& operator=(const Tensor&) = delete;
+
 public:
 
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
@@ -118,30 +122,53 @@ public:
 	class SetToMatrix : public exatn::TensorMethod {
 	public:
 
-		SetToMatrix(const MatrixType& m) : m_(m)
+		SetToMatrix(const VectorSizeType& dimensions,
+		            SizeType ins,
+		            const MatrixType& m) : dimensions_(dimensions), ins_(ins), m_(m)
 		{}
 
 		virtual void pack(BytePacket & packet) {}
+
 		virtual void unpack(BytePacket & packet) {}
+
 		virtual const std::string name() const {return "SetToMatrix";}
+
 		virtual const std::string description() const {return "SetToMatrixDescription"; }
 
 	    //Application-defined external tensor method:
 	    virtual int apply(talsh::Tensor& local_tensor)
 		{
-			const ComplexOrRealType* ptr = 0;
-			bool ret = local_tensor.getDataAccessHostConst(&ptr);
-			//if (!ret)
-				// check error
-			unsigned int numdims = 0;
-			const int* iptr = local_tensor.getDimExtents(numdims);
+			ComplexOrRealType* ptr = 0;
+			bool ret = local_tensor.getDataAccessHost(&ptr);
+			checkTalshErrorCode(ret, "getDataAccessHostConst");
 
+			if (dimensions_.size() == ins_) {
+				SizeType rows = m_.n_row();
+				SizeType cols = m_.n_col();
+				for (SizeType i = 0; i < rows; ++i)
+					for (SizeType j = 0; j < cols; ++j)
+						ptr[i+j*rows] = m_(i,j);
+				return 0;
+			}
+
+			SizeType dins = 1;
+			for (SizeType i = 0; i < ins_; ++i)
+				dins *= dimensions_[i];
+
+			SizeType douts = 1;
+			for (SizeType i = ins_; i < dimensions_.size(); ++i)
+				douts *= dimensions_[i];
+			for (SizeType x = 0; x < dins; ++x)
+				for (SizeType y = 0; y < douts; ++y)
+					ptr[x + y*dins] = m_(x,y);
 			// ptr[i0 + i1*iptr[0] + i2*iptr[0]*iptr[1] ] = ...m_(i, j);
-			return 0;
+			return 0; // error code
 		}
 
 	private:
 
+		const VectorSizeType& dimensions_;
+		const SizeType ins_;
 		const MatrixType& m_;
 	};
 
@@ -150,46 +177,30 @@ public:
 		if (ins_ == 0) return;
 		if (dimensions_.size() < ins_) return;
 
-		std::shared_ptr<SetToMatrix> setToMatrix1 = std::make_shared<SetToMatrix>(m);
+		std::shared_ptr<SetToMatrix> setToMatrix1 = std::make_shared<SetToMatrix>(dimensions_,
+		                                                                          ins_,
+		                                                                          m);
 
 		exatn::transformTensor(name_, setToMatrix1);
 		// FIXME: Set tensor to matrix m as below:
 
-//		if (dimensions_.size() == ins_) {
-//			SizeType rows = m.n_row();
-//			SizeType cols = m.n_col();
-//			for (SizeType i = 0; i < rows; ++i)
-//				for (SizeType j = 0; j < cols; ++j)
-//					data_[i+j*rows] = m(i,j);
-//			return;
-//		}
 
-//		SizeType dins = 1;
-//		for (SizeType i = 0; i < ins_; ++i)
-//			dins *= dimensions_[i];		return data_[0];
-
-
-//		SizeType douts = 1;
-//		for (SizeType i = ins_; i < dimensions_.size(); ++i)
-//			douts *= dimensions_[i];
-//		for (SizeType x = 0; x < dins; ++x)
-//			for (SizeType y = 0; y < douts; ++y)
-//				data_[x + y*dins] = m(x,y);
 	}
 
-//	void setSizes(const VectorSizeType& dimensions)
-//	{
-//		if (ins_ > dimensions.size())
-//			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions < ins\n");
+	void setSizes(const VectorSizeType& dimensions)
+	{
+		if (ins_ > dimensions.size())
+			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions < ins\n");
 
-//		dimensions_ = dimensions;
+		dimensions_ = dimensions;
 
-//		SizeType v = volume();
-//		if (v == 0)
-//			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions == 0\n");
+		SizeType v = volume();
+		if (v == 0)
+			throw PsimagLite::RuntimeError("Tensor::setSizes(...): dimensions == 0\n");
 
-//		//data_ = std::make_shared<exatn::numerics::Tensor>(name_, exatn::numerics::TensorShape(dimensions_));
-//	}
+		exatn::destroyTensor(name_);
+		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
+	}
 
 	SizeType volume() const
 	{
@@ -223,13 +234,23 @@ public:
 
 	const ComplexOrRealType& operator()(const VectorSizeType& args) const
 	{
-		// FIXME: Return tensor data_ at args, const version
+		// Return tensor data_ at args, const version
 
-		/* SizeType index = pack(args);
-		assert(index < data_.size());
-		return data_[index];*/
+		SizeType index = pack(args);
+		const ComplexOrRealType* ptr = this->data();
+		return ptr[index];
+	}
 
+	void setValue(const VectorSizeType& args, const ComplexOrRealType& val)
+	{
+		SizeType index = pack(args);
 
+		std::shared_ptr<talsh::Tensor> localTensor = exatn::getLocalTensor(name_);
+		ComplexOrRealType* ptr = 0;
+		bool ret = localTensor->getDataAccessHost(&ptr);
+		checkTalshErrorCode(ret, "getDataAccessHostConst");
+
+		ptr[index] = val;
 	}
 
 	// FIXME: GIVES AWAY INTERNALS!!
@@ -244,28 +265,11 @@ public:
 
 //	}
 
-//	SizeType pack(const VectorSizeType& args) const
-//	{
-//		assert(args.size() > 0);
-//		assert(args.size() == dimensions_.size());
-//		SizeType index = 0;
-//		SizeType prod = 1;
-
-//		for (SizeType i = 0; i < args.size(); ++i) {
-//			if (dimensions_[i] == 0) continue;
-//			assert(args[i] < dimensions_[i]);
-//			index += args[i]*prod;
-//			prod *= dimensions_[i];
-//		}
-
-//		return index;
-//	}
-
 	const ComplexOrRealType* data() const
 	{
 
 		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
-		const ComplexOrRealType** ptr2;
+		const ComplexOrRealType** ptr2 = 0;
 		bool ret = ptr->getDataAccessHostConst(ptr2);
 		checkTalshErrorCode(ret, "getLocalTensor");
 		return *ptr2;
@@ -274,7 +278,7 @@ public:
 	void setData(const ComplexOrRealType* data)
 	{
 		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
-		ComplexOrRealType** ptr2;
+		ComplexOrRealType** ptr2 = 0;
 		bool ret = ptr->getDataAccessHost(ptr2);
 		checkTalshErrorCode(ret, "getLocalTensor");
 
@@ -290,11 +294,24 @@ public:
 
 private:
 
-	Tensor(const Tensor&) = delete;
+	SizeType pack(const VectorSizeType& args) const
+	{
+		assert(args.size() > 0);
+		assert(args.size() == dimensions_.size());
+		SizeType index = 0;
+		SizeType prod = 1;
 
-	Tensor& operator=(const Tensor&) = delete;
+		for (SizeType i = 0; i < args.size(); ++i) {
+			if (dimensions_[i] == 0) continue;
+			assert(args[i] < dimensions_[i]);
+			index += args[i]*prod;
+			prod *= dimensions_[i];
+		}
 
-	void checkTalshErrorCode(bool code, PsimagLite::String what) const
+		return index;
+	}
+
+	static void checkTalshErrorCode(bool code, PsimagLite::String what)
 	{
 		if (code) return;
 		throw PsimagLite::RuntimeError("MERA++: TALSH returned false from " + what + "\n");
