@@ -110,12 +110,7 @@ public:
 
 	void setToConstant(ComplexOrRealType value)
 	{
-		// FIXME: SET TENSOR to a constant value value
-
-//		// use std:: function here instead of loop, FIXME
-//		SizeType n = data_.size();
-//		for (SizeType i = 0; i < n; ++i)
-//			data_[i] = value;
+		// SET TENSOR to a constant value value
 		exatn::initTensor(name_, value);
 	}
 
@@ -175,6 +170,7 @@ public:
 	void setToMatrix(const MatrixType& m)
 	{
 		if (ins_ == 0) return;
+
 		if (dimensions_.size() < ins_) return;
 
 		std::shared_ptr<SetToMatrix> setToMatrix1 = std::make_shared<SetToMatrix>(dimensions_,
@@ -182,9 +178,6 @@ public:
 		                                                                          m);
 
 		exatn::transformTensor(name_, setToMatrix1);
-		// FIXME: Set tensor to matrix m as below:
-
-
 	}
 
 	void setSizes(const VectorSizeType& dimensions)
@@ -227,11 +220,6 @@ public:
 		return dimensions_[ind];
 	}
 
-//	SizeType index(const VectorSizeType& args) const
-//	{
-//		return pack(args);
-//	}
-
 	const ComplexOrRealType& operator()(const VectorSizeType& args) const
 	{
 		// Return tensor data_ at args, const version
@@ -252,18 +240,6 @@ public:
 
 		ptr[index] = val;
 	}
-
-	// FIXME: GIVES AWAY INTERNALS!!
-//	ComplexOrRealType& operator()(const VectorSizeType& args)
-//	{
-//		// FIXME: Return tensor data_ at args, non const version
-//		/*
-//		SizeType index = pack(args);
-//		assert(index < data_.size());
-//		return data_[index];*/
-
-
-//	}
 
 	const ComplexOrRealType* data() const
 	{
