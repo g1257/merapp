@@ -36,13 +36,12 @@ public:
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
-	typedef std::shared_ptr<exatn::numerics::Tensor> TensorBlobType;
+	typedef ComplexOrRealType* TensorBlobType;
 
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
 	    : name_(name),
 	      dimensions_(1, dim0),
-	      //data_(std::make_shared<exatn::numerics::Tensor>(name, exatn::numerics::TensorShape(dimensions_))),
 	      ins_(ins)
 	{
 		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
@@ -51,7 +50,6 @@ public:
 	Tensor(PsimagLite::String name, const VectorSizeType& d, SizeType ins)
 	    : name_(name),
 	      dimensions_(d),
-	      //data_(std::make_shared<exatn::numerics::Tensor>(name, exatn::numerics::TensorShape(dimensions_))),
 	      ins_(ins)
 	{
 		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
@@ -263,19 +261,27 @@ public:
 //		return index;
 //	}
 
-	const TensorBlobType& data() const
+	const ComplexOrRealType* data() const
 	{
 
 		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
-		const ComplexOrRealType* ptr2 = 0;
-		bool ret = ptr->getDataAccessHostConst(&ptr2);
-		//if (!ret)
-			// check error
+		const ComplexOrRealType** ptr2;
+		bool ret = ptr->getDataAccessHostConst(ptr2);
+		checkTalshErrorCode(ret, "getLocalTensor");
 		return *ptr2;
 	}
 
-	void setData(const TensorBlobType& data)
+	void setData(const ComplexOrRealType* data)
 	{
+		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
+		ComplexOrRealType** ptr2;
+		bool ret = ptr->getDataAccessHost(ptr2);
+		checkTalshErrorCode(ret, "getLocalTensor");
+
+		const SizeType n = ptr->getVolume();
+		for (SizeType i = 0; i < n; ++i)
+			(*ptr2)[i] = data[i];
+
 		// needs to be done as an add
 		// data_ = data;
 	}
@@ -284,19 +290,24 @@ public:
 
 private:
 
-	//static exatn::numerics::TensorOpFactory* opFactory_;
+	Tensor(const Tensor&) = delete;
+
+	Tensor& operator=(const Tensor&) = delete;
+
+	void checkTalshErrorCode(bool code, PsimagLite::String what) const
+	{
+		if (code) return;
+		throw PsimagLite::RuntimeError("MERA++: TALSH returned false from " + what + "\n");
+	}
+
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;
 	PsimagLite::String name_;
 	VectorSizeType dimensions_;
-	//TensorBlobType data_;
 	SizeType ins_;
 };
 
 template<typename ComplexOrRealType>
 PsimagLite::RandomForTests<ComplexOrRealType> Tensor<ComplexOrRealType>::rng_(1234);
-
-//template<typename ComplexOrRealType>
-//exatn::numerics::TensorOpFactory* Tensor<ComplexOrRealType>::opFactory_ = exatn::numerics::TensorOpFactory::get();
 
 }
 #endif // TENSOR_EXATN_H

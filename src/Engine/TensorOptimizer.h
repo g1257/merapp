@@ -192,14 +192,13 @@ public:
 
 	const PairStringSizeType& nameId() const { return tensorToOptimize_; }
 
+	SizeType indexToOptimize() const { return indToOptimize_; }
+
 	SizeType layer() const { return layer_; }
 
 	void restoreTensor()
 	{
-		if (stack_.size() == 0)
-			throw PsimagLite::RuntimeError("restoreTensor: stack is empty\n");
-		tensors_[indToOptimize_]->setData(stack_.top());
-		stack_.pop();
+		tensors_[indToOptimize_]->setData(savedTensor_);
 	}
 
 	const SizeType& firstOfLayer() const { return firstOfLayer_; }
@@ -214,7 +213,7 @@ private:
 
 	void saveTensor()
 	{
-		stack_.push(tensors_[indToOptimize_]->data());
+		savedTensor_ = tensors_[indToOptimize_]->data();
 	}
 
 	PsimagLite::String conditionToSrep(PairStringSizeType nameId,
@@ -456,7 +455,7 @@ private:
 	SymmetryLocalType* symmLocal_;
 	bool verbose_;
 	PsimagLite::Random48<double> rng_;
-	StackVectorType stack_;
+	const ComplexOrRealType* savedTensor_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
