@@ -67,7 +67,6 @@ public:
 	LanczosSolverType;
 	typedef typename TensorType::TensorBlobType TensorBlobType;
 	typedef typename TensorEvalSlowType::SymmetryLocalType SymmetryLocalType;
-	typedef typename PsimagLite::Stack<TensorBlobType>::Type StackVectorType;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
@@ -455,11 +454,7 @@ private:
 	SymmetryLocalType* symmLocal_;
 	bool verbose_;
 	PsimagLite::Random48<double> rng_;
-#ifndef NO_EXATN
-	const ComplexOrRealType* savedTensor_;
-#else
-	VectorType savedTensor_;
-#endif
+	TensorBlobType savedTensor_;
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
