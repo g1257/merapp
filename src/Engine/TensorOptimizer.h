@@ -455,7 +455,11 @@ private:
 	SymmetryLocalType* symmLocal_;
 	bool verbose_;
 	PsimagLite::Random48<double> rng_;
+#ifndef NO_EXATN
 	const ComplexOrRealType* savedTensor_;
+#else
+	VectorType savedTensor_;
+#endif
 }; // class TensorOptimizer
 } // namespace Mera
 #endif // TENSOROPTIMIZER_H
