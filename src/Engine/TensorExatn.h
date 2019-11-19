@@ -35,11 +35,12 @@ class Tensor {
 
 public:
 
-	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
-	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
+	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorComplexOrRealType;
 	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
+
 
 	class BlobAndSizeConst {
 
@@ -64,78 +65,6 @@ public:
 
 	typedef BlobAndSizeConst TensorBlobType;
 
-	// Tensor with only one dimension
-	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
-	    : name_(name),
-	      dimensions_(1, dim0),
-	      ins_(ins)
-	{
-		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
-	}
-
-	Tensor(PsimagLite::String name, const VectorSizeType& d, SizeType ins)
-	    : name_(name),
-	      dimensions_(d),
-	      ins_(ins)
-	{
-		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
-	}
-
-	~Tensor()
-	{
-		exatn::destroyTensor(name_);
-	}
-
-	void setToIdentity(ComplexOrRealType value)
-	{
-		setToIdentityEx(value,ins_);
-	}
-
-	void setToIdentityEx(ComplexOrRealType value, SizeType ins)
-	{
-		if (ins == 0) return;
-		if (dimensions_.size() <= ins) return;
-
-		SizeType dins = 1;
-		for (SizeType i = 0; i < ins; ++i)
-			dins *= dimensions_[i];
-
-		SizeType douts = 1;
-		for (SizeType i = ins; i < dimensions_.size(); ++i)
-			douts *= dimensions_[i];
-
-		// FIXME: set data_ as below:
-
-//		for (SizeType x = 0; x < dins; ++x)
-//			if (x < douts)
-//				data_[x + x*dins] = value;
-	}
-
-	void setToRandom()
-	{
-		//  FIXME: set tensor to random
-
-//		SizeType n = data_.size();
-//		ComplexOrRealType sum = 0.0;
-//		for (SizeType i = 0; i < n; ++i) {
-//			ComplexOrRealType value = rng_();
-//			data_[i] = value;
-//			sum += value*PsimagLite::conj(value);
-//		}
-
-//		RealType tmp = PsimagLite::real(sum);
-//		assert(tmp > 1e-6);
-//		tmp = 2.0/sqrt(tmp);
-//		for (SizeType i = 0; i < n; ++i)
-//			data_[i] *= tmp;
-	}
-
-	void setToConstant(ComplexOrRealType value)
-	{
-		// SET TENSOR to a constant value value
-		exatn::initTensor(name_, value);
-	}
-
 	class SetToMatrix : public exatn::TensorMethod {
 	public:
 
@@ -152,9 +81,13 @@ public:
 
 		virtual const std::string description() const {return "SetToMatrixDescription"; }
 
-	    //Application-defined external tensor method:
-	    virtual int apply(talsh::Tensor& local_tensor)
+		//Application-defined external tensor method:
+		virtual int apply(talsh::Tensor& local_tensor)
 		{
+			if (ins_ == 0) return 0;
+
+			if (dimensions_.size() < ins_) return 0;
+
 			ComplexOrRealType* ptr = 0;
 			bool ret = local_tensor.getDataAccessHost(&ptr);
 			checkTalshErrorCode(ret, "getDataAccessHostConst");
@@ -189,16 +122,212 @@ public:
 		const MatrixType& m_;
 	};
 
+	class SetToIdentity : public exatn::TensorMethod {
+	public:
+
+		SetToIdentity(const VectorSizeType& dimensions,
+		              SizeType ins,
+		              const ComplexOrRealType& value) : dimensions_(dimensions), ins_(ins), value_(value)
+		{}
+
+		virtual void pack(BytePacket & packet) {}
+
+		virtual void unpack(BytePacket & packet) {}
+
+		virtual const std::string name() const {return "SetToIdentity";}
+
+		virtual const std::string description() const {return "SetToIdentityDescription"; }
+
+		//Application-defined external tensor method:
+		virtual int apply(talsh::Tensor& local_tensor)
+		{
+			if (ins_ == 0) return 0;
+			if (dimensions_.size() <= ins_) return 0;
+
+			ComplexOrRealType* ptr = 0;
+			bool ret = local_tensor.getDataAccessHost(&ptr);
+			checkTalshErrorCode(ret, "getDataAccessHost");
+
+			SizeType dins = 1;
+			for (SizeType i = 0; i < ins_; ++i)
+				dins *= dimensions_[i];
+
+			SizeType douts = 1;
+			for (SizeType i = ins_; i < dimensions_.size(); ++i)
+				douts *= dimensions_[i];
+
+
+			for (SizeType x = 0; x < dins; ++x)
+				if (x < douts)
+					ptr[x + x*dins] = value_;
+
+			return 0; // error code
+		}
+
+	private:
+
+		const VectorSizeType& dimensions_;
+		const SizeType ins_;
+		const ComplexOrRealType& value_;
+	};
+
+	class SetToRandom : public exatn::TensorMethod {
+	public:
+
+		virtual void pack(BytePacket & packet) {}
+
+		virtual void unpack(BytePacket & packet) {}
+
+		virtual const std::string name() const {return "SetToRandom";}
+
+		virtual const std::string description() const {return "SetToRandomDescription"; }
+
+		//Application-defined external tensor method:
+		virtual int apply(talsh::Tensor& local_tensor)
+		{
+			ComplexOrRealType* ptr = 0;
+			bool ret = local_tensor.getDataAccessHost(&ptr);
+			checkTalshErrorCode(ret, "getDataAccessHost");
+
+			const SizeType n = local_tensor.getVolume();
+			ComplexOrRealType sum = 0.0;
+			for (SizeType i = 0; i < n; ++i) {
+				ComplexOrRealType value = rng_();
+				ptr[i] = value;
+				sum += value*PsimagLite::conj(value);
+			}
+
+			RealType tmp = PsimagLite::real(sum);
+			assert(tmp > 1e-6);
+			tmp = 2.0/sqrt(tmp);
+			for (SizeType i = 0; i < n; ++i)
+				ptr[i] *= tmp;
+
+			return 0; // error code
+		}
+	};
+
+	class SetToValue : public exatn::TensorMethod {
+
+	public:
+
+		SetToValue(SizeType index, ComplexOrRealType val) : index_(index), val_(val)
+		{}
+
+		virtual void pack(BytePacket & packet) {}
+
+		virtual void unpack(BytePacket & packet) {}
+
+		virtual const std::string name() const {return "SetToValue";}
+
+		virtual const std::string description() const {return "SetToValueDescription"; }
+
+		//Application-defined external tensor method:
+		virtual int apply(talsh::Tensor& local_tensor)
+		{
+			ComplexOrRealType* ptr = 0;
+			bool ret = local_tensor.getDataAccessHost(&ptr);
+			checkTalshErrorCode(ret, "getDataAccessHost");
+
+			ptr[index_] = val_;
+
+			return 0; // error code
+		}
+
+	private:
+
+		SizeType index_;
+		ComplexOrRealType val_;
+	};
+
+	class SetData : public exatn::TensorMethod {
+
+	public:
+
+		SetData(const TensorBlobType& data) : data_(data)
+		{}
+
+		virtual void pack(BytePacket & packet) {}
+
+		virtual void unpack(BytePacket & packet) {}
+
+		virtual const std::string name() const {return "SetData";}
+
+		virtual const std::string description() const {return "SetDataDescription"; }
+
+		//Application-defined external tensor method:
+		virtual int apply(talsh::Tensor& local_tensor)
+		{
+			ComplexOrRealType* ptr = 0;
+			bool ret = local_tensor.getDataAccessHost(&ptr);
+			checkTalshErrorCode(ret, "getDataAccessHost");
+
+			const SizeType n = local_tensor.getVolume();
+			assert(data_.size_ == n);
+			for (SizeType i = 0; i < n; ++i)
+				ptr[i] = data_.ptr_[i];
+
+			return 0; // error code
+		}
+
+	private:
+
+		const TensorBlobType& data_;
+	};
+
+	// Tensor with only one dimension
+	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
+	    : name_(name),
+	      dimensions_(1, dim0),
+	      ins_(ins)
+	{
+		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
+	}
+
+	Tensor(PsimagLite::String name, const VectorSizeType& d, SizeType ins)
+	    : name_(name),
+	      dimensions_(d),
+	      ins_(ins)
+	{
+		exatn::createTensor(name_, exatn::TensorElementType::REAL64, exatn::numerics::TensorShape(dimensions_));
+	}
+
+	~Tensor()
+	{
+		exatn::destroyTensor(name_);
+	}
+
+	void setToIdentity(ComplexOrRealType value)
+	{
+		setToIdentityEx(value, ins_);
+	}
+
+	void setToIdentityEx(ComplexOrRealType value, SizeType ins)
+	{
+		std::shared_ptr<SetToIdentity> setToIdentity = std::make_shared<SetToIdentity>(dimensions_,
+		                                                                             ins,
+		                                                                             value);
+		exatn::transformTensor(name_, setToIdentity);
+	}
+
+	void setToRandom()
+	{
+		//  FIXME: set tensor to random
+		std::shared_ptr<SetToRandom> setToRandom;
+		exatn::transformTensor(name_, setToRandom);
+	}
+
+	void setToConstant(ComplexOrRealType value)
+	{
+		// SET TENSOR to a constant value value
+		exatn::initTensor(name_, value);
+	}
+
 	void setToMatrix(const MatrixType& m)
 	{
-		if (ins_ == 0) return;
-
-		if (dimensions_.size() < ins_) return;
-
 		std::shared_ptr<SetToMatrix> setToMatrix1 = std::make_shared<SetToMatrix>(dimensions_,
 		                                                                          ins_,
 		                                                                          m);
-
 		exatn::transformTensor(name_, setToMatrix1);
 	}
 
@@ -255,12 +384,8 @@ public:
 	{
 		SizeType index = pack(args);
 
-		std::shared_ptr<talsh::Tensor> localTensor = exatn::getLocalTensor(name_);
-		ComplexOrRealType* ptr = 0;
-		bool ret = localTensor->getDataAccessHost(&ptr);
-		checkTalshErrorCode(ret, "getDataAccessHostConst");
-
-		ptr[index] = val;
+		std::shared_ptr<SetToValue> setToVal = std::make_shared<SetToValue>(index, val);
+		exatn::transformTensor(name_, setToVal);
 	}
 
 	TensorBlobType data() const
@@ -268,23 +393,15 @@ public:
 		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
 		const ComplexOrRealType** ptr2 = 0;
 		bool ret = ptr->getDataAccessHostConst(ptr2);
-		checkTalshErrorCode(ret, "getLocalTensor");
+		checkTalshErrorCode(ret, "getDataAccessHostConst");
 		return TensorBlobType(ptr->getVolume(), *ptr2);
 	}
 
+	// Set data_ = data
 	void setData(const TensorBlobType& data)
 	{
-		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
-		ComplexOrRealType** ptr2 = 0;
-		bool ret = ptr->getDataAccessHost(ptr2);
-		checkTalshErrorCode(ret, "getLocalTensor");
-
-		const SizeType n = ptr->getVolume();
-		for (SizeType i = 0; i < n; ++i)
-			(*ptr2)[i] = data[i];
-
-		// needs to be done as an add
-		// data_ = data;
+		std::shared_ptr<SetData> setToDat = std::make_shared<SetData>(data);
+		exatn::transformTensor(name_, setToDat);
 	}
 
 	PsimagLite::String name() const { return name_; }
