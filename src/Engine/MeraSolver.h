@@ -311,9 +311,7 @@ private:
 			assert(ind < energyTerms_.size());
 			SrepStatementType* ptr = energyTerms_[ind];
 			if (!ptr) return 0.0;
-			TensorEvalType tensorEval(*ptr, tensors_);
-//			                         nameToIndexLut_,
-	//		                         symmLocal_);
+			TensorEvalType tensorEval(*ptr, tensors_, nameToIndexLut_, symmLocal_);
 
 			typename TensorEvalType::HandleType handle = tensorEval();
 			while (!handle.done());

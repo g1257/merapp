@@ -47,10 +47,8 @@ int main(int argc, char **argv)
 	vt[1]->setToConstant(1.5);
 
 	Mera::SrepStatement<double> srepEq(str);
-	TensorEvalType tensorEval(srepEq, vt);
-	        //Mera::NameToIndexLut<TensorType> nameToIndexLut(vt);
-	//tensorEval = new TensorEvalSlowType(srepEq, vt, nameToIndexLut, 0,false);
-
+	Mera::NameToIndexLut<TensorType> nameToIndexLut(vt);
+	TensorEvalType tensorEval(srepEq, vt, nameToIndexLut, 0, false);
 	TensorEvalType::HandleType handle = tensorEval();
 
 	while (!handle.done());

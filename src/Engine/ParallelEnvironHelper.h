@@ -121,7 +121,7 @@ public:
 		outputTensor(eq).setSizes(dimensions);
 
 		// evaluate environment
-		TensorEvalType tensorEval(eq, tensors_);
+		TensorEvalType tensorEval(eq, tensors_, nameToIndexLut_, symmLocal_);
 
 		typename TensorEvalType::HandleType handle = tensorEval();
 

@@ -21,43 +21,44 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorSrep.h"
 #include <map>
 #include "TensorBreakup.h"
-#include "TensorEvalBase.h"
 #include "SymmetryLocal.h"
 #include "BLAS.h"
 #include "PsimagLite.h"
 #include "NameToIndexLut.h"
+#include "Tensor.h"
+#include "SrepStatement.h"
+#include "TensorEvalHandle.h"
 
 namespace Mera {
 
 template<typename ComplexOrRealType>
-class TensorEvalSlow : public TensorEvalBase<ComplexOrRealType> {
+class TensorEval {
 
 	typedef TensorSrep TensorSrepType;
 
 public:
 
-	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
-	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
-	typedef typename TensorEvalBaseType::HandleType HandleType;
-	typedef typename TensorEvalBaseType::TensorType TensorType;
-	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef typename TensorEvalBaseType::VectorSizeType VectorSizeType;
-	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
+	typedef TensorEvalHandle HandleType;
+	typedef Tensor<ComplexOrRealType> TensorType;
+	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
+	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef SrepStatement<ComplexOrRealType> SrepStatementType;
+	typedef typename SrepStatementType::PairStringSizeType PairStringSizeType;
+	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+	typedef SymmetryLocal SymmetryLocalType;
 	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
 	typedef TensorBreakup::VectorStringType VectorStringType;
 	typedef typename TensorType::MatrixType MatrixType;
-	typedef SymmetryLocal SymmetryLocalType;
 	typedef SymmetryLocalType::VectorVectorSizeType VectorVectorSizeType;
 
 	static const SizeType EVAL_BREAKUP = TensorBreakup::EVAL_BREAKUP;
 
-	TensorEvalSlow(const SrepStatementType& tSrep,
-	               const VectorTensorType& vt,
-	               NameToIndexLut<TensorType>& nameToIndexLUT,
-	               SymmetryLocalType* symmLocal,
-	               bool modify = EVAL_BREAKUP)
+	TensorEval(const SrepStatementType& tSrep,
+	           const VectorTensorType& vt,
+	           NameToIndexLut<TensorType>& nameToIndexLUT,
+	           SymmetryLocalType* symmLocal,
+	           bool modify = EVAL_BREAKUP)
 	    : srepStatement_(tSrep),
 	      data_(vt), // deep copy
 	      nameToIndexLUT_(nameToIndexLUT),
@@ -105,11 +106,11 @@ public:
 				veqs[j]->canonicalize();
 			veqs[j]->rhs().simplify(empty);
 
-			TensorEvalSlow tEval(*(veqs[j]),
-			                     data_,
-			                     nameToIndexLUT_,
-			                     symmLocal_,
-			                     false);
+			TensorEval tEval(*(veqs[j]),
+			                 data_,
+			                 nameToIndexLUT_,
+			                 symmLocal_,
+			                 false);
 
 			//std::cerr<<"Evaluation of "<<veqs[j]->sRep()<<"\n";
 			tEval(); //handle the handle here
@@ -122,7 +123,7 @@ public:
 		}
 	}
 
-	~TensorEvalSlow()
+	~TensorEval()
 	{
 		for (SizeType i = 0; i < garbage_.size(); ++i) {
 			delete garbage_[i];
@@ -652,9 +653,9 @@ private:
 		return buffer;
 	}
 
-	TensorEvalSlow(const TensorEvalSlow& other);
+	TensorEval(const TensorEval& other);
 
-	TensorEvalSlow& operator=(const TensorEvalSlow& other);
+	TensorEval& operator=(const TensorEval& other);
 
 	SrepStatementType srepStatement_;
 	VectorTensorType data_;

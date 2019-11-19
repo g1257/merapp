@@ -23,33 +23,4 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "TensorEvalSlow.h"
 #endif
 
-//#include "Tensor.h"
-//#include "SrepStatement.h"
-//#include "TensorEvalHandle.h"
-
-//namespace Mera {
-
-//template<typename ComplexOrRealType>
-//class TensorEvalBase {
-
-//public:
-
-//	typedef TensorEvalHandle HandleType;
-//	typedef Tensor<ComplexOrRealType> TensorType;
-//	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
-//	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
-//	typedef SrepStatement<ComplexOrRealType> SrepStatementType;
-//	typedef typename SrepStatementType::PairStringSizeType PairStringSizeType;
-//	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
-//	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
-
-//	virtual ~TensorEvalBase() {}
-
-//	virtual HandleType operator()() = 0;
-
-//	virtual void printResult(std::ostream& os) const = 0;
-
-//	virtual SizeType nameToIndexLut(PsimagLite::String) = 0;
-//};
-//} // namespace Mera
 #endif // TENSOREVALBASE_H
