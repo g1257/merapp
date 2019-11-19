@@ -22,6 +22,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #include "SrepStatement.h"
 #include "TensorEvalHandle.h"
 #include "SymmetryLocal.h"
+#include "NameToIndexLut.h"
 
 namespace Mera {
 
@@ -41,22 +42,25 @@ public:
 	typedef SymmetryLocal SymmetryLocalType;
 
 	TensorEval(const SrepStatementType& tSrep,
-	              const VectorTensorType& vt)
+	           const VectorTensorType& vt,
+	           const NameToIndexLut<TensorType>&,
+	           SymmetryLocalType*,
+	           bool = false)
 	{}
 
 	SizeType nameToIndexLut(PsimagLite::String name)
 	{
-		throw PsimagLite::RuntimeError("Not implemented yet\n");
+		throw PsimagLite::RuntimeError("TensorEvalNew::nameToIndexLut Not implemented yet\n");
 	}
 
 	HandleType operator()()
 	{
-		throw PsimagLite::RuntimeError("Not implemented yet\n");
+		throw PsimagLite::RuntimeError("TensorEvalNew::operator: Not implemented yet\n");
 	}
 
 	void printResult(std::ostream& os) const
 	{
-		throw PsimagLite::RuntimeError("Not implemented yet\n");
+		throw PsimagLite::RuntimeError("TensorEvalNew::printResult: Not implemented yet\n");
 	}
 };
 } // namespace Mera
