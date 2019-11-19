@@ -18,11 +18,10 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef PARALLELENVIRONHELPER_H
 #define PARALLELENVIRONHELPER_H
 #include "Matrix.h"
-#include "TensorEvalSlow.h"
 #include "TensorEvalBase.h"
-#include "TensorEvalNew.h"
 #include "Vector.h"
 #include "TensorStanza.h"
+#include "NameToIndexLut.h"
 
 namespace  Mera {
 
@@ -31,23 +30,21 @@ class ParallelEnvironHelper {
 
 public:
 
-	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
-	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
-	typedef TensorEvalNew<ComplexOrRealType> TensorEvalNewType;
+	typedef TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef PsimagLite::Matrix<ComplexOrRealType> MatrixType;
-	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalBaseType::TensorType TensorType;
-	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
+	typedef typename TensorEvalType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalType::TensorType TensorType;
+	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
+	typedef typename TensorEvalType::SrepStatementType SrepStatementType;
 	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
 	typedef PsimagLite::Vector<TensorStanza::IndexDirectionEnum>::Type VectorDirType;
 	typedef PsimagLite::Vector<bool>::Type VectorBoolType;
 	typedef PsimagLite::Vector<SizeType>::Type VectorSizeType;
 	typedef typename PsimagLite::Vector<MatrixType*>::Type VectorMatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
-	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
-	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename TensorEvalSlowType::SymmetryLocalType SymmetryLocalType;
+	typedef typename TensorEvalType::MapPairStringSizeType MapPairStringSizeType;
+	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename TensorEvalType::SymmetryLocalType SymmetryLocalType;
 
 	ParallelEnvironHelper(VectorSrepStatementType& tensorSrep,
 	                      PsimagLite::String evaluator,
@@ -124,17 +121,11 @@ public:
 		outputTensor(eq).setSizes(dimensions);
 
 		// evaluate environment
-		TensorEvalBaseType* tensorEval =  getTensorEvalPtr(evaluator,
-		                                                   eq,
-		                                                   tensors_,
-		                                                   nameToIndexLut_,
-		                                                   symmLocal_);
+		TensorEvalType tensorEval(eq, tensors_);
 
-		typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
+		typename TensorEvalType::HandleType handle = tensorEval();
+
 		while (!handle.done());
-
-		delete tensorEval;
-		tensorEval = 0;
 
 		// copy result into m
 		SizeType count = 0;
@@ -146,23 +137,23 @@ public:
 		} while (ProgramGlobals::nextIndex(freeIndices,dimensions,total));
 	}
 
-	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
-	                                            const SrepStatementType& srep,
-	                                            VectorTensorType& tensors,
-	                                            NameToIndexLut<TensorType>& nameToIndexLut,
-	                                            SymmetryLocalType* symmLocal)
-	{
-		TensorEvalBaseType* tensorEval = 0;
-		if (evaluator == "slow") {
-			tensorEval = new TensorEvalSlowType(srep, tensors, nameToIndexLut, symmLocal);
-		} else if (evaluator == "new") {
-			tensorEval = new TensorEvalNewType(srep, tensors);
-		} else {
-			throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
-		}
+//	static TensorEvalBaseType* getTensorEvalPtr(PsimagLite::String evaluator,
+//	                                            const SrepStatementType& srep,
+//	                                            VectorTensorType& tensors,
+//	                                            NameToIndexLut<TensorType>& nameToIndexLut,
+//	                                            SymmetryLocalType* symmLocal)
+//	{
+//		TensorEvalBaseType* tensorEval = 0;
+//		if (evaluator == "slow") {
+//			tensorEval = new TensorEvalSlowType(srep, tensors, nameToIndexLut, symmLocal);
+//		} else if (evaluator == "new") {
+//			tensorEval = new TensorEvalNewType(srep, tensors);
+//		} else {
+//			throw PsimagLite::RuntimeError("Unknown evaluator " + evaluator + "\n");
+//		}
 
-		return tensorEval;
-	}
+//		return tensorEval;
+//	}
 
 private:
 

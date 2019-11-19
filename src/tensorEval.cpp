@@ -15,18 +15,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef NO_EXATN
-#include "TensorEvalSlow.h"
-typedef Mera::TensorEvalSlow<double> TensorEvalSlowType;
-#else
-#include "TensorEvalNew.h"
-typedef Mera::TensorEvalNew<double> TensorEvalNewType;
-#endif
+
 #include "Vector.h"
 #include "SrepStatement.h"
+#include "TensorEvalBase.h"
 
 int main(int argc, char **argv)
 {
+	typedef Mera::TensorEval<double> TensorEvalType;
 	PsimagLite::String str = "r0(f0) = u0(f0|s0)u1(s0)";
 	PsimagLite::String evaluator = "slow"; // or you can say "new" here when ready
 
@@ -36,11 +32,10 @@ int main(int argc, char **argv)
 	std::cout<<"Using evaluator "<<evaluator<<"\n";
 
 	SizeType dim0 = 5;
-	typedef Mera::TensorEvalBase<double> TensorEvalBaseType;
-	typedef TensorEvalBaseType::TensorType TensorType;
-	TensorEvalBaseType::VectorTensorType vt(3);
+	typedef TensorEvalType::TensorType TensorType;
+	TensorEvalType::VectorTensorType vt(3);
 
-	TensorEvalBaseType::VectorSizeType d(2, dim0);
+	TensorEvalType::VectorSizeType d(2, dim0);
 	d[0] = 3;
 	vt[0] = new TensorType("u0", d, 1);
 	vt[1] = new TensorType("u1", dim0, 1);
@@ -52,24 +47,18 @@ int main(int argc, char **argv)
 	vt[1]->setToConstant(1.5);
 
 	Mera::SrepStatement<double> srepEq(str);
-	TensorEvalBaseType* tensorEval = 0;
-#ifdef NO_EXATN
-	Mera::NameToIndexLut<TensorType> nameToIndexLut(vt);
-	tensorEval = new TensorEvalSlowType(srepEq, vt, nameToIndexLut, 0,false);
-#else
-	tensorEval = new TensorEvalNewType(srepEq, vt);
-#endif
+	TensorEvalType tensorEval(srepEq, vt);
+	        //Mera::NameToIndexLut<TensorType> nameToIndexLut(vt);
+	//tensorEval = new TensorEvalSlowType(srepEq, vt, nameToIndexLut, 0,false);
 
-	TensorEvalBaseType::HandleType handle = tensorEval->operator()();
+	TensorEvalType::HandleType handle = tensorEval();
 
 	while (!handle.done());
 
-	tensorEval->printResult(std::cout);
-	delete tensorEval;
-	tensorEval = 0;
+	tensorEval.printResult(std::cout);
 
 	for (SizeType i = 0; i < vt.size(); ++i) {
 		delete vt[i];
-		vt[i] = 0;
+		vt[i] = nullptr;
 	}
 }

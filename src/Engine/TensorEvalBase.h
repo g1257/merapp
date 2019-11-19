@@ -17,33 +17,39 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef TENSOREVALBASE_H
 #define TENSOREVALBASE_H
-#include "Tensor.h"
-#include "SrepStatement.h"
-#include "TensorEvalHandle.h"
+#ifndef NO_EXATN
+#include "TensorEvalNew.h"
+#else
+#include "TensorEvalSlow.h"
+#endif
 
-namespace Mera {
+//#include "Tensor.h"
+//#include "SrepStatement.h"
+//#include "TensorEvalHandle.h"
 
-template<typename ComplexOrRealType>
-class TensorEvalBase {
+//namespace Mera {
 
-public:
+//template<typename ComplexOrRealType>
+//class TensorEvalBase {
 
-	typedef TensorEvalHandle HandleType;
-	typedef Tensor<ComplexOrRealType> TensorType;
-	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
-	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
-	typedef SrepStatement<ComplexOrRealType> SrepStatementType;
-	typedef typename SrepStatementType::PairStringSizeType PairStringSizeType;
-	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
-	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+//public:
 
-	virtual ~TensorEvalBase() {}
+//	typedef TensorEvalHandle HandleType;
+//	typedef Tensor<ComplexOrRealType> TensorType;
+//	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
+//	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
+//	typedef SrepStatement<ComplexOrRealType> SrepStatementType;
+//	typedef typename SrepStatementType::PairStringSizeType PairStringSizeType;
+//	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+//	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
 
-	virtual HandleType operator()() = 0;
+//	virtual ~TensorEvalBase() {}
 
-	virtual void printResult(std::ostream& os) const = 0;
+//	virtual HandleType operator()() = 0;
 
-	virtual SizeType nameToIndexLut(PsimagLite::String) = 0;
-};
-} // namespace Mera
+//	virtual void printResult(std::ostream& os) const = 0;
+
+//	virtual SizeType nameToIndexLut(PsimagLite::String) = 0;
+//};
+//} // namespace Mera
 #endif // TENSOREVALBASE_H

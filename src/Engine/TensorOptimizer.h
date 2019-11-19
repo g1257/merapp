@@ -19,8 +19,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define TENSOROPTIMIZER_H
 #include "Vector.h"
 #include "TensorSrep.h"
-#include "TensorEvalSlow.h"
-#include "TensorEvalNew.h"
+#include "TensorEvalBase.h"
 #include <algorithm>
 #include "Sort.h"
 #include "Matrix.h"
@@ -47,26 +46,25 @@ public:
 
 	typedef ParallelEnvironHelper<ComplexOrRealType> ParallelEnvironHelperType;
 	typedef ParametersForMera<ComplexOrRealType> ParametersForMeraType;
-	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
-	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
+	typedef TensorEval<ComplexOrRealType> TensorEvalType;
 	typedef typename PsimagLite::Real<ComplexOrRealType>::Type RealType;
 	typedef typename PsimagLite::Vector<RealType>::Type VectorRealType;
-	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename TensorEvalBaseType::TensorType TensorType;
-	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
+	typedef typename TensorEvalType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename TensorEvalType::TensorType TensorType;
+	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
+	typedef typename TensorEvalType::SrepStatementType SrepStatementType;
+	typedef typename TensorEvalType::MapPairStringSizeType MapPairStringSizeType;
 	typedef typename PsimagLite::Vector<SrepStatementType*>::Type VectorSrepStatementType;
 	typedef typename ParallelEnvironHelperType::MatrixType MatrixType;
 	typedef std::pair<SizeType,SizeType> PairSizeType;
-	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
 	typedef PsimagLite::ParametersForSolver<RealType> ParametersForSolverType;
 	typedef typename PsimagLite::Vector<ComplexOrRealType>::Type VectorType;
 	typedef PsimagLite::CrsMatrix<ComplexOrRealType> SparseMatrixType;
 	typedef PsimagLite::LanczosSolver<ParametersForSolverType,SparseMatrixType,VectorType>
 	LanczosSolverType;
 	typedef typename TensorType::TensorBlobType TensorBlobType;
-	typedef typename TensorEvalSlowType::SymmetryLocalType SymmetryLocalType;
+	typedef typename TensorEvalType::SymmetryLocalType SymmetryLocalType;
 
 	TensorOptimizer(IoInType& io,
 	                PsimagLite::String nameToOptimize,
@@ -212,6 +210,7 @@ private:
 
 	void saveTensor()
 	{
+		assert(indToOptimize_ < tensors_.size());
 		savedTensor_ = tensors_[indToOptimize_]->data();
 	}
 

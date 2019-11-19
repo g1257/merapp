@@ -20,8 +20,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define MERASOLVER_H
 #include "InputNg.h"
 #include "TensorSrep.h"
-#include "TensorEvalSlow.h"
-#include "TensorEvalNew.h"
 #include "TensorOptimizer.h"
 #include "InputCheck.h"
 #include "ModelSelector.h"
@@ -44,17 +42,15 @@ class MeraSolver {
 	typedef typename TensorOptimizerType::ParametersForSolverType ParametersForSolverType;
 	typedef typename TensorOptimizerType::SrepStatementType SrepStatementType;
 	typedef typename TensorOptimizerType::VectorSrepStatementType VectorSrepStatementType;
-	typedef typename TensorOptimizerType::TensorEvalBaseType TensorEvalBaseType;
-	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
-	typedef typename TensorEvalBaseType::TensorType TensorType;
-	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
+	typedef typename TensorOptimizerType::TensorEvalType TensorEvalType;
+	typedef typename TensorEvalType::PairStringSizeType PairStringSizeType;
+	typedef typename TensorEvalType::VectorPairStringSizeType VectorPairStringSizeType;
+	typedef typename TensorEvalType::TensorType TensorType;
+	typedef typename TensorEvalType::VectorTensorType VectorTensorType;
 	typedef ModelBase<ComplexOrRealType> ModelBaseType;
 	typedef ModelSelector<ModelBaseType> ModelType;
 	typedef typename TensorOptimizerType::SymmetryLocalType SymmetryLocalType;
 	typedef typename TensorOptimizerType::ParametersForMeraType ParametersForMeraType;
-	typedef TensorEvalSlow<ComplexOrRealType> TensorEvalSlowType;
-	typedef TensorEvalNew<ComplexOrRealType> TensorEvalNewType;
 	typedef PsimagLite::Vector<PsimagLite::String>::Type VectorStringType;
 
 	static const int EVAL_BREAKUP = TensorOptimizerType::EVAL_BREAKUP;
@@ -315,20 +311,15 @@ private:
 			assert(ind < energyTerms_.size());
 			SrepStatementType* ptr = energyTerms_[ind];
 			if (!ptr) return 0.0;
-			TensorEvalBaseType* tensorEval = TensorOptimizerType::ParallelEnvironHelperType::
-			        getTensorEvalPtr(paramsForMera_.evaluator,
-			                         *ptr,
-			                         tensors_,
-			                         nameToIndexLut_,
-			                         symmLocal_);
+			TensorEvalType tensorEval(*ptr, tensors_);
+//			                         nameToIndexLut_,
+	//		                         symmLocal_);
 
-			typename TensorEvalBaseType::HandleType handle = tensorEval->operator()();
+			typename TensorEvalType::HandleType handle = tensorEval();
 			while (!handle.done());
 
 			VectorSizeType args(1,0);
-			const SizeType index = tensorEval->nameToIndexLut("e" + ttos(ind));
-			delete tensorEval;
-			tensorEval = 0;
+			const SizeType index = tensorEval.nameToIndexLut("e" + ttos(ind));
 			assert(index < tensors_.size());
 			return tensors_[index]->operator()(args);
 		}
@@ -430,7 +421,7 @@ private:
 	{
 		TensorSrep tsrep(meraStr_);
 		SizeType maxLegs = 2.0*paramsForMera_.hamiltonianConnection.size();
-		SymmetryLocal* symmLocal = new SymmetryLocal(tsrep.size(), model_().qOne(), maxLegs);
+		SymmetryLocalType* symmLocal = new SymmetryLocalType(tsrep.size(), model_().qOne(), maxLegs);
 		DimensionSrep<SymmetryLocal> dimSrep(meraStr_, *symmLocal, paramsForMera_.m);
 		PsimagLite::String dsrep = dimSrep() + dsrepEnvirons_;
 

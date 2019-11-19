@@ -17,26 +17,30 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef TENSOREVALNEW_H
 #define TENSOREVALNEW_H
-#include "TensorEvalBase.h"
+
+#include "Tensor.h"
+#include "SrepStatement.h"
+#include "TensorEvalHandle.h"
+#include "SymmetryLocal.h"
 
 namespace Mera {
 
 template<typename ComplexOrRealType>
-class TensorEvalNew : public TensorEvalBase<ComplexOrRealType> {
-
-	typedef TensorEvalBase<ComplexOrRealType> TensorEvalBaseType;
-	typedef typename TensorEvalBaseType::SrepStatementType SrepStatementType;
-	typedef typename TensorEvalBaseType::HandleType HandleType;
-	typedef typename TensorEvalBaseType::TensorType TensorType;
-	typedef typename TensorEvalBaseType::VectorTensorType VectorTensorType;
-	typedef typename TensorEvalBaseType::VectorSizeType VectorSizeType;
-	typedef typename TensorEvalBaseType::PairStringSizeType PairStringSizeType;
-	typedef typename TensorEvalBaseType::MapPairStringSizeType MapPairStringSizeType;
-	typedef typename TensorEvalBaseType::VectorPairStringSizeType VectorPairStringSizeType;
+class TensorEval {
 
 public:
 
-	TensorEvalNew(const SrepStatementType& tSrep,
+	typedef TensorEvalHandle HandleType;
+	typedef Tensor<ComplexOrRealType> TensorType;
+	typedef typename PsimagLite::Vector<TensorType*>::Type VectorTensorType;
+	typedef typename PsimagLite::Vector<SizeType>::Type VectorSizeType;
+	typedef SrepStatement<ComplexOrRealType> SrepStatementType;
+	typedef typename SrepStatementType::PairStringSizeType PairStringSizeType;
+	typedef std::map<PairStringSizeType,SizeType> MapPairStringSizeType;
+	typedef typename PsimagLite::Vector<PairStringSizeType>::Type VectorPairStringSizeType;
+	typedef SymmetryLocal SymmetryLocalType;
+
+	TensorEval(const SrepStatementType& tSrep,
 	              const VectorTensorType& vt)
 	{}
 
