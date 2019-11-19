@@ -19,7 +19,6 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #define TENSOROPTIMIZER_H
 #include "Vector.h"
 #include "TensorSrep.h"
-#include "TensorEvalBase.h"
 #include <algorithm>
 #include "Sort.h"
 #include "Matrix.h"

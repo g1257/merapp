@@ -18,7 +18,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 #ifndef PARALLELENVIRONHELPER_H
 #define PARALLELENVIRONHELPER_H
 #include "Matrix.h"
-#include "TensorEvalBase.h"
+#include "TensorEval.h"
 #include "Vector.h"
 #include "TensorStanza.h"
 #include "NameToIndexLut.h"

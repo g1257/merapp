@@ -18,7 +18,7 @@ along with MERA++. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Vector.h"
 #include "SrepStatement.h"
-#include "TensorEvalBase.h"
+#include "TensorEval.h"
 
 int main(int argc, char **argv)
 {
