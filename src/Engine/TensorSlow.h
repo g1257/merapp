@@ -39,6 +39,10 @@ public:
 	typedef std::pair<PsimagLite::String, SizeType> PairStringSizeType;
 	typedef VectorComplexOrRealType TensorBlobType;
 
+	static void init() {}
+
+	static void finalize() {}
+
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
 	    : name_(name), dimensions_(1, dim0), ins_(ins)
