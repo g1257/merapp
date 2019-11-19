@@ -73,6 +73,7 @@ public:
 	      model_(paramsForMera_.model, paramsForMera_.hamiltonianConnection),
 	      paramsForLanczos_(0)
 	{
+		TensorType::init();
 		InputCheck inputCheck;
 		InputNgType::Writeable ioWriteable(filename,inputCheck);
 		InputNgType::Readable io(ioWriteable);
@@ -207,6 +208,7 @@ public:
 			energyTerms_[i] = 0;
 		}
 
+		TensorType::finalize();
 		delete paramsForLanczos_;
 	}
 

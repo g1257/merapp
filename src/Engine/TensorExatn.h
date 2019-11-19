@@ -275,6 +275,16 @@ public:
 		const TensorBlobType& data_;
 	};
 
+	static void init()
+	{
+		exatn::initialize();
+	}
+
+	static void finalize()
+	{
+		exatn::finalize();
+	}
+
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
 	    : name_(name),
@@ -391,10 +401,10 @@ public:
 	TensorBlobType data() const
 	{
 		std::shared_ptr<talsh::Tensor> ptr = exatn::getLocalTensor(name_);
-		const ComplexOrRealType** ptr2 = 0;
-		bool ret = ptr->getDataAccessHostConst(ptr2);
+		const ComplexOrRealType* ptr2;
+		bool ret = ptr->getDataAccessHostConst(&ptr2);
 		checkTalshErrorCode(ret, "getDataAccessHostConst");
-		return TensorBlobType(ptr->getVolume(), *ptr2);
+		return TensorBlobType(ptr->getVolume(), ptr2);
 	}
 
 	// Set data_ = data
