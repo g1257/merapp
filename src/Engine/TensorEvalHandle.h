@@ -30,7 +30,7 @@ public:
 	    : status_(status)
 	{}
 
-	bool done() const
+	explicit operator bool() const
 	{
 		return (status_ == STATUS_DONE);
 	}
