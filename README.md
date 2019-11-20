@@ -39,7 +39,7 @@ layering or caching acceleration techniques, and parallelization.
 
 TBW
 
-## Code Signature 
+## Code Signature
 
 TBW
 
@@ -71,34 +71,38 @@ make, perl, and git if you don't have them.
 3. Compile PsimagLite
 
 ```BASH
-	$ cd PsimagLite
-	$ git checkout features
-	$ git pull origin features
+    $ cd PsimagLite
+    $ git checkout features
+    $ git pull origin features
     $ cd lib/
     $ ./configure.pl
-    $ make -j something 
+    $ make -j something
     $ cd ../../
 ```
 
 4. Now issue
 
 ```BASH
-	$ cd merapp
-	$ git checkout features
-	$ git pull origin features
+    $ cd merapp
+    $ git checkout features
+    $ git pull origin features
     $ cd src
 ```
 
 Create a file myconfig.psiTag with the following.
-If NOT using exatn write 
+If NOT using exatn write
+```BASH
 dependency exatn = CPPFLAGS += -DNO_EXATN
+```
 else write
+```BASH
 location exatn = (EXATN=/path/to/your/.exatn)
+```
 and then
 ```BASH
-	$ ./configure.pl -c myconfig.psiTag
-	$ make clean
-	$ make -j something
+    $ ./configure.pl -c myconfig.psiTag
+    $ make clean
+    $ make -j something
 ```
 
 5. You can run it with
@@ -108,15 +112,15 @@ and then
     $ ./meranpp -f out8sites.txt
 ```
 
-	or run just the evaluator example driver
+    or run just the evaluator example driver
 ```BASH
-	$ ./tensorEval
+    $ ./tensorEval
 ```
 
     or run from the TestSuite
 ```BASH
     ./meranpp -f ../TestSuite/inputs/meraEnviron1.txt
 ```
-	etc.
+    etc.
 
 
