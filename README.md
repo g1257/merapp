@@ -71,26 +71,46 @@ make, perl, and git if you don't have them.
 3. Compile PsimagLite
 
 ```BASH
-    $ cd PsimagLite/lib/
+	$ cd PsimagLite
+	$ git checkout features
+	$ git pull origin features
+    $ cd lib/
     $ ./configure.pl
     $ make -j something 
-    $ d ../../
+    $ cd ../../
 ```
 
 4. Now issue
 
 ```BASH
-    $ cd merapp/src
-    $ cp Config.make.sample Config.make
+	$ cd merapp
+	$ git checkout features
+	$ git pull origin features
+    $ cd src
 ```
-(edit Config.make if needed)
-and then make.
+
+Create a file myconfig.psiTag with the following.
+If NOT using exatn write 
+dependency exatn = CPPFLAGS += -DNO_EXATN
+else write
+location exatn = (EXATN=/path/to/your/.exatn)
+and then
+```BASH
+	$ ./configure.pl -c myconfig.psiTag
+	$ make clean
+	$ make -j something
+```
 
 5. You can run it with
 
 ```BASH
     $ ./merapp -n 8 -m 6  -a 2 -d 1  > out8sites
     $ ./meranpp -f out8sites.txt
+```
+
+	or run just the evaluator example driver
+```BASH
+	$ ./tensorEval
 ```
 
     or run from the TestSuite
