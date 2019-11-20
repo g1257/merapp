@@ -25,15 +25,10 @@ int main(int argc, char **argv)
 {
 	typedef Mera::TensorEval<double> TensorEvalType;
 	PsimagLite::String str = "r0(f0) = u0(f0|s0)u1(s0)";
-	PsimagLite::String evaluator = "slow"; // or you can say "new" here when ready
-
-	if (argc == 2)
-		evaluator = argv[1];
-
-	std::cout<<"Using evaluator "<<evaluator<<"\n";
 
 	SizeType dim0 = 5;
 	typedef TensorEvalType::TensorType TensorType;
+	TensorType::init();
 	TensorEvalType::VectorTensorType vt(3);
 
 	TensorEvalType::VectorSizeType d(2, dim0);
@@ -60,4 +55,6 @@ int main(int argc, char **argv)
 		delete vt[i];
 		vt[i] = nullptr;
 	}
+
+	TensorType::finalize();
 }
