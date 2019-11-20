@@ -125,7 +125,7 @@ public:
 
 		typename TensorEvalType::HandleType handle = tensorEval();
 
-		while (!handle.done());
+		while (!handle);
 
 		// copy result into m
 		SizeType count = 0;

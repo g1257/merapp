@@ -314,7 +314,7 @@ private:
 			TensorEvalType tensorEval(*ptr, tensors_, nameToIndexLut_, symmLocal_);
 
 			typename TensorEvalType::HandleType handle = tensorEval();
-			while (!handle.done());
+			while (!handle);
 
 			VectorSizeType args(1,0);
 			const SizeType index = tensorEval.nameToIndexLut("e" + ttos(ind));

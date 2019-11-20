@@ -285,6 +285,12 @@ public:
 		exatn::finalize();
 	}
 
+	static void checkTalshErrorCode(bool code, PsimagLite::String what)
+	{
+		if (code) return;
+		throw PsimagLite::RuntimeError("MERA++: TALSH returned false from " + what + "\n");
+	}
+
 	// Tensor with only one dimension
 	Tensor(PsimagLite::String name, SizeType dim0, SizeType ins)
 	    : name_(name),
@@ -433,12 +439,6 @@ private:
 		}
 
 		return index;
-	}
-
-	static void checkTalshErrorCode(bool code, PsimagLite::String what)
-	{
-		if (code) return;
-		throw PsimagLite::RuntimeError("MERA++: TALSH returned false from " + what + "\n");
 	}
 
 	static PsimagLite::RandomForTests<ComplexOrRealType> rng_;

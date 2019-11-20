@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 	TensorEvalType tensorEval(srepEq, vt, nameToIndexLut, 0, false);
 	TensorEvalType::HandleType handle = tensorEval();
 
-	while (!handle.done());
+	while (!handle);
 
 	tensorEval.printResult(std::cout);
 
